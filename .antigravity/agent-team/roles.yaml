@@ -1,0 +1,47 @@
+version: 1
+team:
+  mode: senior-autonomy
+  default_parallelism: 4
+  model_routing:
+    executor_primary: gpt-5.3-codex-spark
+    executor_escalation: gpt-5-codex
+    architect_primary: claude-opus-4.6
+    architect_secondary: claude-sonnet-4.6
+    verifier_primary: gemini-3.1-pro-preview-deep-think
+    consensus_arbiter: harness-policy-engine
+  roles:
+    - id: lead-architect
+      responsibility: architecture, boundaries, integration risk
+      required_on:
+        - cross-module changes
+        - schema/data model changes
+    - id: planner
+      responsibility: task decomposition and dependency graphing
+      required_on:
+        - all autonomous runs
+    - id: executor
+      responsibility: implementation and refactors
+      required_on:
+        - all code changes
+    - id: reviewer
+      responsibility: correctness and regression review
+      required_on:
+        - all code changes
+    - id: security-reviewer
+      responsibility: security and trust-boundary review
+      required_on:
+        - auth or data-boundary changes
+        - externally exposed endpoints
+    - id: qa-visual
+      responsibility: ui visual/interaction checks
+      required_on:
+        - frontend ui changes
+    - id: release-manager
+      responsibility: commit/push/release gates
+      required_on:
+        - merge-ready changes
+gates:
+  require_reviewer: true
+  require_security_for_sensitive_changes: true
+  require_visual_for_ui_changes: true
+  require_release_gate: true

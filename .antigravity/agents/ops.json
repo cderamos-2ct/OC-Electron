@@ -1,0 +1,72 @@
+{
+  "id": "ops",
+  "name": "Ops",
+  "emoji": "\ud83d\udee0\ufe0f",
+  "lane": "operations",
+  "status": "active",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Monitor runtime health, services, tunnels, logs, and environment issues across the OpenClaw stack.",
+  "responsibilities": [
+    "Watch service health and tunnel status",
+    "Investigate runtime failures and regressions",
+    "Maintain ops dashboards and logs",
+    "Own infrastructure and availability tasks"
+  ],
+  "monitorSurfaces": [
+    "Cloudflare tunnel",
+    "launchd services",
+    "dashboard runtime",
+    "gateway logs"
+  ],
+  "communicationChannels": [
+    "ops updates",
+    "incident alerts",
+    "health summaries"
+  ],
+  "tools": [
+    "launchctl",
+    "cloudflared",
+    "logs",
+    "service health checks"
+  ],
+  "memoryPaths": [
+    "/Volumes/Storage/OpenClaw/.antigravity/AGENT_OPERATING_MODEL.md",
+    "/Users/cderamos/.openclaw/workspace/STATUS.md"
+  ],
+  "taskTags": [
+    "ops",
+    "runtime",
+    "infra",
+    "dashboard"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "openai",
+  "defaultModel": "openai/gpt-5-codex",
+  "fallbackModel": "anthropic/claude-sonnet-4.6",
+  "reasoningLevel": "high",
+  "authProfile": "default",
+  "canSpawnSubagents": true,
+  "subagentModel": "openai/gpt-5.3-codex-spark",
+  "subagentMaxDepth": 1,
+  "subagentUseCases": [
+    "parallel log inspection",
+    "incident investigation"
+  ],
+  "persistent": true,
+  "desiredStatus": "running",
+  "sessionLabel": "lane-ops",
+  "startupPolicy": "always_on",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/.antigravity/agents/profiles/ops/DIRECTIVES.md",
+  "dashboardCardId": "ops",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

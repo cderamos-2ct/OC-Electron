@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://visualgraphx.local/schemas/command-center-phase1.json",
+  "title": "Command Center Phase 1 Payload",
+  "type": "object",
+  "required": ["generatedAt", "now", "need", "active", "recentCompletions", "decisionQueue"],
+  "properties": {
+    "generatedAt": { "type": "string" },
+    "now": {
+      "type": "object",
+      "required": ["summary", "focus", "lastMeaningfulUpdate"],
+      "properties": {
+        "summary": { "type": "string" },
+        "focus": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "lastMeaningfulUpdate": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "need": {
+      "type": "object",
+      "required": ["status", "items"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["nothing-needed", "needs-input", "blocked"]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title", "detail", "kind"],
+            "properties": {
+              "title": { "type": "string" },
+              "detail": { "type": ["string", "null"] },
+              "kind": {
+                "type": "string",
+                "enum": ["blocker", "approval", "decision"]
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "active": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "status", "note"],
+        "properties": {
+          "title": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["running", "queued", "blocked"]
+          },
+          "note": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "recentCompletions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "detail"],
+        "properties": {
+          "title": { "type": "string" },
+          "detail": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "decisionQueue": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "summary", "doc"],
+        "properties": {
+          "title": { "type": "string" },
+          "summary": { "type": ["string", "null"] },
+          "doc": { "type": ["string", "null"] }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

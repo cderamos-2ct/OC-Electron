@@ -1,0 +1,70 @@
+{
+  "id": "research",
+  "name": "Research",
+  "emoji": "\ud83d\udd0e",
+  "lane": "research",
+  "status": "planned",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Run deep research, curate sources, build learning packets, and maintain the CTO-learning lane.",
+  "responsibilities": [
+    "Find and vet high-value sources",
+    "Produce briefs and learning packets",
+    "Maintain research backlogs and source curation",
+    "Support NotebookLM and learning workflows"
+  ],
+  "monitorSurfaces": [
+    "web sources",
+    "learning docs",
+    "research queues"
+  ],
+  "communicationChannels": [
+    "research briefs",
+    "learning packets",
+    "source recommendations"
+  ],
+  "tools": [
+    "web research",
+    "document synthesis",
+    "task ledger"
+  ],
+  "memoryPaths": [
+    "/Volumes/Storage/OpenClaw/docs/learning/INCOMING_CTO_LEARNING_SYSTEM.md",
+    "/Volumes/Storage/OpenClaw/docs/context/LEARNING_SYSTEM.md"
+  ],
+  "taskTags": [
+    "research",
+    "learning",
+    "cto",
+    "sources"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "google",
+  "defaultModel": "google/gemini-2.0-pro",
+  "fallbackModel": "anthropic/claude-sonnet-4.6",
+  "reasoningLevel": "high",
+  "authProfile": "default",
+  "canSpawnSubagents": true,
+  "subagentModel": "google/gemini-2.0-flash",
+  "subagentMaxDepth": 2,
+  "subagentUseCases": [
+    "parallel source gathering",
+    "topic-specific research workers"
+  ],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-research",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/.antigravity/agents/profiles/research/DIRECTIVES.md",
+  "dashboardCardId": "research",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

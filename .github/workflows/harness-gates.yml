@@ -1,0 +1,29 @@
+name: Harness Gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  harness-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Harness Gate Pipeline
+        env:
+          HARNESS_CORE_REPO: ${{ vars.HARNESS_CORE_REPO || 'https://github.com/VisualGraphxLLC/dev-harness-core.git' }}
+          HARNESS_CORE_REF: ${{ vars.HARNESS_CORE_REF || 'main' }}
+          HARNESS_CORE_REPO_TOKEN: ${{ secrets.HARNESS_CORE_REPO_TOKEN }}
+        run: bash scripts/ci-harness-gates.sh

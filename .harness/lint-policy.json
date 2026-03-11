@@ -1,0 +1,29 @@
+{
+  "paths": {
+    "exclude_globs": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.git/**",
+      "**/coverage/**",
+      "**/docs/**",
+      "**/frontend_legacy/**"
+    ]
+  },
+  "typescript": {
+    "commands": []
+  },
+  "structure": {
+    "warn_lines": 250,
+    "error_lines": 400,
+    "forbid_inline_style": true,
+    "forbid_non_module_vue_style": true
+  },
+  "functions": {
+    "max_lines": 120
+  },
+  "visual": {
+    "mode": "smoke",
+    "command": ""
+  }
+}

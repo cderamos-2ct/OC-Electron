@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-03-08T05:35:00-07:00",
+  "now": {
+    "summary": "Resuming the broader EA/operator setup across organization, integrations, and visibility now that the dashboard connection issue has been resolved outside this session.",
+    "focus": [
+      "Keep building the exemplar EA operating layer across Christian’s Mac ecosystem",
+      "Continue safe Storage migration and file organization work",
+      "Continue ecosystem/integration mapping across email, calendar, tasks, notes, messaging, Google Chat, and Microsoft Teams",
+      "Keep status, task visibility, and durable docs current so active work stays coherent"
+    ],
+    "lastMeaningfulUpdate": null
+  },
+  "need": {
+    "status": "needs-input",
+    "items": [
+      {
+        "title": "Re-enable Control UI device auth / remove dangerous dashboard flag",
+        "detail": "Dashboard hardening is still pending because gateway.controlUi.dangerouslyDisableDeviceAuth=true remains live.",
+        "kind": "decision"
+      },
+      {
+        "title": "Decide whether Telegram group messages should stay blocked or get an explicit allowlist",
+        "detail": "Telegram groups are intentionally blocked by current allowlist policy until a decision is made.",
+        "kind": "decision"
+      }
+    ]
+  },
+  "active": [
+    {
+      "title": "Build out the exemplar EA/operator setup across Christian’s ecosystem",
+      "status": "running",
+      "note": "Phase 1 dashboard screen is scoped, data contract defined, and extraction path documented."
+    },
+    {
+      "title": "Set up Storage-based personal file system under /Volumes/Storage/Home-Overflow",
+      "status": "running",
+      "note": null
+    },
+    {
+      "title": "Continue safe migration work from internal home folders to Storage",
+      "status": "running",
+      "note": "Current ~/Documents map re-validated: 36/36 real files accounted for."
+    },
+    {
+      "title": "Continue Google/Exchange ecosystem integration mapping",
+      "status": "running",
+      "note": null
+    }
+  ],
+  "recentCompletions": [
+    {
+      "title": "Dashboard lane stabilized",
+      "detail": "Patched dashboard URL output, confirmed Tailscale Serve, and tightened heartbeat cadence."
+    },
+    {
+      "title": "File-organization lane staged cleanly",
+      "detail": "Documents inventoried, migration map written, destination folders created, dry-run log generated, and 36/36 file map re-validated."
+    },
+    {
+      "title": "Notes / Messages integration reality captured",
+      "detail": "Apple Notes and Messages surfaces are live, but both have metadata limits that were documented explicitly."
+    },
+    {
+      "title": "Security/config truths surfaced clearly",
+      "detail": "Dashboard device-auth risk and Telegram group-policy behavior are now documented as intentional config state, not mystery failures."
+    }
+  ],
+  "decisionQueue": [
+    {
+      "title": "Re-enable Control UI device auth / remove dangerous dashboard flag",
+      "summary": "Improve dashboard security by removing the break-glass device-auth override.",
+      "doc": "CONFIG_HARDENING_NOTES.md"
+    },
+    {
+      "title": "Decide whether Telegram group messages should stay blocked or get an explicit allowlist",
+      "summary": "Keep groups blocked by default or enable a small trusted allowlist if group participation is actually wanted.",
+      "doc": "TELEGRAM_GROUP_POLICY_OPTIONS.md"
+    },
+    {
+      "title": "Decide later which home folders should become symlinks",
+      "summary": "Hold symlink decisions until basic file migration is stable.",
+      "doc": null
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "id": "comms",
+  "name": "Communications",
+  "emoji": "\ud83d\udce8",
+  "lane": "communications",
+  "status": "planned",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Own inbox triage, reply drafting, Teams review, iMessage awareness, and communication follow-ups.",
+  "responsibilities": [
+    "Review unread or urgent communications",
+    "Draft replies and follow-ups",
+    "Surface action-required conversations",
+    "Track communication-related tasks"
+  ],
+  "monitorSurfaces": [
+    "Apple Mail",
+    "Gmail API",
+    "Microsoft Teams",
+    "iMessage"
+  ],
+  "communicationChannels": [
+    "email",
+    "teams",
+    "imessage"
+  ],
+  "tools": [
+    "read_mail.sh",
+    "search_mail.sh",
+    "get_teams_messages.sh",
+    "get_recent_imessages.sh"
+  ],
+  "memoryPaths": [
+    "/Users/cderamos/.openclaw/workspace/MEMORY.md",
+    "/Volumes/Storage/OpenClaw/docs/context/RELATIONSHIP.md"
+  ],
+  "taskTags": [
+    "communications",
+    "email",
+    "teams",
+    "imessage"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "anthropic",
+  "defaultModel": "anthropic/claude-sonnet-4.6",
+  "fallbackModel": "openai/gpt-5-mini",
+  "reasoningLevel": "medium",
+  "authProfile": "default",
+  "canSpawnSubagents": true,
+  "subagentModel": "openai/gpt-5-mini",
+  "subagentMaxDepth": 1,
+  "subagentUseCases": [
+    "batch inbox triage",
+    "parallel message summarization"
+  ],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-comms",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/.antigravity/agents/profiles/comms/DIRECTIVES.md",
+  "dashboardCardId": "comms",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "openclaw-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Repo-local orchestration overlay for OpenClaw",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "hooks": [
+      "./hooks/bootstrap-overlay",
+      "./hooks/session-state"
+    ]
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

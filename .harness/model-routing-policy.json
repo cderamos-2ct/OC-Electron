@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "updatedAt": "",
+  "roles": {
+    "executor": {
+      "primary": {
+        "provider": "codex",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "escalation": {
+        "provider": "codex",
+        "model": "gpt-5-codex"
+      }
+    },
+    "architect": {
+      "primary": {
+        "provider": "claude",
+        "model": "claude-opus-4.6"
+      },
+      "secondary": {
+        "provider": "claude",
+        "model": "claude-sonnet-4.6"
+      }
+    },
+    "verifier": {
+      "primary": {
+        "provider": "gemini",
+        "model": "gemini-3.1-pro-preview-deep-think"
+      },
+      "contextWindowHint": "1M"
+    }
+  },
+  "consensus": {
+    "arbiter": "harness-policy-engine",
+    "requiredVotes": [
+      "executor",
+      "architect",
+      "verifier"
+    ],
+    "passCriteria": {
+      "executorStatus": "pass",
+      "architectStatus": "pass",
+      "verifierStatus": "pass",
+      "ciStatus": "pass"
+    }
+  }
+}

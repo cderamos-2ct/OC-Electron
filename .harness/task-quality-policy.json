@@ -1,0 +1,5 @@
+{
+  "appSmokeCommand": "",
+  "mode": "strict",
+  "baselineFile": ".harness/task-quality-baseline.json"
+}

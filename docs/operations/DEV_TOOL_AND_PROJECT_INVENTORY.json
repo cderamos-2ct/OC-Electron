@@ -1,0 +1,120 @@
+{
+  "generatedAt": "2026-03-08T07:47:00-07:00",
+  "local": {
+    "tools": {
+      "claude": {
+        "path": "/Users/cderamos/.local/bin/claude",
+        "available": true,
+        "version": "2.1.62"
+      },
+      "gemini": {
+        "path": "/opt/homebrew/bin/gemini",
+        "available": true,
+        "version": "0.32.1"
+      },
+      "gh": {
+        "path": "/opt/homebrew/bin/gh",
+        "available": true,
+        "version": "2.86.0"
+      },
+      "git": {
+        "path": "/usr/bin/git",
+        "available": true
+      },
+      "docker": {
+        "path": "/opt/homebrew/bin/docker",
+        "available": true
+      },
+      "docker-compose": {
+        "path": "/opt/homebrew/bin/docker-compose",
+        "available": true
+      },
+      "openclaw": {
+        "path": "/opt/homebrew/bin/openclaw",
+        "available": true,
+        "version": "2026.3.7"
+      },
+      "codex": {
+        "path": null,
+        "available": false
+      },
+      "opencode": {
+        "path": null,
+        "available": false
+      },
+      "pi": {
+        "path": null,
+        "available": false
+      },
+      "pnpm": {
+        "path": null,
+        "available": false
+      }
+    },
+    "projectRoots": [
+      {
+        "path": "/Volumes/Storage/OpenClaw",
+        "role": "real-openclaw-home",
+        "markers": ["requirements.txt", "openclaw-orchestrator/package.json", "docs/antigravity-agent/requirements.txt"]
+      },
+      {
+        "path": "/Volumes/Storage/antigravity",
+        "role": "antigravity-candidate",
+        "markers": []
+      },
+      {
+        "path": "/Volumes/Storage/mockup-generator",
+        "role": "project-candidate",
+        "markers": ["package.json", "docker-compose.yml"]
+      },
+      {
+        "path": "/Volumes/Storage/ShopVox Account Extraction",
+        "role": "project-candidate",
+        "markers": ["package.json"]
+      }
+    ]
+  },
+  "github": {
+    "account": "cderamos-2ct",
+    "authenticated": true,
+    "repos": [
+      {
+        "nameWithOwner": "cderamos-2ct/shopvox-extractor",
+        "private": false,
+        "url": "https://github.com/cderamos-2ct/shopvox-extractor"
+      },
+      {
+        "nameWithOwner": "cderamos-2ct/clarity-dashboard",
+        "private": true,
+        "url": "https://github.com/cderamos-2ct/clarity-dashboard"
+      },
+      {
+        "nameWithOwner": "cderamos-2ct/clarity",
+        "private": true,
+        "url": "https://github.com/cderamos-2ct/clarity"
+      }
+    ]
+  },
+  "server": {
+    "host": "192.168.1.170",
+    "user": "chris",
+    "hostname": "dockerserver",
+    "projectRoots": [
+      "/home/chris/antigravity-agent",
+      "/home/chris/dev-harness-core",
+      "/home/chris/projects/GraphXDash"
+    ],
+    "tools": {
+      "git": true,
+      "docker": true,
+      "claude": null,
+      "codex": null,
+      "gemini": null,
+      "gh": null
+    },
+    "notes": [
+      "Server has .claude, .codex, and .gemini state directories.",
+      "Tool PATH/install state needs a cleaner follow-up audit."
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "updatedAt": "2026-03-06T00:00:00Z",
+  "roles": {
+    "executor": {
+      "primary": {
+        "provider": "openai-codex",
+        "model": "gpt-5.4",
+        "purpose": "Primary implementation lane for coding and refactors"
+      },
+      "escalation": {
+        "provider": "openai-codex",
+        "model": "gpt-5.4",
+        "when": "Cross-module risk, large diffs, or repeated retries"
+      }
+    },
+    "architect": {
+      "primary": {
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "purpose": "Architecture, boundaries, and integration risk"
+      },
+      "secondary": {
+        "provider": "openai-codex",
+        "model": "gpt-5.4",
+        "purpose": "Fast architectural follow-up when Claude is unavailable"
+      }
+    },
+    "verifier": {
+      "primary": {
+        "provider": "google-gemini-cli",
+        "model": "gemini-3-pro-preview",
+        "purpose": "Large-context verification and regression detection"
+      },
+      "contextWindowHint": "1M"
+    }
+  },
+  "consensus": {
+    "arbiter": "orchestrator-policy-engine",
+    "requiredVotes": [
+      "executor",
+      "architect",
+      "verifier"
+    ],
+    "passCriteria": {
+      "executorStatus": "pass",
+      "architectStatus": "pass",
+      "verifierStatus": "pass",
+      "ciStatus": "pass"
+    },
+    "blockOn": [
+      "security_high_or_critical",
+      "lint_stack_fail",
+      "missing_required_vote",
+      "ci_fail"
+    ]
+  }
+}

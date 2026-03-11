@@ -1,0 +1,76 @@
+# OS / editor noise
+.DS_Store
+
+# Secrets / local env
+.env
+.env.local
+.env.*
+!.env.example
+
+# Runtime state and local agent data
+.openclaw/
+.omx/
+.omc/
+
+# Logs
+logs/
+*.log
+/server.log
+
+# Databases / mutable runtime data
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/heartbeat_state.json
+
+# Python / Node build artifacts
+__pycache__/
+*.pyc
+node_modules/
+.next/
+dist/
+build/
+coverage/
+
+# Local temp / generated outputs
+test-results/
+tmp-playwright/
+screenshots/
+
+# Archived / imported local-only workspaces and credentials
+docs/AI-wingman/
+docs/antigravity-agent/data/
+docs/antigravity-agent/dashboard/static/
+docs/antigravity-agent/memory/
+docs/archive/
+scripts/client_secret_*.json
+*.pickle
+token*.pickle
+
+# Harness generated views and local-only artifacts
+.antigravity/autonomy-heartbeat.json
+.antigravity/autonomy-run.log
+.antigravity/TASK_STATUS.md
+.antigravity/task-quality-gates.jsonl
+.antigravity/quality-gates/
+.antigravity/tasks/index.json
+.antigravity/tasks/tasks.json
+.antigravity/run-state.json
+.antigravity/runtime/roster.json
+.antigravity/runtime/sessions.json
+.antigravity/runtime/update-targets.json
+.antigravity/evidence/
+.antigravity/agents/profiles/**/INBOX.jsonl
+.antigravity/agents/profiles/**/OUTBOX.jsonl
+.antigravity/agents/profiles/**/artifacts/
+
+# Keep canonical task definitions and durable orchestration docs tracked
+!.antigravity/tasks/items/
+
+# Imported / legacy project snapshots that should not pollute the core repo
+docs/AI-wingman/
+docs/antigravity-agent/
+docs/archive/

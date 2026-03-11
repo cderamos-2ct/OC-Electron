@@ -1,0 +1,176 @@
+# oh-my-codex top-level settings (must be before any [table])
+notify = ["node", "/opt/homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js"]
+model_reasoning_effort = "high"
+developer_instructions = "You have oh-my-codex installed. AGENTS.md is your orchestration brain and the main orchestration surface. Use /prompts:<role> and spawned role prompts for specialized subagent work. Use workflow skills via $name when explicitly invoked or clearly routed by AGENTS.md. Treat role prompts as narrower execution surfaces under AGENTS.md authority."
+model = "gpt-5.4"
+model_context_window = 1000000
+model_auto_compact_token_limit = 900000
+
+[features]
+multi_agent = true
+child_agents_md = true
+
+# ============================================================
+# oh-my-codex (OMX) Configuration
+# Managed by omx setup - manual edits preserved on next setup
+# ============================================================
+
+# OMX State Management MCP Server
+[mcp_servers.omx_state]
+command = "node"
+args = ["/opt/homebrew/lib/node_modules/oh-my-codex/dist/mcp/state-server.js"]
+enabled = true
+startup_timeout_sec = 5
+
+# OMX Project Memory MCP Server
+[mcp_servers.omx_memory]
+command = "node"
+args = ["/opt/homebrew/lib/node_modules/oh-my-codex/dist/mcp/memory-server.js"]
+enabled = true
+startup_timeout_sec = 5
+
+# OMX Code Intelligence MCP Server (LSP diagnostics, AST search)
+[mcp_servers.omx_code_intel]
+command = "node"
+args = ["/opt/homebrew/lib/node_modules/oh-my-codex/dist/mcp/code-intel-server.js"]
+enabled = true
+startup_timeout_sec = 10
+
+# OMX Trace MCP Server (agent flow timeline & statistics)
+[mcp_servers.omx_trace]
+command = "node"
+args = ["/opt/homebrew/lib/node_modules/oh-my-codex/dist/mcp/trace-server.js"]
+enabled = true
+startup_timeout_sec = 5
+
+# OMX Team MCP Server (team job lifecycle: start, status, wait, cleanup)
+[mcp_servers.omx_team_run]
+command = "node"
+args = ["/opt/homebrew/lib/node_modules/oh-my-codex/dist/mcp/team-server.js"]
+enabled = true
+startup_timeout_sec = 5
+
+# OMX Native Agent Roles (Codex multi-agent)
+
+[agents.explore]
+description = "Fast codebase search and file/symbol mapping"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/explore.toml"
+
+[agents.analyst]
+description = "Requirements clarity, acceptance criteria, hidden constraints"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/analyst.toml"
+
+[agents.planner]
+description = "Task sequencing, execution plans, risk flags"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/planner.toml"
+
+[agents.architect]
+description = "System design, boundaries, interfaces, long-horizon tradeoffs"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/architect.toml"
+
+[agents.debugger]
+description = "Root-cause analysis, regression isolation, failure diagnosis"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/debugger.toml"
+
+[agents.executor]
+description = "Code implementation, refactoring, feature work"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/executor.toml"
+
+[agents.verifier]
+description = "Completion evidence, claim validation, test adequacy"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/verifier.toml"
+
+[agents."style-reviewer"]
+description = "Formatting, naming, idioms, lint conventions"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/style-reviewer.toml"
+
+[agents."quality-reviewer"]
+description = "Logic defects, maintainability, anti-patterns"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/quality-reviewer.toml"
+
+[agents."api-reviewer"]
+description = "API contracts, versioning, backward compatibility"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/api-reviewer.toml"
+
+[agents."security-reviewer"]
+description = "Vulnerabilities, trust boundaries, authn/authz"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/security-reviewer.toml"
+
+[agents."performance-reviewer"]
+description = "Hotspots, complexity, memory/latency optimization"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/performance-reviewer.toml"
+
+[agents."code-reviewer"]
+description = "Comprehensive review across all concerns"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/code-reviewer.toml"
+
+[agents."dependency-expert"]
+description = "External SDK/API/package evaluation"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/dependency-expert.toml"
+
+[agents."test-engineer"]
+description = "Test strategy, coverage, flaky-test hardening"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/test-engineer.toml"
+
+[agents."quality-strategist"]
+description = "Quality strategy, release readiness, risk assessment"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/quality-strategist.toml"
+
+[agents."build-fixer"]
+description = "Build/toolchain/type failures resolution"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/build-fixer.toml"
+
+[agents.designer]
+description = "UX/UI architecture, interaction design"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/designer.toml"
+
+[agents.writer]
+description = "Documentation, migration notes, user guidance"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/writer.toml"
+
+[agents."qa-tester"]
+description = "Interactive CLI/service runtime validation"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/qa-tester.toml"
+
+[agents."git-master"]
+description = "Commit strategy, history hygiene, rebasing"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/git-master.toml"
+
+[agents."code-simplifier"]
+description = "Simplifies recently modified code for clarity and consistency without changing behavior"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/code-simplifier.toml"
+
+[agents.researcher]
+description = "External documentation and reference research"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/researcher.toml"
+
+[agents."product-manager"]
+description = "Problem framing, personas/JTBD, PRDs"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/product-manager.toml"
+
+[agents."ux-researcher"]
+description = "Heuristic audits, usability, accessibility"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/ux-researcher.toml"
+
+[agents."information-architect"]
+description = "Taxonomy, navigation, findability"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/information-architect.toml"
+
+[agents."product-analyst"]
+description = "Product metrics, funnel analysis, experiments"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/product-analyst.toml"
+
+[agents.critic]
+description = "Plan/design critical challenge and review"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/critic.toml"
+
+[agents.vision]
+description = "Image/screenshot/diagram analysis"
+config_file = "/Volumes/Storage/OpenClaw/.omx/agents/vision.toml"
+
+# OMX TUI StatusLine (Codex CLI v0.101.0+)
+[tui]
+status_line = ["model-with-reasoning", "git-branch", "context-remaining", "total-input-tokens", "total-output-tokens", "five-hour-limit"]
+
+# ============================================================
+# End oh-my-codex

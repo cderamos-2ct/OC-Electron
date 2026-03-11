@@ -1,0 +1,14 @@
+{
+  "project": "OpenClaw",
+  "version": "1.0.0",
+  "startDate": "2026-03-08",
+  "taskGroups": [
+    {
+      "id": "intake-queue",
+      "name": "Intake Queue",
+      "phase": 0,
+      "estimatedTime": "Rolling",
+      "tasks": []
+    }
+  ]
+}

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AntiGravity — System Health</title>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #141414; --surface2: #1c1c1c; --border: #2a2a2a;
+  --text: #e4e4e7; --muted: #71717a; --accent: #22d3ee; --accent2: #818cf8;
+  --green: #34d399; --red: #f87171; --orange: #fb923c; --yellow: #fbbf24;
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'SF Pro', 'Inter', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; -webkit-font-smoothing: antialiased;
+  padding: 24px 16px 48px;
+}
+a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color 0.15s; }
+a:hover { color: var(--accent); }
+
+/* ── Header ── */
+.page-header {
+  max-width: 900px; margin: 0 auto 28px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.header-title {
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-mark {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #000; font-weight: 800; font-size: 14px;
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+.subtitle { font-size: 13px; color: var(--muted); }
+.last-updated { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ── Cards Grid ── */
+.section-label {
+  max-width: 900px; margin: 0 auto 10px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--muted);
+}
+.cards-grid {
+  max-width: 900px; margin: 0 auto 24px;
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 600px) { .cards-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(34,211,238,0.15), 0 4px 16px rgba(0,0,0,0.4);
+}
+.card-icon { font-size: 20px; margin-bottom: 8px; }
+.card-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.card-value { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+.card-bar-track {
+  height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden;
+}
+.card-bar-fill {
+  height: 100%; border-radius: 2px; transition: width 0.5s ease, background 0.5s ease;
+}
+.card-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* Bot status card */
+.status-indicator {
+  display: flex; align-items: center; gap: 8px; margin-top: 4px;
+}
+.status-indicator-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.status-indicator-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-indicator-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.status-indicator-label { font-size: 13px; font-weight: 600; }
+
+/* ── Stats row ── */
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--accent2); }
+.stat-card-icon { font-size: 18px; margin-bottom: 6px; }
+.stat-card-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.stat-card-value { font-size: 32px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat-card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ── Activity Section ── */
+.activity-section {
+  max-width: 900px; margin: 0 auto;
+}
+.journal-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.journal-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+}
+.journal-entry {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.journal-entry:last-child { border-bottom: none; }
+.journal-entry-time { font-size: 11px; color: var(--muted); min-width: 80px; padding-top: 1px; }
+.journal-entry-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+.journal-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* ── Error state ── */
+.error-chip {
+  display: inline-block; background: rgba(248,113,113,0.12);
+  color: var(--red); border-radius: 4px; padding: 1px 6px;
+  font-size: 11px; font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <a class="back-link" href="/">&#8592; Back to AntiGravity</a>
+  <div class="header-title">
+    <div class="logo-mark">AG</div>
+    <div>
+      <h1>&#9889; AntiGravity</h1>
+      <div class="subtitle">System Health</div>
+    </div>
+  </div>
+  <div class="last-updated">Last updated: <span id="last-updated-time">—</span></div>
+</div>
+
+<!-- System Metrics -->
+<div class="section-label">System Metrics</div>
+<div class="cards-grid">
+
+  <div class="card">
+    <div class="card-icon">&#128187;</div>
+    <div class="card-label">CPU</div>
+    <div class="card-value" id="cpu">—</div>
+    <div class="card-bar-track"><div class="card-bar-fill" id="cpu-bar" style="width:0%"></div></div>
+    <div class="card-sub" id="cpu-sub">&nbsp;</div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">&#129504;</div>
+    <div class="card-label">Memory</div>
+    <div class="card-value" id="memory">—</div>
+    <div class="card-bar-track"><div class="card-bar-fill" id="memory-bar" style="width:0%"></div></div>
+    <div class="card-sub" id="memory-sub">&nbsp;</div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">&#128190;</div>
+    <div class="card-label">Disk</div>
+    <div class="card-value" id="disk">—</div>
+    <div class="card-bar-track"><div class="card-bar-fill" id="disk-bar" style="width:0%"></div></div>
+    <div class="card-sub" id="disk-sub">&nbsp;</div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">&#9201;</div>
+    <div class="card-label">Uptime</div>
+    <div class="card-value" style="font-size:20px" id="uptime">—</div>
+    <div class="card-sub" id="uptime-sub">&nbsp;</div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">&#129302;</div>
+    <div class="card-label">Bot Status</div>
+    <div class="card-value" style="font-size:14px" id="bot-status-text">—</div>
+    <div class="status-indicator">
+      <div class="status-indicator-dot" id="bot-dot"></div>
+      <span class="status-indicator-label" id="bot-label">Unknown</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">&#128196;</div>
+    <div class="card-label">DB Size</div>
+    <div class="card-value" style="font-size:20px" id="db-size">—</div>
+    <div class="card-sub" id="db-sub">&nbsp;</div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">&#128257;</div>
+    <div class="card-label">Connections</div>
+    <div class="card-value" id="connections">—</div>
+    <div class="card-sub" id="connections-sub">&nbsp;</div>
+  </div>
+
+  <div class="card">
+    <div class="card-icon">&#127757;</div>
+    <div class="card-label">Version</div>
+    <div class="card-value" style="font-size:16px" id="version">—</div>
+    <div class="card-sub" id="version-sub">&nbsp;</div>
+  </div>
+
+</div>
+
+<!-- Today's Stats -->
+<div class="section-label">Today's Activity</div>
+<div class="cards-grid">
+
+  <div class="stat-card">
+    <div class="stat-card-icon">&#128680;</div>
+    <div class="stat-card-label">High Priority</div>
+    <div class="stat-card-value" id="stat-high">—</div>
+    <div class="stat-card-sub">messages today</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon">&#9889;</div>
+    <div class="stat-card-label">Pending Actions</div>
+    <div class="stat-card-value" id="stat-pending">—</div>
+    <div class="stat-card-sub">awaiting approval</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon">&#9989;</div>
+    <div class="stat-card-label">Approved Today</div>
+    <div class="stat-card-value" id="stat-approved">—</div>
+    <div class="stat-card-sub">actions resolved</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-icon">&#128276;</div>
+    <div class="stat-card-label">Unread Notifs</div>
+    <div class="stat-card-value" id="stat-notifs">—</div>
+    <div class="stat-card-sub">notifications</div>
+  </div>
+
+</div>
+
+<!-- Activity Journal -->
+<div class="section-label">Recent Activity</div>
+<div class="activity-section">
+  <div class="journal-card">
+    <div class="journal-header">&#128203; Last 5 Journal Entries</div>
+    <div id="journal-list">
+      <div class="journal-empty">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function colorForPct(pct) {
+  if (pct > 80) return 'var(--red)';
+  if (pct > 60) return 'var(--yellow)';
+  return 'var(--green)';
+}
+
+function fmtUptime(s) {
+  if (!s && s !== 0) return '—';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (h > 24) return Math.floor(h / 24) + 'd ' + (h % 24) + 'h';
+  return h + 'h ' + m + 'm';
+}
+
+function fmtBytes(bytes) {
+  if (!bytes && bytes !== 0) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+  return (bytes / 1073741824).toFixed(2) + ' GB';
+}
+
+function timeAgo(ts) {
+  if (!ts) return '';
+  const d = new Date(ts.includes('T') ? ts : ts + 'Z');
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+function setBar(barId, pct) {
+  const bar = document.getElementById(barId);
+  if (!bar) return;
+  const clampedPct = Math.min(100, Math.max(0, pct || 0));
+  bar.style.width = clampedPct + '%';
+  bar.style.background = colorForPct(clampedPct);
+}
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function renderJournal(entries) {
+  const list = document.getElementById('journal-list');
+  if (!list) return;
+  if (!entries || entries.length === 0) {
+    list.innerHTML = '<div class="journal-empty">No recent activity</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => {
+    const text = e.content || e.message || e.text || e.description || JSON.stringify(e);
+    const ts = e.timestamp || e.created_at || e.time || '';
+    return '<div class="journal-entry">' +
+      '<div class="journal-entry-time">' + timeAgo(ts) + '</div>' +
+      '<div class="journal-entry-text">' + text.slice(0, 200) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+async function refresh() {
+  try {
+    const [hb, stats, journal] = await Promise.all([
+      fetch('/api/heartbeat').then(r => r.json()).catch(() => ({})),
+      fetch('/api/stats').then(r => r.json()).catch(() => ({})),
+      fetch('/api/journal?limit=5').then(r => r.json()).catch(() => ({ entries: [] }))
+    ]);
+
+    // ── CPU ──
+    const cpuPct = hb.cpu_percent != null ? hb.cpu_percent : null;
+    if (cpuPct != null) {
+      setText('cpu', cpuPct.toFixed(1) + '%');
+      setBar('cpu-bar', cpuPct);
+      setText('cpu-sub', cpuPct > 80 ? 'High load' : cpuPct > 60 ? 'Moderate' : 'Normal');
+    } else {
+      setText('cpu', 'N/A');
+    }
+
+    // ── Memory ──
+    const memPct = hb.memory_percent != null ? hb.memory_percent : null;
+    if (memPct != null) {
+      setText('memory', memPct.toFixed(1) + '%');
+      setBar('memory-bar', memPct);
+      const memUsed = hb.memory_used_mb ? hb.memory_used_mb.toFixed(0) + ' MB used' : '';
+      setText('memory-sub', memUsed || (memPct > 80 ? 'High usage' : 'Normal'));
+    } else {
+      setText('memory', 'N/A');
+    }
+
+    // ── Disk ──
+    const diskPct = hb.disk_percent != null ? hb.disk_percent : null;
+    if (diskPct != null) {
+      setText('disk', diskPct.toFixed(1) + '%');
+      setBar('disk-bar', diskPct);
+      setText('disk-sub', diskPct > 80 ? 'Low space' : 'OK');
+    } else {
+      setText('disk', 'N/A');
+    }
+
+    // ── Uptime ──
+    const uptime = hb.uptime_seconds != null ? hb.uptime_seconds : (hb.uptime != null ? hb.uptime : null);
+    setText('uptime', fmtUptime(uptime));
+    setText('uptime-sub', uptime != null ? 'system running' : '');
+
+    // ── Bot status ──
+    const isOnline = hb.status === 'ok' || hb.status === 'healthy' || hb.ok === true || (Object.keys(hb).length > 0 && !hb.error);
+    const botDot = document.getElementById('bot-dot');
+    if (botDot) {
+      botDot.className = 'status-indicator-dot ' + (isOnline ? 'online' : 'offline');
+    }
+    setText('bot-label', isOnline ? 'Responsive' : 'Offline');
+    setText('bot-status-text', hb.status || (isOnline ? 'ok' : 'offline'));
+
+    // ── DB Size ──
+    const dbSize = hb.db_size_bytes || hb.db_size || stats.db_size_bytes || stats.db_size || null;
+    setText('db-size', fmtBytes(dbSize));
+    setText('db-sub', dbSize ? 'database' : '');
+
+    // ── Connections / WS ──
+    const conns = hb.active_connections != null ? hb.active_connections
+      : (hb.ws_clients != null ? hb.ws_clients : (stats.active_connections != null ? stats.active_connections : null));
+    setText('connections', conns != null ? String(conns) : '—');
+    setText('connections-sub', conns != null ? 'active clients' : '');
+
+    // ── Version ──
+    const ver = hb.version || stats.version || '—';
+    setText('version', ver);
+    setText('version-sub', hb.environment || stats.environment || '');
+
+    // ── Stats ──
+    setText('stat-high', stats.high_priority_today != null ? stats.high_priority_today
+      : (stats.today_high != null ? stats.today_high : '—'));
+    setText('stat-pending', stats.pending_actions != null ? stats.pending_actions : '—');
+    setText('stat-approved', stats.approved_today != null ? stats.approved_today
+      : (stats.actions_resolved_today != null ? stats.actions_resolved_today : '—'));
+    setText('stat-notifs', stats.unread_notifications != null ? stats.unread_notifications : '—');
+
+    // ── Journal ──
+    const entries = journal.entries || journal.journal || journal.items || (Array.isArray(journal) ? journal : []);
+    renderJournal(entries);
+
+    // ── Timestamp ──
+    setText('last-updated-time', new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' }));
+
+  } catch (err) {
+    setText('last-updated-time', 'Error — retrying');
+  }
+}
+
+setInterval(refresh, 5000);
+refresh();
+</script>
+</body>
+</html>
