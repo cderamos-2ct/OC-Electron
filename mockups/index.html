@@ -1927,6 +1927,936 @@ html, body {
   .gmail-toast { width: calc(100vw - 16px); right: 8px; left: 8px; }
 }
 
+/* ============================================================
+   VIEW 6: CALENDAR CHANNEL
+   ============================================================ */
+#view-calendar {
+  flex-direction: row;
+}
+
+/* ── Calendar shell layout ───────────────────────────────── */
+.cal-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+  min-width: 0;
+}
+
+/* ── Calendar top nav bar ────────────────────────────────── */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: 44px;
+  background: #0d0d11;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.cal-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.cal-month-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  min-width: 160px;
+}
+.cal-arrow-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--muted);
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+.cal-arrow-btn:hover { background: var(--border-2); color: var(--text); }
+.cal-today-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.cal-today-btn:hover { background: var(--border-2); color: var(--text); }
+
+.cal-nav-center { flex: 1; }
+
+.cal-view-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 3px;
+}
+.cal-view-btn {
+  padding: 4px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.cal-view-btn:hover { color: var(--text); }
+.cal-view-btn.active { background: var(--border); color: var(--text); }
+
+/* ── Calendar body: agenda sidebar + week grid ───────────── */
+.cal-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Agenda sidebar ──────────────────────────────────────── */
+.cal-agenda {
+  width: 200px;
+  min-width: 200px;
+  background: #0e0e12;
+  border-right: 1px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+  padding: 0 0 16px;
+}
+.cal-agenda-section {
+  padding: 14px 16px 8px;
+}
+.cal-agenda-day-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-2);
+}
+.cal-agenda-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+.cal-agenda-item:hover { background: rgba(255,255,255,0.03); }
+.cal-agenda-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.cal-agenda-dot.meeting  { background: var(--accent); }
+.cal-agenda-dot.focus    { background: #2ecc71; }
+.cal-agenda-dot.travel   { background: #3b9ede; }
+.cal-agenda-dot.personal { background: var(--dimmer); }
+.cal-agenda-time {
+  font-size: 10px;
+  color: var(--dim);
+  white-space: nowrap;
+  min-width: 38px;
+  margin-top: 2px;
+}
+.cal-agenda-name {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.35;
+  min-width: 0;
+}
+.cal-agenda-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.cal-agenda-badge.ada    { background: #1f1f3d; color: #8888ff; border: 1px solid #3d3d6a; }
+.cal-agenda-badge.kronos { background: #3d1a12; color: #e85d3a; border: 1px solid #5e2a1a; }
+
+/* ── Week grid ───────────────────────────────────────────── */
+.cal-week-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Day headers row */
+.cal-day-headers {
+  display: grid;
+  grid-template-columns: 48px repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: #0d0d11;
+}
+.cal-gutter-spacer {
+  border-right: 1px solid var(--border-2);
+}
+.cal-day-header {
+  padding: 8px 6px;
+  text-align: center;
+  border-right: 1px solid var(--border-2);
+  cursor: default;
+}
+.cal-day-header:last-child { border-right: none; }
+.cal-day-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--dim);
+  margin-bottom: 3px;
+}
+.cal-day-num {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text-3);
+  line-height: 1;
+}
+.cal-day-header.today .cal-day-name { color: var(--accent); }
+.cal-day-header.today .cal-day-num  {
+  color: #fff;
+  background: var(--accent);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 auto;
+}
+
+/* Scrollable time grid */
+.cal-time-grid {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  padding-bottom: 60px; /* room for toolbar */
+}
+
+/* Grid inner: gutter + 7 day columns */
+.cal-grid-inner {
+  display: grid;
+  grid-template-columns: 48px repeat(7, 1fr);
+  min-height: 100%;
+  position: relative;
+}
+
+/* Time gutter labels */
+.cal-time-col {
+  position: relative;
+  border-right: 1px solid var(--border-2);
+}
+.cal-hour-label {
+  position: absolute;
+  right: 6px;
+  font-size: 10px;
+  color: var(--faint);
+  transform: translateY(-50%);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Day columns */
+.cal-day-col {
+  border-right: 1px solid var(--border-2);
+  position: relative;
+  min-height: 780px; /* 13 hours × 60px */
+}
+.cal-day-col:last-child { border-right: none; }
+.cal-day-col.today-col { background: rgba(232, 93, 58, 0.025); }
+
+/* Hour lines */
+.cal-hour-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: var(--border-2);
+}
+.cal-half-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.03);
+  border-top: 1px dashed rgba(255,255,255,0.04);
+}
+
+/* Current time indicator */
+.cal-now-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 10;
+  pointer-events: none;
+}
+.cal-now-line::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ── Event blocks ─────────────────────────────────────────── */
+.cal-event {
+  position: absolute;
+  left: 3px; right: 3px;
+  border-radius: 5px;
+  padding: 4px 7px;
+  font-size: 11px;
+  line-height: 1.3;
+  overflow: hidden;
+  cursor: pointer;
+  transition: opacity 0.12s, transform 0.12s;
+  z-index: 5;
+  border-left: 3px solid transparent;
+}
+.cal-event:hover { opacity: 0.88; transform: scale(1.01); }
+
+.cal-event.meeting {
+  background: rgba(232, 93, 58, 0.18);
+  border-color: var(--accent);
+  color: #ffb8a0;
+}
+.cal-event.focus {
+  background: rgba(46, 204, 113, 0.12);
+  border-color: #2ecc71;
+  color: #7de8a8;
+}
+.cal-event.travel {
+  background: rgba(59, 158, 222, 0.14);
+  border-color: #3b9ede;
+  color: #88c8f0;
+}
+.cal-event.personal {
+  background: rgba(102, 102, 112, 0.18);
+  border-color: var(--dimmer);
+  color: var(--muted);
+}
+
+.cal-event-title {
+  font-weight: 600;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-event-time {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Agent badge on event */
+.cal-event-badges {
+  display: flex;
+  gap: 3px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+.cal-event-badge {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.cal-event-badge.ada    { background: #1f1f3d; color: #9999ff; }
+.cal-event-badge.kronos { background: #3d2010; color: #e88060; }
+
+/* ── Meeting Detail Panel (slide-in from right within cal-shell) */
+.cal-detail-panel {
+  position: absolute;
+  top: 44px; /* below cal-nav */
+  right: 0;
+  bottom: 52px; /* above toolbar */
+  width: 360px;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  transform: translateX(100%);
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+}
+.cal-detail-panel.open {
+  transform: translateX(0);
+}
+
+.cal-detail-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.cal-detail-close {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--dimmer);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  float: right;
+  margin-top: -2px;
+}
+.cal-detail-close:hover { background: var(--border); color: var(--text); }
+.cal-detail-type-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.cal-detail-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  margin: 6px 0 4px;
+}
+.cal-detail-meta {
+  font-size: 12px;
+  color: var(--dim);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cal-detail-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cal-detail-meta-icon { font-size: 12px; width: 14px; text-align: center; }
+
+.cal-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Attendees */
+.cal-detail-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.cal-detail-attendees {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cal-attendee {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cal-attendee-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.cal-attendee-name {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.cal-attendee-status {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--green);
+}
+
+/* Ada brief section */
+.cal-ada-brief {
+  background: #12122a;
+  border: 1px solid #2e2e5a;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.cal-ada-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.cal-ada-avatar {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: #1f1f4e;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.cal-ada-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8888cc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.cal-ada-brief-item {
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 4px 0;
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.45;
+}
+.cal-ada-brief-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 10px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #6666bb;
+}
+
+/* Detail actions */
+.cal-detail-actions {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* ── Kronos agent overlay toolbar ────────────────────────── */
+/* Reuses .agent-overlay-toolbar / .toolbar-* from Gmail, no extra needed */
+
+/* ── Scheduling suggestion toast ─────────────────────────── */
+/* Reuses .gmail-toast structure, positioned differently */
+.cal-toast {
+  position: absolute;
+  top: 52px;
+  right: 16px;
+  width: 340px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px 14px;
+  z-index: 30;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.2s ease-out;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.cal-toast.dismissed {
+  animation: toastOut 0.25s ease-in forwards;
+}
+
+/* ── Calendar responsive ─────────────────────────────────── */
+@media (max-width: 1199px) {
+  .cal-agenda { width: 160px; min-width: 160px; }
+  .cal-detail-panel { width: 300px; }
+  .cal-day-num { font-size: 15px; }
+}
+@media (max-width: 900px) {
+  .cal-agenda { display: none; }
+  .cal-toast  { width: 260px; right: 8px; }
+  .cal-detail-panel { width: 280px; }
+}
+@media (max-width: 599px) {
+  .cal-agenda { display: none; }
+  .cal-day-headers { grid-template-columns: 32px repeat(7, 1fr); }
+  .cal-grid-inner  { grid-template-columns: 32px repeat(7, 1fr); }
+  .cal-hour-label  { font-size: 8px; right: 2px; }
+  .cal-event-time, .cal-event-badges { display: none; }
+  .cal-event-title { font-size: 9px; }
+  .cal-detail-panel { width: calc(100vw - 32px); }
+  .cal-toast  { width: calc(100vw - 16px); right: 8px; left: 8px; }
+  .cal-time-grid { padding-bottom: 70px; }
+}
+
+/* ============================================================
+   VIEW: GITHUB CHANNEL — Vulcan
+   ============================================================ */
+#view-github { flex-direction: row; }
+
+.gh-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+  min-width: 0;
+}
+
+.gh-chrome {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 36px;
+  background: #0d0d11;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.gh-chrome-url {
+  flex: 1;
+  background: #1a1a1e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gh-chrome-url .lock { color: var(--green); font-size: 10px; }
+.gh-chrome-url .url  { color: var(--muted); }
+.gh-chrome-nav { display: flex; gap: 4px; }
+.gh-chrome-nav-btn {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--dimmer);
+  font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.gh-chrome-nav-btn:hover { background: var(--border-2); color: var(--text-2); }
+
+.gh-app { flex: 1; display: flex; overflow: hidden; }
+
+.gh-sidebar {
+  width: 48px; min-width: 48px;
+  background: #0c0c10;
+  border-right: 1px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.gh-nav-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--muted);
+  position: relative;
+  transition: background 0.1s, color 0.1s;
+}
+.gh-nav-icon:hover   { background: var(--border-2); color: var(--text); }
+.gh-nav-icon.active  { background: var(--accent-bg); color: var(--accent); }
+.gh-nav-icon .nav-dot {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid #0c0c10;
+}
+
+.gh-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.gh-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-2);
+  flex-shrink: 0;
+  gap: 12px;
+}
+.gh-section-title { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.gh-filter-tabs { display: flex; gap: 2px; }
+.gh-filter-tab {
+  padding: 4px 11px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--muted);
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+.gh-filter-tab:hover  { background: var(--border-2); color: var(--text); }
+.gh-filter-tab.active { background: var(--accent-bg); color: #ffb8a0; }
+.gh-filter-tab .gh-tab-count {
+  display: inline-block;
+  margin-left: 4px;
+  background: rgba(232,93,58,0.22);
+  color: var(--accent);
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.gh-main-scroll { flex: 1; overflow-y: auto; padding-bottom: 64px; }
+
+/* PR rows */
+.gh-pr-row {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.gh-pr-row:hover    { background: #131317; }
+.gh-pr-row.expanded { background: #111115; }
+
+.gh-pr-row-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+}
+.gh-ci-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.gh-ci-dot.pass    { background: var(--green); box-shadow: 0 0 5px rgba(46,204,113,0.4); }
+.gh-ci-dot.fail    { background: var(--red);   box-shadow: 0 0 5px rgba(231,76,60,0.4); }
+.gh-ci-dot.running { background: var(--yellow); animation: ghCiPulse 1.4s ease-in-out infinite; }
+@keyframes ghCiPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.gh-pr-meta { flex: 1; min-width: 0; }
+.gh-pr-top-line { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; min-width: 0; }
+.gh-pr-repo { font-size: 11px; color: var(--dim); white-space: nowrap; flex-shrink: 0; }
+.gh-pr-repo .repo-name { color: var(--muted); }
+.gh-pr-title {
+  font-size: 13px; font-weight: 500; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0;
+}
+.gh-pr-bottom-line { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.gh-author-chip { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dim); }
+.gh-author-avatar {
+  width: 16px; height: 16px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.gh-status-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 10px; white-space: nowrap;
+}
+.gh-status-badge.open     { background:#1a2d1a; color:#6bffb0; border:1px solid #2a4a2a; }
+.gh-status-badge.draft    { background:var(--border-2); color:var(--muted); border:1px solid var(--border); }
+.gh-status-badge.merged   { background:#2d1a4a; color:#c89bff; border:1px solid #4a2a7a; }
+.gh-status-badge.approved { background:#1a2d1a; color:#6bffb0; border:1px solid #2a4a2a; }
+.gh-status-badge.changes  { background:#2d1a1a; color:#ff8888; border:1px solid #4a2a2a; }
+.gh-status-badge.pending  { background:#2d2a14; color:var(--yellow); border:1px solid #4a421a; }
+
+.gh-agent-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 4px; white-space: nowrap;
+}
+.gh-agent-badge.reviewed      { background:var(--accent-bg2); color:#ff9b7b; border:1px solid #4d1f15; }
+.gh-agent-badge.auto-approved { background:#1a2d1a; color:#6bffb0; border:1px solid #2a4a2a; }
+.gh-agent-badge.needs-you     { background:#2d1f0a; color:#ffcc66; border:1px solid #5a3a10; }
+
+.gh-pr-time { font-size: 11px; color: var(--dim); margin-left: auto; flex-shrink: 0; }
+
+/* Expanded PR */
+.gh-pr-expanded {
+  display: none;
+  padding: 0 16px 16px 35px;
+  border-top: 1px solid var(--border-2);
+  background: #0f0f13;
+  animation: viewIn 0.12s ease-out;
+}
+.gh-pr-row.expanded .gh-pr-expanded { display: block; }
+
+.gh-pr-desc {
+  font-size: 12px; color: var(--text-3); line-height: 1.55;
+  margin: 12px 0 10px; max-width: 600px;
+}
+.gh-pr-stats-row { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+.gh-pr-stat { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.gh-pr-stat .stat-val { color: var(--text-2); font-weight: 500; }
+
+/* Vulcan review card */
+.gh-vulcan-card {
+  background: #151519;
+  border: 1px solid #3a1f14;
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.gh-vulcan-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.gh-vulcan-avatar {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: var(--accent-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+.gh-vulcan-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); }
+.gh-vulcan-summary { font-size: 12px; color: var(--text-3); line-height: 1.5; margin-bottom: 10px; }
+
+.gh-risk-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.gh-risk-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 5px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.gh-risk-chip.low  { background:#1a2d1a; color:#6bffb0; border:1px solid #2a4a2a; }
+.gh-risk-chip.med  { background:#2d2a14; color:var(--yellow); border:1px solid #4a421a; }
+.gh-risk-chip.high { background:#2d1a1a; color:#ff8888; border:1px solid #4a2a2a; }
+
+.gh-quality-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.gh-quality-label { font-size: 10px; color: var(--dim); white-space: nowrap; }
+.gh-quality-track { flex: 1; max-width: 160px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.gh-quality-fill  { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), #ffb347); }
+.gh-quality-score { font-size: 11px; color: var(--text-2); font-weight: 600; }
+
+.gh-reviewers-label { font-size: 10px; color: var(--dim); margin-bottom: 5px; }
+.gh-reviewer-chips  { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+.gh-reviewer-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; padding: 2px 8px; border-radius: 5px;
+  background: var(--border-2); color: var(--text-3); border: 1px solid var(--border);
+}
+
+.gh-pr-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.gh-pr-btn {
+  padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 500;
+  cursor: pointer; border: none; font-family: inherit;
+  transition: opacity 0.12s; white-space: nowrap;
+}
+.gh-pr-btn:hover   { opacity: 0.85; }
+.gh-pr-btn.approve { background: var(--accent); color: #fff; }
+.gh-pr-btn.changes { background: transparent; border: 1px solid #4d1f1f; color: #ff8888; }
+.gh-pr-btn.diff    { background: var(--border); color: var(--text-3); }
+.gh-pr-btn.close   { background: transparent; border: 1px solid var(--border); color: var(--dim); }
+
+/* Right column */
+.gh-right-col {
+  width: 288px; min-width: 252px;
+  border-left: 1px solid var(--border-2);
+  display: flex; flex-direction: column;
+  overflow-y: auto; flex-shrink: 0; padding-bottom: 64px;
+}
+.gh-right-section { padding: 14px 16px; border-bottom: 1px solid var(--border-2); }
+.gh-right-section-title {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--dim); margin-bottom: 12px;
+}
+
+/* Deploy cards */
+.gh-deploy-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+  position: relative; overflow: hidden;
+}
+.gh-deploy-card:last-child { margin-bottom: 0; }
+.gh-deploy-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+.gh-deploy-card.prod::before    { background: var(--green); }
+.gh-deploy-card.staging::before { background: var(--yellow); }
+.gh-deploy-card.preview::before { background: #4a9fff; }
+
+.gh-deploy-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.gh-deploy-env { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.gh-deploy-status-chip { font-size: 10px; font-weight: 500; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.gh-deploy-status-chip.live      { background:#1a2d1a; color:#6bffb0; border:1px solid #2a4a2a; }
+.gh-deploy-status-chip.deploying { background:#2d2a14; color:var(--yellow); border:1px solid #4a421a; animation:ghCiPulse 1.2s ease-in-out infinite; }
+.gh-deploy-status-chip.ready     { background:#1a2040; color:#4a9fff; border:1px solid #2a3a6a; }
+.gh-deploy-meta { font-size: 11px; color: var(--dim); line-height: 1.5; }
+.gh-deploy-meta .commit-hash { font-family:'SF Mono',ui-monospace,monospace; color:var(--muted); font-size:10px; }
+.gh-deploy-progress { height:2px; background:var(--border); border-radius:1px; margin-top:6px; overflow:hidden; }
+.gh-deploy-progress-fill { height:100%; border-radius:1px; background:var(--yellow); animation:ghDeployProg 2.8s ease-in-out infinite alternate; }
+@keyframes ghDeployProg { from{width:32%} to{width:76%} }
+
+/* Issue list */
+.gh-issue-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  cursor: pointer; transition: background 0.1s;
+}
+.gh-issue-row:last-child { border-bottom: none; }
+.gh-issue-row:hover { background: rgba(255,255,255,0.02); }
+.gh-priority-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.gh-priority-dot.high { background: var(--red); }
+.gh-priority-dot.med  { background: var(--yellow); }
+.gh-priority-dot.low  { background: var(--green); }
+.gh-issue-body { flex:1; min-width:0; }
+.gh-issue-title { font-size:12px; color:var(--text-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+.gh-issue-meta  { font-size:10px; color:var(--dim); display:flex; gap:6px; flex-wrap:wrap; }
+.gh-issue-num   { color:var(--dimmer); font-family:'SF Mono',ui-monospace,monospace; }
+
+/* GitHub toast */
+.gh-toast {
+  position: absolute; top: 48px; right: 16px; width: 340px;
+  background: var(--bg-card);
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 12px 14px;
+  z-index: 30; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.2s ease-out;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.gh-toast.dismissed { animation: toastOut 0.25s ease-in forwards; }
+.gh-toast-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.gh-toast-body { flex: 1; min-width: 0; }
+.gh-toast-agent { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent); margin-bottom:3px; }
+.gh-toast-text  { font-size:12px; color:var(--text-2); line-height:1.45; }
+.gh-toast-action { font-size:11px; color:var(--accent); cursor:pointer; font-weight:500; display:inline-block; margin-top:4px; }
+.gh-toast-action:hover { text-decoration: underline; }
+.gh-toast-dismiss { background:transparent; border:none; color:var(--dimmer); font-size:14px; cursor:pointer; flex-shrink:0; padding:0; line-height:1; margin-top:1px; }
+.gh-toast-dismiss:hover { color: var(--text); }
+.gh-toast-progress { position:absolute; bottom:0; left:0; height:2px; background:var(--accent); border-radius:0 0 0 8px; animation:toastProgressBar 6s linear forwards; opacity:0.6; }
+
+/* GitHub responsive */
+@media (max-width: 1199px) { .gh-right-col { width: 240px; min-width: 220px; } }
+@media (max-width: 900px)  { .gh-sidebar { display:none; } .gh-right-col { display:none; } .gh-toast { width:280px; right:8px; } }
+@media (max-width: 599px)  { .gh-pr-row-top { padding:10px 12px; } .gh-pr-expanded { padding:0 12px 14px 22px; } .gh-section-header { padding:8px 12px; } .gh-toast { width:calc(100vw - 16px); right:8px; left:8px; } }
+
 </style>
 </head>
 <body>
@@ -1965,7 +2895,7 @@ html, body {
     <span>✉️</span><span class="tab-text"> Gmail</span>
     <span class="badge">4</span>
   </div>
-  <div class="tab">
+  <div class="tab nav-tab" data-view="calendar">
     <span>📅</span><span class="tab-text"> Calendar</span>
   </div>
   <div class="tab">
@@ -2012,7 +2942,7 @@ html, body {
       <span class="drawer-icon">✉️</span> Gmail
       <span class="drawer-badge">4</span>
     </div>
-    <div class="mobile-drawer-item">
+    <div class="mobile-drawer-item" data-drawer-view="calendar">
       <span class="drawer-icon">📅</span> Calendar
     </div>
     <div class="mobile-drawer-item">
@@ -3453,6 +4383,448 @@ html, body {
 
   </div><!-- #view-gmail -->
 
+  <!-- ===========================================================
+       VIEW 6: CALENDAR CHANNEL (Kronos + Ada)
+       =========================================================== -->
+  <div class="view" id="view-calendar">
+
+    <!-- Main calendar shell -->
+    <div class="cal-shell">
+
+      <!-- Top nav bar -->
+      <div class="cal-nav">
+        <div class="cal-nav-left">
+          <button class="cal-arrow-btn" id="calPrev">&#8249;</button>
+          <button class="cal-arrow-btn" id="calNext">&#8250;</button>
+          <span class="cal-month-label">March 2026</span>
+          <button class="cal-today-btn" id="calTodayBtn">Today</button>
+        </div>
+        <div class="cal-nav-center"></div>
+        <div class="cal-view-toggle">
+          <button class="cal-view-btn">Day</button>
+          <button class="cal-view-btn active">Week</button>
+          <button class="cal-view-btn">Month</button>
+        </div>
+      </div>
+
+      <!-- Body: agenda sidebar + week grid -->
+      <div class="cal-body">
+
+        <!-- Agenda sidebar -->
+        <div class="cal-agenda">
+          <!-- Today -->
+          <div class="cal-agenda-section">
+            <div class="cal-agenda-day-label">Today &mdash; Sun Mar 15</div>
+            <div class="cal-agenda-item" data-event="investor">
+              <span class="cal-agenda-dot meeting"></span>
+              <span class="cal-agenda-time">10 AM</span>
+              <span class="cal-agenda-name">Investor Sync</span>
+              <span class="cal-agenda-badge ada">Ada</span>
+            </div>
+            <div class="cal-agenda-item">
+              <span class="cal-agenda-dot focus"></span>
+              <span class="cal-agenda-time">1 PM</span>
+              <span class="cal-agenda-name">Focus: Dashboard Build</span>
+            </div>
+            <div class="cal-agenda-item">
+              <span class="cal-agenda-dot meeting"></span>
+              <span class="cal-agenda-time">4:30 PM</span>
+              <span class="cal-agenda-name">VG Standup ⚠</span>
+              <span class="cal-agenda-badge kronos">K</span>
+            </div>
+          </div>
+          <!-- Tomorrow -->
+          <div class="cal-agenda-section">
+            <div class="cal-agenda-day-label">Tomorrow &mdash; Mon Mar 16</div>
+            <div class="cal-agenda-item">
+              <span class="cal-agenda-dot meeting"></span>
+              <span class="cal-agenda-time">9 AM</span>
+              <span class="cal-agenda-name">Sprint Planning</span>
+              <span class="cal-agenda-badge ada">Ada</span>
+            </div>
+            <div class="cal-agenda-item">
+              <span class="cal-agenda-dot meeting"></span>
+              <span class="cal-agenda-time">2 PM</span>
+              <span class="cal-agenda-name">Lynn Nelson — Buckner</span>
+              <span class="cal-agenda-badge kronos">K</span>
+            </div>
+          </div>
+          <!-- Tue Mar 17 -->
+          <div class="cal-agenda-section">
+            <div class="cal-agenda-day-label">Tue Mar 17</div>
+            <div class="cal-agenda-item">
+              <span class="cal-agenda-dot personal"></span>
+              <span class="cal-agenda-time">11 AM</span>
+              <span class="cal-agenda-name">Dentist</span>
+            </div>
+            <div class="cal-agenda-item">
+              <span class="cal-agenda-dot meeting"></span>
+              <span class="cal-agenda-time">3 PM</span>
+              <span class="cal-agenda-name">All Hands</span>
+              <span class="cal-agenda-badge ada">Ada</span>
+            </div>
+          </div>
+        </div><!-- .cal-agenda -->
+
+        <!-- Week grid -->
+        <div class="cal-week-wrap">
+          <!-- Day headers -->
+          <div class="cal-day-headers">
+            <div class="cal-gutter-spacer"></div>
+            <div class="cal-day-header today">
+              <div class="cal-day-name">Sun</div>
+              <div class="cal-day-num">15</div>
+            </div>
+            <div class="cal-day-header">
+              <div class="cal-day-name">Mon</div>
+              <div class="cal-day-num">16</div>
+            </div>
+            <div class="cal-day-header">
+              <div class="cal-day-name">Tue</div>
+              <div class="cal-day-num">17</div>
+            </div>
+            <div class="cal-day-header">
+              <div class="cal-day-name">Wed</div>
+              <div class="cal-day-num">18</div>
+            </div>
+            <div class="cal-day-header">
+              <div class="cal-day-name">Thu</div>
+              <div class="cal-day-num">19</div>
+            </div>
+            <div class="cal-day-header">
+              <div class="cal-day-name">Fri</div>
+              <div class="cal-day-num">20</div>
+            </div>
+            <div class="cal-day-header">
+              <div class="cal-day-name">Sat</div>
+              <div class="cal-day-num">21</div>
+            </div>
+          </div><!-- .cal-day-headers -->
+
+          <!-- Scrollable time grid -->
+          <div class="cal-time-grid" id="calTimeGrid">
+            <div class="cal-grid-inner" id="calGridInner">
+
+              <!-- Time gutter column (hours 8am–9pm = 13 ticks at 60px each = 780px) -->
+              <div class="cal-time-col" id="calTimeCol">
+                <!-- Hour labels and lines injected by JS -->
+              </div>
+
+              <!-- ── Sunday Mar 15 (TODAY) ── -->
+              <div class="cal-day-col today-col" id="calCol-0">
+                <!-- Current time line injected by JS -->
+                <!-- Events -->
+                <div class="cal-event meeting" style="top:120px; height:60px;" data-event="investor" id="evtInvestor">
+                  <div class="cal-event-title">Investor Sync</div>
+                  <div class="cal-event-time">10:00 &ndash; 11:00 AM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge ada">Ada Brief</span>
+                    <span class="cal-event-badge kronos">Prep</span>
+                  </div>
+                </div>
+                <div class="cal-event focus" style="top:300px; height:180px;">
+                  <div class="cal-event-title">Focus: Dashboard Build</div>
+                  <div class="cal-event-time">1:00 &ndash; 4:00 PM</div>
+                </div>
+                <div class="cal-event meeting" style="top:510px; height:30px;" id="evtVG">
+                  <div class="cal-event-title">VG Standup ⚠</div>
+                  <div class="cal-event-time">4:30 PM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge kronos">Conflict</span>
+                  </div>
+                </div>
+                <div class="cal-event meeting" style="top:510px; height:60px; left:48%; right:3px;" id="evtPrintDeed">
+                  <div class="cal-event-title">PrintDeed Review</div>
+                  <div class="cal-event-time">4:30 &ndash; 5:30 PM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge kronos">Conflict</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Monday Mar 16 ── -->
+              <div class="cal-day-col" id="calCol-1">
+                <div class="cal-event meeting" style="top:60px; height:60px;" id="evtSprint">
+                  <div class="cal-event-title">Sprint Planning</div>
+                  <div class="cal-event-time">9:00 &ndash; 10:00 AM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge ada">Ada Brief</span>
+                  </div>
+                </div>
+                <div class="cal-event meeting" style="top:360px; height:60px;" id="evtLynn">
+                  <div class="cal-event-title">Lynn Nelson &mdash; Buckner</div>
+                  <div class="cal-event-time">2:00 &ndash; 3:00 PM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge kronos">Prep</span>
+                  </div>
+                </div>
+                <div class="cal-event travel" style="top:480px; height:30px;">
+                  <div class="cal-event-title">&#9992; Travel: Austin &rarr; DAL</div>
+                  <div class="cal-event-time">4:00 PM</div>
+                </div>
+              </div>
+
+              <!-- ── Tuesday Mar 17 ── -->
+              <div class="cal-day-col" id="calCol-2">
+                <div class="cal-event personal" style="top:180px; height:60px;">
+                  <div class="cal-event-title">Dentist Appt</div>
+                  <div class="cal-event-time">11:00 AM &ndash; 12:00 PM</div>
+                </div>
+                <div class="cal-event meeting" style="top:420px; height:60px;" id="evtAllHands">
+                  <div class="cal-event-title">All Hands</div>
+                  <div class="cal-event-time">3:00 &ndash; 4:00 PM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge ada">Ada Brief</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Wednesday Mar 18 ── -->
+              <div class="cal-day-col" id="calCol-3">
+                <div class="cal-event focus" style="top:0px; height:90px;">
+                  <div class="cal-event-title">Focus: API Review</div>
+                  <div class="cal-event-time">8:00 &ndash; 9:30 AM</div>
+                </div>
+                <div class="cal-event meeting" style="top:210px; height:60px;">
+                  <div class="cal-event-title">1:1 with Vulcan</div>
+                  <div class="cal-event-time">11:30 AM &ndash; 12:30 PM</div>
+                </div>
+                <div class="cal-event meeting" style="top:390px; height:30px;">
+                  <div class="cal-event-title">Design Review</div>
+                  <div class="cal-event-time">2:30 PM</div>
+                </div>
+              </div>
+
+              <!-- ── Thursday Mar 19 ── -->
+              <div class="cal-day-col" id="calCol-4">
+                <div class="cal-event meeting" style="top:120px; height:90px;" id="evtSequoia">
+                  <div class="cal-event-title">Sequoia &mdash; Series A Deep Dive</div>
+                  <div class="cal-event-time">10:00 &ndash; 11:30 AM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge ada">Ada Brief</span>
+                    <span class="cal-event-badge kronos">Prep</span>
+                  </div>
+                </div>
+                <div class="cal-event focus" style="top:360px; height:120px;">
+                  <div class="cal-event-title">Focus: Q2 Planning</div>
+                  <div class="cal-event-time">2:00 &ndash; 4:00 PM</div>
+                </div>
+              </div>
+
+              <!-- ── Friday Mar 20 ── -->
+              <div class="cal-day-col" id="calCol-5">
+                <div class="cal-event meeting" style="top:30px; height:30px;">
+                  <div class="cal-event-title">Engineering Standup</div>
+                  <div class="cal-event-time">8:30 AM</div>
+                </div>
+                <div class="cal-event meeting" style="top:300px; height:60px;">
+                  <div class="cal-event-title">Investor Relations Update</div>
+                  <div class="cal-event-time">1:00 &ndash; 2:00 PM</div>
+                  <div class="cal-event-badges">
+                    <span class="cal-event-badge ada">Ada Brief</span>
+                  </div>
+                </div>
+                <div class="cal-event personal" style="top:480px; height:60px;">
+                  <div class="cal-event-title">&#127802; Bella: Cheer Practice Pickup</div>
+                  <div class="cal-event-time">4:00 &ndash; 5:00 PM</div>
+                </div>
+              </div>
+
+              <!-- ── Saturday Mar 21 ── -->
+              <div class="cal-day-col" id="calCol-6">
+                <div class="cal-event personal" style="top:120px; height:180px;">
+                  <div class="cal-event-title">Family Day &#127968;</div>
+                  <div class="cal-event-time">10:00 AM &ndash; 1:00 PM</div>
+                </div>
+              </div>
+
+            </div><!-- .cal-grid-inner -->
+          </div><!-- .cal-time-grid -->
+        </div><!-- .cal-week-wrap -->
+
+      </div><!-- .cal-body -->
+
+      <!-- ── Meeting detail panel ─────────────────────────────── -->
+      <div class="cal-detail-panel" id="calDetailPanel">
+        <div class="cal-detail-header">
+          <button class="cal-detail-close" id="calDetailClose">&#10005;</button>
+          <div>
+            <span class="cal-detail-type-dot"></span>
+            <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);">Meeting &middot; Zoom</span>
+          </div>
+          <div class="cal-detail-title">Investor Sync</div>
+          <div class="cal-detail-meta">
+            <div class="cal-detail-meta-row">
+              <span class="cal-detail-meta-icon">&#128197;</span>
+              <span>Sunday, March 15, 2026</span>
+            </div>
+            <div class="cal-detail-meta-row">
+              <span class="cal-detail-meta-icon">&#128336;</span>
+              <span>10:00 &ndash; 11:00 AM (1 hour)</span>
+            </div>
+            <div class="cal-detail-meta-row">
+              <span class="cal-detail-meta-icon">&#128279;</span>
+              <span style="color:#3b9ede;cursor:pointer;">zoom.us/j/98412630011</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cal-detail-body">
+
+          <!-- Attendees -->
+          <div>
+            <div class="cal-detail-section-label">Attendees</div>
+            <div class="cal-detail-attendees">
+              <div class="cal-attendee">
+                <div class="cal-attendee-avatar" style="background:#1f2d5e;">CD</div>
+                <span class="cal-attendee-name">Christian De Ramos <span style="color:var(--dim);font-size:10px;">(you)</span></span>
+                <span class="cal-attendee-status">&#10003; Accepted</span>
+              </div>
+              <div class="cal-attendee">
+                <div class="cal-attendee-avatar" style="background:#1f3d2d;">MC</div>
+                <span class="cal-attendee-name">Marcus Chen &middot; Sequoia</span>
+                <span class="cal-attendee-status">&#10003; Accepted</span>
+              </div>
+              <div class="cal-attendee">
+                <div class="cal-attendee-avatar" style="background:#3d2d1f;">JR</div>
+                <span class="cal-attendee-name">Jordan Reed &middot; Partner</span>
+                <span class="cal-attendee-status" style="color:var(--yellow);">&#63; Tentative</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ada's brief -->
+          <div class="cal-ada-brief">
+            <div class="cal-ada-header">
+              <div class="cal-ada-avatar">&#128302;</div>
+              <span class="cal-ada-label">Ada&rsquo;s Brief</span>
+              <span style="margin-left:auto;font-size:10px;color:var(--dim);">Ready 8:42 AM</span>
+            </div>
+            <div class="cal-ada-brief-item">Marcus asked about Q4 ARR growth at last meeting &mdash; have slide 7 ready</div>
+            <div class="cal-ada-brief-item">Series B timeline question expected &mdash; current guidance: H2 2026</div>
+            <div class="cal-ada-brief-item">Jordan was skeptical of PrintDeed vertical &mdash; address proactively</div>
+            <div class="cal-ada-brief-item"><strong style="color:var(--text-3);">Action from last:</strong> Send updated cap table by EOD Friday (not done)</div>
+            <div class="cal-ada-brief-item">Tone: confident, data-forward, concise. Avoid over-promising.</div>
+          </div>
+
+          <!-- Kronos note -->
+          <div style="background:#1a1208;border:1px solid #3d2e10;border-radius:8px;padding:12px 14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="width:22px;height:22px;border-radius:5px;background:#3d1a08;display:flex;align-items:center;justify-content:center;font-size:11px;">&#9203;</div>
+              <span style="font-size:11px;font-weight:600;color:#cc8844;text-transform:uppercase;letter-spacing:0.5px;">Kronos &mdash; Schedule Note</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-3);line-height:1.5;">3 conflicts resolved this week. VG Standup and PrintDeed Review overlap at 4:30 today &mdash; awaiting your decision on which to move.</div>
+          </div>
+
+        </div><!-- .cal-detail-body -->
+
+        <div class="cal-detail-actions">
+          <button class="action-btn primary" style="font-size:12px;padding:7px 16px;">&#128279; Join Zoom</button>
+          <button class="action-btn outline" style="font-size:12px;padding:7px 14px;">&#128197; Reschedule</button>
+          <button class="action-btn outline" style="font-size:12px;padding:7px 14px;">&#128221; Add Notes</button>
+        </div>
+
+      </div><!-- .cal-detail-panel -->
+
+      <!-- Scheduling suggestion toast -->
+      <div class="cal-toast" id="calToast">
+        <div class="toast-icon" style="background:#3d1a08;">&#9203;</div>
+        <div class="toast-body">
+          <div class="toast-agent">Kronos</div>
+          <div class="toast-text">Lynn Nelson requested Tuesday 2pm &mdash; conflicts with Sprint Planning. Suggested alternatives sent.</div>
+          <span class="toast-action" id="calToastView">View schedule &rarr;</span>
+        </div>
+        <button class="toast-dismiss" id="calToastDismiss" title="Dismiss">&#10005;</button>
+        <div class="toast-progress"></div>
+      </div>
+
+      <!-- Kronos agent overlay toolbar -->
+      <div class="agent-overlay-toolbar">
+        <div class="toolbar-agent-identity">
+          <div class="toolbar-agent-avatar" style="background:#3d1a08;">
+            &#9203;
+            <div class="toolbar-status-dot"></div>
+          </div>
+          <span class="toolbar-agent-name">Kronos &#9203;</span>
+        </div>
+        <div class="toolbar-separator"></div>
+        <div class="toolbar-summary">
+          <span class="highlight">Next: Investor Sync in 2h</span>
+          <span class="sep">&middot;</span>
+          <span>3 conflicts resolved</span>
+          <span class="sep">&middot;</span>
+          <span class="highlight">Ada brief ready</span>
+        </div>
+        <div class="toolbar-actions">
+          <button class="toolbar-btn primary" id="calViewBriefBtn">View Brief</button>
+          <button class="toolbar-btn secondary">Scheduling</button>
+          <button class="toolbar-btn ghost">Pause Agent</button>
+        </div>
+      </div>
+
+    </div><!-- .cal-shell -->
+
+    <!-- Right Rail: CD / Kronos on Calendar -->
+    <div class="right-rail" id="rail-calendar">
+      <div class="rail-agent-tabs" id="railTabs-calendar">
+        <div class="rail-agent-tab">&#129504;</div>
+        <div class="rail-agent-tab active">&#9203;<span class="tab-badge">2</span></div>
+        <div class="rail-agent-tab">&#128302;</div>
+        <div class="rail-agent-tab">&#128737;</div>
+        <div class="rail-agent-tab">&#128161;</div>
+      </div>
+      <div class="rail-header">
+        <div class="rail-agent-info">
+          <div class="rail-avatar" style="background:#3d1a08;">&#9203;</div>
+          <div>
+            <div class="rail-name">Kronos</div>
+            <div class="rail-role">Scheduling Agent</div>
+          </div>
+        </div>
+        <div class="rail-status">Active</div>
+      </div>
+      <div class="rail-chat">
+        <div class="chat-msg highlight">
+          <div class="msg-label">&#9203; SCHEDULE SUMMARY</div>
+          3 meetings today (conflict at 4:30)<br>
+          Ada brief ready for Investor Sync<br>
+          Lynn Nelson Tuesday request &mdash; resolved
+        </div>
+        <div class="chat-msg agent">
+          <strong>Kronos</strong><br>
+          Good morning! Your Investor Sync is at 10:00 AM &mdash; Ada&rsquo;s prep brief is ready. Key point: Marcus will likely ask about Q4 ARR and Series B timeline. Slide 7 is prepped.
+          <div class="chat-action-row">
+            <button class="chat-btn primary" id="calRailViewBriefBtn">View Brief</button>
+            <button class="chat-btn secondary">Join Zoom</button>
+          </div>
+          <div class="msg-time">8:42 AM</div>
+        </div>
+        <div class="chat-msg agent">
+          <strong>Kronos</strong><br>
+          &#9888;&#65039; Conflict detected: VG Standup and PrintDeed Review both at 4:30 PM today. Lynn Nelson requested Tuesday 2pm for Buckner review &mdash; but that conflicts with Sprint Planning. I&rsquo;ve sent Lynn three alternative windows (Tue 10am, Wed 9am, Wed 2pm).
+          <div class="chat-action-row">
+            <button class="chat-btn primary">Resolve Conflicts</button>
+            <button class="chat-btn secondary">Move VG</button>
+          </div>
+          <div class="msg-time">8:45 AM</div>
+        </div>
+        <div class="chat-msg agent">
+          <strong>Kronos</strong><br>
+          Thursday&rsquo;s Sequoia deep dive (10am) is confirmed &mdash; Ada brief will be ready by Wednesday evening. Jordan Reed is tentative; want me to send a nudge?
+          <div class="chat-action-row">
+            <button class="chat-btn primary">Send nudge</button>
+            <button class="chat-btn outline">Ignore</button>
+          </div>
+          <div class="msg-time">8:46 AM</div>
+        </div>
+      </div>
+      <div class="rail-input">
+        <input type="text" placeholder="Message Kronos...">
+      </div>
+    </div><!-- #rail-calendar -->
+
+  </div><!-- #view-calendar -->
+
 </div><!-- end .app-shell -->
 
 <script>
@@ -3777,6 +5149,163 @@ html, body {
       closeDraftPanel();
     }
   });
+
+  // ── Calendar view interactions ──────────────────────────
+
+  // Build time gutter + hour lines in all day columns
+  (function buildCalGrid() {
+    const HOURS_START = 8;   // 8 AM
+    const HOURS_END   = 21;  // 9 PM
+    const PX_PER_HOUR = 60;
+    const totalHours  = HOURS_END - HOURS_START;
+
+    // Time gutter column
+    const timeCol = document.getElementById('calTimeCol');
+    if (!timeCol) return;
+    timeCol.style.position = 'relative';
+    timeCol.style.height = (totalHours * PX_PER_HOUR) + 'px';
+
+    for (let h = HOURS_START; h <= HOURS_END; h++) {
+      const top = (h - HOURS_START) * PX_PER_HOUR;
+      const lbl = document.createElement('div');
+      lbl.className = 'cal-hour-label';
+      lbl.style.top = top + 'px';
+      const hour12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      const ampm   = h >= 12 ? 'PM' : 'AM';
+      lbl.textContent = (h === HOURS_START ? '' : hour12 + ' ' + ampm);
+      timeCol.appendChild(lbl);
+    }
+
+    // Hour lines + half-hour lines in each day column
+    for (let col = 0; col <= 6; col++) {
+      const dayCol = document.getElementById('calCol-' + col);
+      if (!dayCol) continue;
+      dayCol.style.minHeight = (totalHours * PX_PER_HOUR) + 'px';
+
+      for (let h = 0; h < totalHours; h++) {
+        const top = h * PX_PER_HOUR;
+        const hourLine = document.createElement('div');
+        hourLine.className = 'cal-hour-line';
+        hourLine.style.top = top + 'px';
+        dayCol.appendChild(hourLine);
+
+        const halfLine = document.createElement('div');
+        halfLine.className = 'cal-half-line';
+        halfLine.style.top = (top + 30) + 'px';
+        dayCol.appendChild(halfLine);
+      }
+    }
+
+    // Current time indicator on today's column (col-0 = Mar 15)
+    const todayCol = document.getElementById('calCol-0');
+    if (todayCol) {
+      // Simulate 10:05 AM current time for the mockup
+      const nowHour = 10;
+      const nowMin  = 5;
+      const nowTop  = (nowHour - HOURS_START) * PX_PER_HOUR + (nowMin / 60) * PX_PER_HOUR;
+      const nowLine = document.createElement('div');
+      nowLine.className = 'cal-now-line';
+      nowLine.style.top  = nowTop + 'px';
+      todayCol.appendChild(nowLine);
+    }
+
+    // Scroll time grid to 8:30am area on load
+    const grid = document.getElementById('calTimeGrid');
+    if (grid) grid.scrollTop = 20;
+  })();
+
+  // Meeting detail panel open/close
+  const calDetailPanel = document.getElementById('calDetailPanel');
+  const calDetailClose = document.getElementById('calDetailClose');
+
+  function openCalDetail() {
+    if (calDetailPanel) calDetailPanel.classList.add('open');
+  }
+  function closeCalDetail() {
+    if (calDetailPanel) calDetailPanel.classList.remove('open');
+  }
+
+  if (calDetailClose) calDetailClose.addEventListener('click', closeCalDetail);
+
+  // Clicking Investor Sync event opens detail panel
+  const evtInvestor = document.getElementById('evtInvestor');
+  if (evtInvestor) evtInvestor.addEventListener('click', openCalDetail);
+
+  // "View Brief" in toolbar and rail also opens detail
+  const calViewBriefBtn     = document.getElementById('calViewBriefBtn');
+  const calRailViewBriefBtn = document.getElementById('calRailViewBriefBtn');
+  if (calViewBriefBtn)     calViewBriefBtn.addEventListener('click', openCalDetail);
+  if (calRailViewBriefBtn) calRailViewBriefBtn.addEventListener('click', openCalDetail);
+
+  // Agenda items with data-event also open detail
+  document.querySelectorAll('[data-event="investor"]').forEach(el => {
+    el.addEventListener('click', openCalDetail);
+  });
+
+  // Close detail on ESC when calendar is active
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && currentView === 'calendar') {
+      if (calDetailPanel && calDetailPanel.classList.contains('open')) {
+        closeCalDetail();
+      }
+    }
+  });
+
+  // Calendar toast dismiss
+  const calToast        = document.getElementById('calToast');
+  const calToastDismiss = document.getElementById('calToastDismiss');
+  const calToastView    = document.getElementById('calToastView');
+
+  function dismissCalToast() {
+    if (calToast) {
+      calToast.classList.add('dismissed');
+      setTimeout(() => { calToast.style.display = 'none'; }, 260);
+    }
+  }
+  if (calToastDismiss) calToastDismiss.addEventListener('click', dismissCalToast);
+  if (calToastView) {
+    calToastView.addEventListener('click', () => {
+      dismissCalToast();
+      openCalDetail();
+    });
+  }
+
+  // Auto-dismiss calendar toast after 8s
+  setTimeout(() => {
+    if (calToast && !calToast.classList.contains('dismissed')) {
+      dismissCalToast();
+    }
+  }, 8200);
+
+  // Calendar view-toggle buttons (Day / Week / Month) — visual only
+  document.querySelectorAll('.cal-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.cal-view-toggle').querySelectorAll('.cal-view-btn')
+         .forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Calendar prev/next arrows — visual feedback only
+  const calPrev = document.getElementById('calPrev');
+  const calNext = document.getElementById('calNext');
+  if (calPrev) calPrev.addEventListener('click', () => {
+    const lbl = document.querySelector('.cal-month-label');
+    if (lbl) { lbl.style.opacity = '0.5'; setTimeout(() => { lbl.style.opacity = '1'; }, 200); }
+  });
+  if (calNext) calNext.addEventListener('click', () => {
+    const lbl = document.querySelector('.cal-month-label');
+    if (lbl) { lbl.style.opacity = '0.5'; setTimeout(() => { lbl.style.opacity = '1'; }, 200); }
+  });
+
+  // Today button — scroll time grid back to current time area
+  const calTodayBtn = document.getElementById('calTodayBtn');
+  if (calTodayBtn) {
+    calTodayBtn.addEventListener('click', () => {
+      const grid = document.getElementById('calTimeGrid');
+      if (grid) grid.scrollTo({ top: 20, behavior: 'smooth' });
+    });
+  }
 
 })();
 </script>
