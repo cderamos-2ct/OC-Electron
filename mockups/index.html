@@ -2285,6 +2285,526 @@ html, body {
 .dp-btn.edit    { background: var(--border); color: var(--text-3); }
 .dp-btn.discard { background: transparent; border: 1px solid #4d1f1f; color: #ff6b6b; }
 
+/* ============================================================
+   COMMS CONFIRMATION MODAL
+   ============================================================ */
+.comms-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: backdropIn 0.18s ease-out;
+}
+.comms-modal-backdrop.closing {
+  animation: backdropOut 0.18s ease-in forwards;
+}
+@keyframes backdropIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes backdropOut { from { opacity:1; } to { opacity:0; } }
+
+.comms-modal {
+  background: #16161a;
+  border: 1px solid #2a2a2e;
+  border-radius: 14px;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.72), 0 0 0 1px rgba(232,93,58,0.08);
+  animation: modalIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+  position: relative;
+}
+.comms-modal-backdrop.closing .comms-modal {
+  animation: modalOut 0.16s ease-in forwards;
+}
+@keyframes modalIn  { from { opacity:0; transform:scale(0.93) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes modalOut { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.95) translateY(4px); } }
+
+/* Channel badge strip at top */
+.comms-modal-channel-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #222226;
+  background: #111114;
+}
+.comms-modal-channel-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.comms-modal-channel-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+}
+.comms-modal-channel-label.email  { color: #6ba0ff; }
+.comms-modal-channel-label.imsg   { color: #6bffb0; }
+.comms-modal-channel-label.phone  { color: #ffb86b; }
+.comms-modal-channel-label.social { color: #6bc8ff; }
+.comms-modal-channel-label.calendar { color: #c9b8ff; }
+
+/* Recipient row */
+.comms-modal-recipient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 12px;
+}
+.comms-modal-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.comms-modal-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+.comms-modal-contact {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 1px;
+}
+
+/* Message preview */
+.comms-modal-preview {
+  margin: 0 20px 12px;
+  background: #111114;
+  border: 1px solid #222226;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.comms-modal-preview-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent);
+  padding: 8px 14px 6px;
+  border-bottom: 1px solid #1e1e22;
+}
+.comms-modal-preview-body {
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.55;
+  max-height: 90px;
+  overflow: hidden;
+  position: relative;
+}
+.comms-modal-preview-body::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: linear-gradient(transparent, #111114);
+}
+
+/* Transport metadata */
+.comms-modal-transport {
+  margin: 0 20px 14px;
+  background: #0e0e11;
+  border: 1px solid #1e1e22;
+  border-radius: 7px;
+  padding: 10px 14px;
+}
+.comms-modal-transport-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--faint);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.comms-modal-transport-title::before,
+.comms-modal-transport-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #222226;
+}
+.comms-modal-transport-row {
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  margin-bottom: 4px;
+  align-items: baseline;
+}
+.comms-modal-transport-row:last-child { margin-bottom: 0; }
+.transport-key {
+  color: var(--faint);
+  min-width: 52px;
+  flex-shrink: 0;
+}
+.transport-val {
+  color: var(--muted);
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 10.5px;
+}
+
+/* Modal action buttons */
+.comms-modal-actions {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid #1e1e22;
+}
+.comms-modal-confirm {
+  flex: 1;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: var(--accent);
+  color: #fff;
+  transition: opacity 0.12s, transform 0.1s;
+}
+.comms-modal-confirm:hover { opacity: 0.88; transform: translateY(-1px); }
+.comms-modal-confirm:active { transform: translateY(0); }
+.comms-modal-cancel {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #333338;
+  color: var(--muted);
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s;
+}
+.comms-modal-cancel:hover { background: #222226; color: var(--text); }
+
+/* Success state inside modal */
+.comms-modal-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 12px;
+}
+.comms-success-check {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: #1a3c22;
+  border: 2px solid #2ecc71;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  animation: checkPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes checkPop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.comms-success-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+.comms-success-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Call Dialer Modal variant ────────────────────────────── */
+.comms-modal-dialer {
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.dialer-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid rgba(255,184,107,0.3);
+}
+.dialer-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+.dialer-number {
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--text-2);
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.dialer-via {
+  font-size: 11px;
+  color: var(--dim);
+  background: #1a1a1e;
+  border: 1px solid #2a2a2e;
+  border-radius: 4px;
+  padding: 3px 10px;
+}
+.dialer-start-btn {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: #2ecc71;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 4px;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 4px 20px rgba(46,204,113,0.35);
+}
+.dialer-start-btn:hover { background: #34d97e; transform: scale(1.05); }
+.dialer-start-btn:active { transform: scale(0.97); }
+.dialer-label {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: -4px;
+}
+
+/* ── Schedule Call Picker ─────────────────────────────────── */
+.comms-modal-schedule {
+  padding: 16px 20px 20px;
+}
+.schedule-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.schedule-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.schedule-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #111114;
+  border: 1px solid #222226;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+}
+.schedule-option:hover { border-color: var(--accent); background: #1a1210; }
+.schedule-option.selected { border-color: var(--accent); background: #1e1210; }
+.schedule-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  min-width: 90px;
+}
+.schedule-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Triage Settings Popover ──────────────────────────────── */
+.triage-popover {
+  position: absolute;
+  bottom: 58px;
+  right: 120px;
+  width: 260px;
+  background: #16161a;
+  border: 1px solid #2a2a2e;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  z-index: 60;
+  animation: panelIn 0.15s ease-out;
+  overflow: hidden;
+}
+.triage-popover.hidden { display: none; }
+.triage-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #222226;
+  background: #111114;
+}
+.triage-popover-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.triage-popover-close {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--dimmer);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+.triage-popover-close:hover { background: var(--border); color: var(--text); }
+.triage-popover-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.triage-checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+.triage-checkbox-label {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.triage-toggle {
+  width: 32px; height: 18px;
+  border-radius: 9px;
+  background: var(--border);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.triage-toggle.on { background: var(--accent); }
+.triage-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+.triage-toggle.on::after { transform: translateX(14px); }
+
+/* ── Success mini-toast (quick confirm) ───────────────────── */
+.comms-success-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: #1a2d1a;
+  border: 1px solid #2a4a2a;
+  border-radius: 20px;
+  padding: 9px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6bffb0;
+  z-index: 300;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  animation: miniToastIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none;
+}
+.comms-success-toast.out {
+  animation: miniToastOut 0.2s ease-in forwards;
+}
+@keyframes miniToastIn  { from { opacity:0; transform:translateX(-50%) translateY(12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+@keyframes miniToastOut { from { opacity:1; transform:translateX(-50%) translateY(0); }    to { opacity:0; transform:translateX(-50%) translateY(-8px); } }
+
+/* ── Edit inline textarea ─────────────────────────────────── */
+.dp-inline-edit {
+  width: 100%;
+  background: #111114;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 64px;
+  outline: none;
+  margin-top: 4px;
+  display: block;
+}
+.dp-inline-edit-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+.dp-inline-save {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: var(--accent);
+  color: #fff;
+}
+.dp-inline-cancel-edit {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--border);
+  border: none;
+  color: var(--text-3);
+  font-family: inherit;
+}
+
+/* ── Pause Agents toggled state ───────────────────────────── */
+.toolbar-btn.paused {
+  background: #2d1a1a;
+  border: 1px solid #5e1f1f;
+  color: #ff8888;
+}
+
+/* ── Hermes flag tooltip ──────────────────────────────────── */
+.hermes-tooltip {
+  position: absolute;
+  background: #1a1a1e;
+  border: 1px solid #3d2a1f;
+  border-left: 3px solid var(--yellow);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+  z-index: 150;
+  width: 220px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  animation: tooltipIn 0.15s ease-out;
+  pointer-events: none;
+}
+.hermes-tooltip-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--yellow);
+  margin-bottom: 4px;
+}
+@keyframes tooltipIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
 /* ── Comms responsive ────────────────────────────────────── */
 @media (max-width: 1199px) {
   .gmail-sidebar { width: 160px; min-width: 160px; }
@@ -5344,7 +5864,7 @@ html, body {
           <span class="toolbar-agent-name" style="margin-left:14px;">Karoline + Iris</span>
         </div>
         <div class="toolbar-separator"></div>
-        <div class="toolbar-summary">
+        <div class="toolbar-summary" id="gmailToolbarSummary">
           <span class="highlight">4 drafts ready</span>
           <span class="sep">&middot;</span>
           <span>3 flagged</span>
@@ -5353,8 +5873,120 @@ html, body {
         </div>
         <div class="toolbar-actions">
           <button class="toolbar-btn primary" id="gmailReviewDraftsBtn">Review Drafts</button>
-          <button class="toolbar-btn secondary">Triage Settings</button>
-          <button class="toolbar-btn ghost">Pause Agents</button>
+          <button class="toolbar-btn secondary" id="gmailTriageSettingsBtn">Triage Settings</button>
+          <button class="toolbar-btn ghost" id="gmailPauseAgentsBtn">Pause Agents</button>
+        </div>
+      </div>
+
+      <!-- Triage Settings Popover -->
+      <div class="triage-popover hidden" id="gmailTriagePopover">
+        <div class="triage-popover-header">
+          <span class="triage-popover-title">Triage Settings</span>
+          <button class="triage-popover-close" id="gmailTriagePopoverClose">&#10005;</button>
+        </div>
+        <div class="triage-popover-body">
+          <label class="triage-checkbox-row">
+            <span class="triage-checkbox-label">Auto-triage new messages</span>
+            <div class="triage-toggle on" data-toggle="auto-triage"></div>
+          </label>
+          <label class="triage-checkbox-row">
+            <span class="triage-checkbox-label">Flag cross-channel signals</span>
+            <div class="triage-toggle on" data-toggle="cross-channel"></div>
+          </label>
+          <label class="triage-checkbox-row">
+            <span class="triage-checkbox-label">Auto-draft replies</span>
+            <div class="triage-toggle on" data-toggle="auto-draft"></div>
+          </label>
+          <label class="triage-checkbox-row">
+            <span class="triage-checkbox-label">Escalate missed calls</span>
+            <div class="triage-toggle" data-toggle="missed-calls"></div>
+          </label>
+          <label class="triage-checkbox-row">
+            <span class="triage-checkbox-label">Notify on investor emails</span>
+            <div class="triage-toggle on" data-toggle="investor-notify"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Reusable Confirmation Modal -->
+      <div class="comms-modal-backdrop" id="commsModalBackdrop" style="display:none;">
+        <div class="comms-modal" id="commsModal">
+          <!-- Channel strip -->
+          <div class="comms-modal-channel-strip" id="commsModalChannelStrip">
+            <span class="comms-modal-channel-icon" id="commsModalChannelIcon">✉️</span>
+            <span class="comms-modal-channel-label" id="commsModalChannelLabel">VIA EMAIL</span>
+          </div>
+          <!-- Recipient -->
+          <div class="comms-modal-recipient">
+            <div class="comms-modal-avatar" id="commsModalAvatar" style="background:#1f4e5e;">LN</div>
+            <div>
+              <div class="comms-modal-name" id="commsModalName">Lynn Nelson</div>
+              <div class="comms-modal-contact" id="commsModalContact">l.nelson@alphagraphics-austin.com</div>
+            </div>
+          </div>
+          <!-- Message preview (hidden for call modals) -->
+          <div class="comms-modal-preview" id="commsModalPreview">
+            <div class="comms-modal-preview-label" id="commsModalPreviewLabel">Draft Message</div>
+            <div class="comms-modal-preview-body" id="commsModalPreviewBody">Lynn, thanks for the update. Here's where we stand on each item…</div>
+          </div>
+          <!-- Dialer (shown for call modals) -->
+          <div class="comms-modal-dialer" id="commsModalDialer" style="display:none;">
+            <div class="dialer-avatar" id="commsDialerAvatar" style="background:#4e3d1f;">KL</div>
+            <div class="dialer-name" id="commsDialerName">Kyle Lasseter</div>
+            <div class="dialer-number" id="commsDialerNumber">(512) 555-0147</div>
+            <div class="dialer-via">VOIP Adapter → Phone</div>
+            <button class="dialer-start-btn" id="commsDialerStartBtn">📞</button>
+            <div class="dialer-label">Start Call</div>
+          </div>
+          <!-- Schedule picker (shown for schedule modals) -->
+          <div class="comms-modal-schedule" id="commsModalSchedule" style="display:none;">
+            <div class="schedule-title">When should the call happen?</div>
+            <div class="schedule-options">
+              <button class="schedule-option" data-time="In 30 min">
+                <span class="schedule-time">In 30 min</span>
+                <span class="schedule-label">~10:45 AM today</span>
+              </button>
+              <button class="schedule-option" data-time="At 10:30 AM">
+                <span class="schedule-time">At 10:30 AM</span>
+                <span class="schedule-label">Earlier today</span>
+              </button>
+              <button class="schedule-option" data-time="After lunch">
+                <span class="schedule-time">After lunch</span>
+                <span class="schedule-label">~1:00 PM today</span>
+              </button>
+              <button class="schedule-option" data-time="Tomorrow AM">
+                <span class="schedule-time">Tomorrow AM</span>
+                <span class="schedule-label">Mar 16, 9:00 AM</span>
+              </button>
+            </div>
+          </div>
+          <!-- Transport info -->
+          <div class="comms-modal-transport" id="commsModalTransport">
+            <div class="comms-modal-transport-title">Transport</div>
+            <div class="comms-modal-transport-row">
+              <span class="transport-key">Adapter</span>
+              <span class="transport-val" id="commsTransportAdapter">GWS CLI (Gmail)</span>
+            </div>
+            <div class="comms-modal-transport-row">
+              <span class="transport-key">Route</span>
+              <span class="transport-val" id="commsTransportRoute">smtp → l.nelson@alphagraphics-austin.com</span>
+            </div>
+            <div class="comms-modal-transport-row">
+              <span class="transport-key">Agent</span>
+              <span class="transport-val" id="commsTransportAgent">Karoline (drafted) → You (approved)</span>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="comms-modal-actions" id="commsModalActions">
+            <button class="comms-modal-confirm" id="commsModalConfirmBtn">Confirm &amp; Send</button>
+            <button class="comms-modal-cancel" id="commsModalCancelBtn">Cancel</button>
+          </div>
+          <!-- Success state (hidden initially) -->
+          <div class="comms-modal-success" id="commsModalSuccess" style="display:none;">
+            <div class="comms-success-check">✓</div>
+            <div class="comms-success-title" id="commsSuccessTitle">Sent via Email</div>
+            <div class="comms-success-sub" id="commsSuccessSub">Message delivered to Lynn Nelson</div>
+          </div>
         </div>
       </div>
 
@@ -6608,6 +7240,724 @@ html, body {
       closeDraftPanel();
     }
   });
+
+  // ── COMMS INTERACTIVE CONFIRMATION SYSTEM ────────────────
+
+  // ── Mini success toast ────────────────────────────────────
+  function showMiniToast(msg) {
+    const existing = document.querySelector('.comms-success-toast');
+    if (existing) existing.remove();
+    const t = document.createElement('div');
+    t.className = 'comms-success-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => {
+      t.classList.add('out');
+      setTimeout(() => t.remove(), 250);
+    }, 2200);
+  }
+
+  // ── Decrement draft count badge ───────────────────────────
+  let pendingDraftCount = 4;
+  function decrementDraftCount() {
+    pendingDraftCount = Math.max(0, pendingDraftCount - 1);
+    const countEl = document.querySelector('.draft-panel-count');
+    if (countEl) countEl.textContent = pendingDraftCount;
+    const summary = document.getElementById('gmailToolbarSummary');
+    if (summary) {
+      const hl = summary.querySelector('.highlight');
+      if (hl) hl.textContent = pendingDraftCount + ' draft' + (pendingDraftCount !== 1 ? 's' : '') + ' ready';
+    }
+    const tabBadge = document.querySelector('#rail-gmail .tab-badge');
+    if (tabBadge) tabBadge.textContent = pendingDraftCount > 0 ? pendingDraftCount : '';
+  }
+
+  // ── Mark draft item as sent (strikethrough + badge) ───────
+  function markDraftItemSent(item) {
+    if (!item) return;
+    const recipient = item.querySelector('.draft-panel-recipient');
+    const subject   = item.querySelector('.draft-panel-subject');
+    const snippet   = item.querySelector('.draft-panel-snippet');
+    if (recipient) recipient.style.textDecoration = 'line-through';
+    if (subject)   subject.style.textDecoration   = 'line-through';
+    if (snippet)   snippet.style.textDecoration   = 'line-through';
+    const actionsEl = item.querySelector('.draft-panel-item-actions');
+    if (actionsEl) {
+      actionsEl.innerHTML = '<span style="font-size:10px;font-weight:600;color:#6bffb0;background:#1a2d1a;border:1px solid #2a4a2a;padding:3px 8px;border-radius:4px;">✓ Sent</span>';
+    }
+    item.style.opacity = '0.55';
+    setTimeout(() => {
+      item.style.transition = 'max-height 0.3s ease, opacity 0.25s, padding 0.3s';
+      item.style.overflow = 'hidden';
+      item.style.maxHeight = item.offsetHeight + 'px';
+      requestAnimationFrame(() => {
+        item.style.maxHeight = '0';
+        item.style.padding = '0';
+      });
+    }, 1600);
+    decrementDraftCount();
+  }
+
+  // ── Confirmation modal engine ─────────────────────────────
+  const commsModalBackdrop = document.getElementById('commsModalBackdrop');
+  const commsModal         = document.getElementById('commsModal');
+  let _onConfirmCallback   = null;
+  let _currentDraftItem    = null;
+
+  function closeCommsModal() {
+    if (!commsModalBackdrop) return;
+    commsModalBackdrop.classList.add('closing');
+    setTimeout(() => {
+      commsModalBackdrop.style.display = 'none';
+      commsModalBackdrop.classList.remove('closing');
+      // Reset modal to default state
+      const success = document.getElementById('commsModalSuccess');
+      const actions = document.getElementById('commsModalActions');
+      const preview = document.getElementById('commsModalPreview');
+      const dialer  = document.getElementById('commsModalDialer');
+      const schedule= document.getElementById('commsModalSchedule');
+      const transport = document.getElementById('commsModalTransport');
+      if (success) success.style.display = 'none';
+      if (actions) actions.style.display = '';
+      if (preview) preview.style.display = '';
+      if (dialer)  dialer.style.display  = 'none';
+      if (schedule) schedule.style.display = 'none';
+      if (transport) transport.style.display = '';
+      _onConfirmCallback = null;
+      _currentDraftItem  = null;
+    }, 200);
+  }
+
+  function openSendModal(opts) {
+    // opts: { channelIcon, channelLabel, channelClass, avatarBg, avatarText,
+    //         name, contact, previewLabel, previewBody,
+    //         adapter, route, agent, confirmLabel, successTitle, successSub,
+    //         draftItem }
+    if (!commsModalBackdrop) return;
+
+    // Channel strip
+    document.getElementById('commsModalChannelIcon').textContent  = opts.channelIcon  || '✉️';
+    document.getElementById('commsModalChannelLabel').textContent = opts.channelLabel || 'VIA EMAIL';
+    const labelEl = document.getElementById('commsModalChannelLabel');
+    labelEl.className = 'comms-modal-channel-label ' + (opts.channelClass || 'email');
+
+    // Recipient
+    const av = document.getElementById('commsModalAvatar');
+    av.style.background = opts.avatarBg || '#1f4e5e';
+    av.textContent = opts.avatarText || 'LN';
+    document.getElementById('commsModalName').textContent    = opts.name    || '';
+    document.getElementById('commsModalContact').textContent = opts.contact || '';
+
+    // Preview
+    document.getElementById('commsModalPreviewLabel').textContent = opts.previewLabel || 'Draft Message';
+    document.getElementById('commsModalPreviewBody').textContent  = opts.previewBody  || '';
+
+    // Dialer: hidden
+    document.getElementById('commsModalDialer').style.display   = 'none';
+    document.getElementById('commsModalSchedule').style.display = 'none';
+    document.getElementById('commsModalPreview').style.display  = '';
+
+    // Transport
+    document.getElementById('commsTransportAdapter').textContent = opts.adapter || 'GWS CLI (Gmail)';
+    document.getElementById('commsTransportRoute').textContent   = opts.route   || '';
+    document.getElementById('commsTransportAgent').textContent   = opts.agent   || 'Karoline (drafted) → You (approved)';
+    document.getElementById('commsModalTransport').style.display = '';
+
+    // Confirm button label
+    document.getElementById('commsModalConfirmBtn').textContent = opts.confirmLabel || 'Confirm & Send';
+
+    // Success strings
+    document.getElementById('commsSuccessTitle').textContent = opts.successTitle || 'Sent';
+    document.getElementById('commsSuccessSub').textContent   = opts.successSub   || '';
+
+    // Actions visible, success hidden
+    document.getElementById('commsModalActions').style.display = '';
+    document.getElementById('commsModalSuccess').style.display = 'none';
+
+    _currentDraftItem = opts.draftItem || null;
+    _onConfirmCallback = opts.onConfirm || null;
+
+    commsModalBackdrop.style.display = 'flex';
+  }
+
+  function openCallModal(opts) {
+    if (!commsModalBackdrop) return;
+
+    // Channel strip
+    document.getElementById('commsModalChannelIcon').textContent  = '📞';
+    document.getElementById('commsModalChannelLabel').textContent = 'VIA PHONE';
+    document.getElementById('commsModalChannelLabel').className   = 'comms-modal-channel-label phone';
+
+    // Hide preview + schedule, show dialer
+    document.getElementById('commsModalPreview').style.display   = 'none';
+    document.getElementById('commsModalSchedule').style.display  = 'none';
+    document.getElementById('commsModalDialer').style.display    = '';
+
+    // Dialer fields
+    const dialAv = document.getElementById('commsDialerAvatar');
+    dialAv.style.background = opts.avatarBg || '#4e3d1f';
+    dialAv.textContent = opts.avatarText || 'KL';
+    document.getElementById('commsDialerName').textContent   = opts.name   || 'Kyle Lasseter';
+    document.getElementById('commsDialerNumber').textContent = opts.number || '(512) 555-0147';
+
+    // Recipient row (kept for layout but hidden via dialer)
+    document.getElementById('commsModalAvatar').style.background = opts.avatarBg || '#4e3d1f';
+    document.getElementById('commsModalAvatar').textContent = opts.avatarText || 'KL';
+    document.getElementById('commsModalName').textContent    = opts.name || 'Kyle Lasseter';
+    document.getElementById('commsModalContact').textContent = opts.number || '(512) 555-0147';
+
+    // Transport
+    document.getElementById('commsTransportAdapter').textContent = 'VOIP Adapter';
+    document.getElementById('commsTransportRoute').textContent   = opts.number || '(512) 555-0147';
+    document.getElementById('commsTransportAgent').textContent   = 'Karoline (flagged) → You (initiating)';
+    document.getElementById('commsModalTransport').style.display = '';
+
+    // Actions row hidden — dialer has its own button
+    document.getElementById('commsModalActions').style.display = 'none';
+    document.getElementById('commsModalSuccess').style.display = 'none';
+
+    // Success strings
+    document.getElementById('commsSuccessTitle').textContent = 'Call Initiated';
+    document.getElementById('commsSuccessSub').textContent   = 'Connecting via VOIP Adapter…';
+
+    _currentDraftItem = null;
+    _onConfirmCallback = opts.onConfirm || null;
+
+    commsModalBackdrop.style.display = 'flex';
+  }
+
+  function openScheduleModal(opts) {
+    if (!commsModalBackdrop) return;
+
+    document.getElementById('commsModalChannelIcon').textContent  = '📅';
+    document.getElementById('commsModalChannelLabel').textContent = 'SCHEDULE CALL';
+    document.getElementById('commsModalChannelLabel').className   = 'comms-modal-channel-label calendar';
+
+    document.getElementById('commsModalPreview').style.display   = 'none';
+    document.getElementById('commsModalDialer').style.display    = 'none';
+    document.getElementById('commsModalSchedule').style.display  = '';
+    document.getElementById('commsModalTransport').style.display = 'none';
+
+    document.getElementById('commsModalAvatar').style.background = opts.avatarBg || '#4e3d1f';
+    document.getElementById('commsModalAvatar').textContent = opts.avatarText || 'KL';
+    document.getElementById('commsModalName').textContent    = opts.name || 'Kyle Lasseter';
+    document.getElementById('commsModalContact').textContent = 'Schedule a call time';
+
+    document.getElementById('commsModalConfirmBtn').textContent  = 'Block Calendar';
+    document.getElementById('commsModalActions').style.display   = '';
+    document.getElementById('commsModalSuccess').style.display   = 'none';
+
+    document.getElementById('commsSuccessTitle').textContent = 'Call Scheduled';
+    document.getElementById('commsSuccessSub').textContent   = '';
+
+    // Reset schedule selections
+    document.querySelectorAll('.schedule-option').forEach(o => o.classList.remove('selected'));
+
+    _currentDraftItem = null;
+    _onConfirmCallback = opts.onConfirm || null;
+
+    commsModalBackdrop.style.display = 'flex';
+  }
+
+  // Schedule option selection
+  document.querySelectorAll('.schedule-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.schedule-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    });
+  });
+
+  // Confirm button
+  const confirmBtn = document.getElementById('commsModalConfirmBtn');
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', () => {
+      // Show success state
+      document.getElementById('commsModalActions').style.display = 'none';
+      document.getElementById('commsModalPreview').style.display = 'none';
+      document.getElementById('commsModalSchedule').style.display = 'none';
+      document.getElementById('commsModalTransport').style.display = 'none';
+      document.getElementById('commsModalDialer').style.display  = 'none';
+      document.getElementById('commsModalSuccess').style.display = '';
+
+      if (_onConfirmCallback) _onConfirmCallback();
+      if (_currentDraftItem) markDraftItemSent(_currentDraftItem);
+
+      setTimeout(() => closeCommsModal(), 2000);
+    });
+  }
+
+  // Dialer start button
+  const dialerStartBtn = document.getElementById('commsDialerStartBtn');
+  if (dialerStartBtn) {
+    dialerStartBtn.addEventListener('click', () => {
+      document.getElementById('commsModalDialer').style.display   = 'none';
+      document.getElementById('commsModalTransport').style.display = 'none';
+      document.getElementById('commsModalSuccess').style.display  = '';
+      if (_onConfirmCallback) _onConfirmCallback();
+      setTimeout(() => closeCommsModal(), 2200);
+    });
+  }
+
+  // Cancel button
+  const cancelBtn = document.getElementById('commsModalCancelBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeCommsModal);
+
+  // Backdrop click to close
+  if (commsModalBackdrop) {
+    commsModalBackdrop.addEventListener('click', e => {
+      if (e.target === commsModalBackdrop) closeCommsModal();
+    });
+  }
+
+  // ESC to close modal
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && commsModalBackdrop && commsModalBackdrop.style.display !== 'none') {
+      closeCommsModal();
+    }
+  });
+
+  // ── Draft data map ────────────────────────────────────────
+  const draftData = {
+    lynn: {
+      channelIcon: '✉️', channelLabel: 'VIA EMAIL', channelClass: 'email',
+      avatarBg: '#1f4e5e', avatarText: 'LN',
+      name: 'Lynn Nelson', contact: 'l.nelson@alphagraphics-austin.com',
+      previewLabel: 'Draft Reply', previewBody: 'Lynn, thanks for keeping me posted. Here\'s where we stand — banner copy targeting EOW, signage proof by Monday, brand guide by next Wednesday…',
+      adapter: 'GWS CLI (Gmail)', route: 'smtp → l.nelson@alphagraphics-austin.com',
+      agent: 'Karoline (drafted) → You (approved)',
+      confirmLabel: 'Confirm & Send', successTitle: 'Sent via Email',
+      successSub: 'Reply delivered to Lynn Nelson'
+    },
+    marcus: {
+      channelIcon: '✉️', channelLabel: 'VIA EMAIL', channelClass: 'email',
+      avatarBg: '#1f3d2d', avatarText: 'MC',
+      name: 'Marcus Chen', contact: 'm.chen@sequoiacap.com',
+      previewLabel: 'Draft Reply', previewBody: 'Marcus, thank you for confirming — March 21st works perfectly. Materials will be sent by March 19th for your team\'s review…',
+      adapter: 'GWS CLI (Gmail)', route: 'smtp → m.chen@sequoiacap.com',
+      agent: 'Karoline (drafted) → You (approved)',
+      confirmLabel: 'Confirm & Send', successTitle: 'Sent via Email',
+      successSub: 'Reply delivered to Marcus Chen'
+    },
+    'kyle-imsg': {
+      channelIcon: '💬', channelLabel: 'VIA iMESSAGE', channelClass: 'imsg',
+      avatarBg: '#4e3d1f', avatarText: 'KL',
+      name: 'Kyle Lasseter', contact: 'iMessage · (512) 555-0147',
+      previewLabel: 'Draft iMessage', previewBody: 'Hey Kyle — calling you back re: Riverside. Free after 10am today?',
+      adapter: 'iMessage Bridge', route: 'iMessage → (512) 555-0147',
+      agent: 'Karoline (drafted) → You (approved)',
+      confirmLabel: 'Send via iMessage', successTitle: 'Message sent via iMessage',
+      successSub: 'Delivered to Kyle Lasseter'
+    },
+    'kyle-email': {
+      channelIcon: '✉️', channelLabel: 'VIA EMAIL', channelClass: 'email',
+      avatarBg: '#4e3d1f', avatarText: 'KL',
+      name: 'Kyle Lasseter', contact: 'k.lasseter@alphagraphics-austin.com',
+      previewLabel: 'Draft Reply', previewBody: 'Kyle — appreciate the heads up. Lynn\'s current load is at capacity through end of month…',
+      adapter: 'GWS CLI (Gmail)', route: 'smtp → k.lasseter@alphagraphics-austin.com',
+      agent: 'Karoline (drafted) → You (approved)',
+      confirmLabel: 'Confirm & Send', successTitle: 'Sent via Email',
+      successSub: 'Reply delivered to Kyle Lasseter'
+    }
+  };
+
+  // ── Re-wire Draft Panel "Approve" buttons → modal ─────────
+  // Remove old direct approve handlers by using event delegation
+  document.querySelectorAll('.draft-panel-item .dp-btn.approve').forEach((btn, idx) => {
+    // Remove old listener by replacing with clone
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    const keys = ['lynn', 'marcus', 'kyle-imsg', 'kyle-email'];
+    const key = keys[idx] || 'lynn';
+    newBtn.addEventListener('click', () => {
+      const item = newBtn.closest('.draft-panel-item');
+      const data = draftData[key];
+      openSendModal({ ...data, draftItem: item });
+    });
+  });
+
+  // ── Draft Panel "Edit" buttons → inline editor ────────────
+  document.querySelectorAll('.draft-panel-item .dp-btn.edit').forEach((btn, idx) => {
+    const snippetTexts = [
+      'Lynn, thanks for the update. Here\'s where we stand on each item…',
+      'Marcus, thank you for confirming — March 21st works perfectly…',
+      'Hey Kyle — calling you back re: Riverside. Free after 10am today?',
+      'Kyle — appreciate the heads up. Lynn\'s current load is at capacity…'
+    ];
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.draft-panel-item');
+      const body = item.querySelector('.draft-panel-body');
+      if (!body || body.querySelector('.dp-inline-edit')) return; // already editing
+
+      const snippetEl = body.querySelector('.draft-panel-snippet');
+      const originalText = snippetEl ? snippetEl.textContent : snippetTexts[idx] || '';
+
+      // Hide snippet, show textarea
+      if (snippetEl) snippetEl.style.display = 'none';
+
+      const ta = document.createElement('textarea');
+      ta.className = 'dp-inline-edit';
+      ta.value = originalText;
+      body.appendChild(ta);
+
+      const editActions = document.createElement('div');
+      editActions.className = 'dp-inline-edit-actions';
+      editActions.innerHTML = '<button class="dp-inline-save">Save</button><button class="dp-inline-cancel-edit">Cancel</button>';
+      body.appendChild(editActions);
+
+      // Disable other action buttons while editing
+      item.querySelectorAll('.dp-btn').forEach(b => { b.disabled = true; });
+
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+
+      editActions.querySelector('.dp-inline-save').addEventListener('click', () => {
+        if (snippetEl) {
+          snippetEl.textContent = ta.value;
+          snippetEl.style.display = '';
+        }
+        ta.remove();
+        editActions.remove();
+        item.querySelectorAll('.dp-btn').forEach(b => { b.disabled = false; });
+        showMiniToast('Draft updated');
+      });
+
+      editActions.querySelector('.dp-inline-cancel-edit').addEventListener('click', () => {
+        if (snippetEl) snippetEl.style.display = '';
+        ta.remove();
+        editActions.remove();
+        item.querySelectorAll('.dp-btn').forEach(b => { b.disabled = false; });
+      });
+    });
+  });
+
+  // ── Draft Panel "Discard" buttons — already work, enhance with mini-toast ──
+  document.querySelectorAll('.draft-panel-item .dp-btn.discard').forEach(btn => {
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    newBtn.addEventListener('click', () => {
+      const item = newBtn.closest('.draft-panel-item');
+      if (item) {
+        item.style.opacity = '0.3';
+        decrementDraftCount();
+        setTimeout(() => {
+          item.style.transition = 'max-height 0.25s ease, opacity 0.2s, padding 0.25s';
+          item.style.maxHeight = item.offsetHeight + 'px';
+          item.style.overflow = 'hidden';
+          requestAnimationFrame(() => {
+            item.style.maxHeight = '0';
+            item.style.padding = '0';
+          });
+        }, 300);
+        showMiniToast('Draft discarded');
+      }
+    });
+  });
+
+  // ── Reading pane "Reply with Draft" buttons ───────────────
+  // Lynn Nelson
+  const lynnReplyDraftBtn = document.querySelector('#reading-lynn .gmail-reply-btn.primary');
+  if (lynnReplyDraftBtn) {
+    lynnReplyDraftBtn.addEventListener('click', () => {
+      openSendModal({ ...draftData.lynn });
+    });
+  }
+
+  // Marcus Chen — "Reply with Draft"
+  const marcusReplyDraftBtn = document.querySelector('#reading-marcus .gmail-reply-btn.primary');
+  if (marcusReplyDraftBtn) {
+    marcusReplyDraftBtn.addEventListener('click', () => {
+      openSendModal({ ...draftData.marcus });
+    });
+  }
+
+  // Investor Relations — "Reply with Draft"
+  const investorReplyDraftBtn = document.querySelector('#reading-investor .gmail-reply-btn.primary');
+  if (investorReplyDraftBtn) {
+    investorReplyDraftBtn.addEventListener('click', () => {
+      openSendModal({
+        channelIcon: '✉️', channelLabel: 'VIA EMAIL', channelClass: 'email',
+        avatarBg: '#2d1f4e', avatarText: 'IR',
+        name: 'Investor Relations', contact: 'ir@openclawventures.com',
+        previewLabel: 'Draft Reply', previewBody: 'Thank you for the reminder. Q4 materials are in progress and will be submitted by March 19th…',
+        adapter: 'GWS CLI (Gmail)', route: 'smtp → ir@openclawventures.com',
+        agent: 'Karoline (drafted) → You (approved)',
+        confirmLabel: 'Confirm & Send', successTitle: 'Sent via Email',
+        successSub: 'Reply delivered to Investor Relations'
+      });
+    });
+  }
+
+  // LinkedIn — "Reply on LinkedIn"
+  const linkedinReplyBtn = document.querySelector('#reading-linkedin .gmail-reply-btn.primary');
+  if (linkedinReplyBtn) {
+    linkedinReplyBtn.addEventListener('click', () => {
+      openSendModal({
+        channelIcon: '🐦', channelLabel: 'VIA LINKEDIN', channelClass: 'social',
+        avatarBg: '#1a3050', avatarText: 'JR',
+        name: 'Jordan Reed', contact: 'Sr. Director, Partnerships · LinkedIn',
+        previewLabel: 'Draft LinkedIn Reply', previewBody: 'Jordan — great catching up as well! Let\'s schedule a 30-min intro call next week. Tuesday or Wednesday works well for me.',
+        adapter: 'LinkedIn API (Social)', route: 'dm → jordan.reed@linkedin',
+        agent: 'Iris (drafted) → You (approved)',
+        confirmLabel: 'Send on LinkedIn', successTitle: 'Sent via LinkedIn',
+        successSub: 'Message delivered to Jordan Reed'
+      });
+    });
+  }
+
+  // ── "Call Back" buttons ───────────────────────────────────
+  function wireCallBackBtn(selector, opts) {
+    const btn = document.querySelector(selector);
+    if (!btn) return;
+    btn.addEventListener('click', () => openCallModal(opts));
+  }
+
+  const kyleCallOpts = {
+    avatarBg: '#4e3d1f', avatarText: 'KL',
+    name: 'Kyle Lasseter', number: '(512) 555-0147',
+    onConfirm: () => showMiniToast('Call initiated — connecting to Kyle Lasseter')
+  };
+  const momCallOpts = {
+    avatarBg: '#5e1f3d', avatarText: 'M',
+    name: 'Mom', number: '(956) 555-0198',
+    onConfirm: () => showMiniToast('Call initiated — connecting to Mom')
+  };
+
+  // Kyle — phone reading pane toolbar
+  wireCallBackBtn('#reading-kyle-phone .gmail-reply-btn.primary', kyleCallOpts);
+  // Kyle — call log "call back" button
+  wireCallBackBtn('#reading-kyle-phone .callback', kyleCallOpts);
+  // Mom — phone reading pane toolbar
+  wireCallBackBtn('#reading-mom-phone .gmail-reply-btn.primary', momCallOpts);
+
+  // ── "Text Instead" buttons ────────────────────────────────
+  function wireTextInsteadBtn(selector, opts) {
+    const btn = document.querySelector(selector);
+    if (!btn) return;
+    btn.addEventListener('click', () => openSendModal(opts));
+  }
+
+  wireTextInsteadBtn('#reading-kyle-phone .gmail-reply-btn:nth-child(2)', {
+    channelIcon: '💬', channelLabel: 'VIA iMESSAGE', channelClass: 'imsg',
+    avatarBg: '#4e3d1f', avatarText: 'KL',
+    name: 'Kyle Lasseter', contact: 'iMessage · (512) 555-0147',
+    previewLabel: 'Draft iMessage', previewBody: 'Hey Kyle — calling you back re: Riverside. Free after 10am today?',
+    adapter: 'iMessage Bridge', route: 'iMessage → (512) 555-0147',
+    agent: 'Karoline (drafted) → You (approved)',
+    confirmLabel: 'Send via iMessage', successTitle: 'Message sent via iMessage',
+    successSub: 'Delivered to Kyle Lasseter'
+  });
+
+  wireTextInsteadBtn('#reading-mom-phone .gmail-reply-btn:nth-child(2)', {
+    channelIcon: '💬', channelLabel: 'VIA iMESSAGE', channelClass: 'imsg',
+    avatarBg: '#5e1f3d', avatarText: 'M',
+    name: 'Mom', contact: 'iMessage · (956) 555-0198',
+    previewLabel: 'Draft iMessage', previewBody: 'Hey mom, I\'ll call you back later today. Love you!',
+    adapter: 'iMessage Bridge', route: 'iMessage → (956) 555-0198',
+    agent: 'Iris (drafted) → You (approved)',
+    confirmLabel: 'Send via iMessage', successTitle: 'Message sent via iMessage',
+    successSub: 'Delivered to Mom'
+  });
+
+  // ── Rail chat "Approve & send" button ─────────────────────
+  const railApproveSend = document.querySelector('#rail-gmail .chat-btn.primary');
+  if (railApproveSend) {
+    railApproveSend.addEventListener('click', () => {
+      const draftItems = document.querySelectorAll('.draft-panel-item');
+      openSendModal({ ...draftData.lynn, draftItem: draftItems[0] || null });
+    });
+  }
+
+  // ── Rail "Block calendar" button ──────────────────────────
+  document.querySelectorAll('#rail-gmail .chat-btn').forEach(btn => {
+    if (btn.textContent.trim() === 'Block calendar') {
+      btn.addEventListener('click', () => {
+        btn.textContent = '✓ Blocked';
+        btn.style.background = '#1a2d1a';
+        btn.style.color = '#6bffb0';
+        btn.disabled = true;
+        showMiniToast('30 min blocked at 10:30 AM');
+      });
+    }
+    if (btn.textContent.trim() === 'Review draft') {
+      btn.addEventListener('click', () => openDraftPanel());
+    }
+  });
+
+  // ── k-btn wiring (agent annotations) ─────────────────────
+  // "Review Draft" buttons — scroll to and highlight draft panel
+  document.querySelectorAll('.k-btn.primary').forEach(btn => {
+    const label = btn.textContent.trim();
+
+    if (label === 'Review Draft') {
+      // Already opens draft panel via existing id=gmailReviewDraftBtn for first occurrence
+      // Wire the others (which have no id)
+      if (!btn.id) {
+        btn.addEventListener('click', () => openDraftPanel());
+      }
+    }
+
+    if (label === '📞 Call now') {
+      btn.addEventListener('click', () => openCallModal(kyleCallOpts));
+    }
+
+    if (label === 'Add reminder' || label === 'Add call reminder') {
+      btn.addEventListener('click', () => {
+        btn.textContent = '✓ Reminder set';
+        btn.disabled = true;
+        btn.style.background = '#1a2d1a';
+        btn.style.color = '#6bffb0';
+        showMiniToast('Reminder added');
+      });
+    }
+
+    if (label === 'Draft update' || label === 'Draft reply') {
+      btn.addEventListener('click', () => {
+        showMiniToast('Karoline is drafting a reply…');
+        setTimeout(() => showMiniToast('Draft ready — open Drafts to review'), 1800);
+      });
+    }
+  });
+
+  document.querySelectorAll('.k-btn.outline').forEach(btn => {
+    const label = btn.textContent.trim();
+
+    if (label === 'View Hermes Flag') {
+      btn.addEventListener('click', (e) => {
+        // Remove any existing tooltip
+        document.querySelectorAll('.hermes-tooltip').forEach(t => t.remove());
+        const rect = btn.getBoundingClientRect();
+        const tooltip = document.createElement('div');
+        tooltip.className = 'hermes-tooltip';
+        tooltip.innerHTML = '<div class="hermes-tooltip-label">⚡ Hermes Risk Flag</div>Riverside print run may create capacity conflict with Buckner deliverables. Lynn\'s load is at 94%. Recommend deferring new intake until EOW.';
+        tooltip.style.position = 'fixed';
+        tooltip.style.top = (rect.bottom + 6) + 'px';
+        tooltip.style.left = Math.min(rect.left, window.innerWidth - 240) + 'px';
+        document.body.appendChild(tooltip);
+        setTimeout(() => tooltip.remove(), 3500);
+      });
+    }
+
+    if (label === 'Schedule Call') {
+      btn.addEventListener('click', () => openScheduleModal({
+        avatarBg: '#4e3d1f', avatarText: 'KL',
+        name: 'Kyle Lasseter',
+        onConfirm: () => {
+          const sel = document.querySelector('.schedule-option.selected');
+          const time = sel ? sel.querySelector('.schedule-time').textContent : 'call';
+          showMiniToast('Call with Kyle scheduled — ' + time);
+        }
+      }));
+    }
+
+    if (label === 'Send text') {
+      btn.addEventListener('click', () => openSendModal({
+        channelIcon: '💬', channelLabel: 'VIA iMESSAGE', channelClass: 'imsg',
+        avatarBg: '#4e3d1f', avatarText: 'KL',
+        name: 'Kyle Lasseter', contact: 'iMessage · (512) 555-0147',
+        previewLabel: 'Draft iMessage', previewBody: 'Hey Kyle — calling you back re: Riverside. Free after 10am today?',
+        adapter: 'iMessage Bridge', route: 'iMessage → (512) 555-0147',
+        agent: 'Karoline (drafted) → You (approved)',
+        confirmLabel: 'Send via iMessage', successTitle: 'Message sent via iMessage',
+        successSub: 'Delivered to Kyle Lasseter'
+      }));
+    }
+
+    if (label === 'Reschedule') {
+      btn.addEventListener('click', () => openScheduleModal({
+        avatarBg: '#4e3d1f', avatarText: 'KL',
+        name: 'Kyle Lasseter',
+        onConfirm: () => {
+          const sel = document.querySelector('.schedule-option.selected');
+          const time = sel ? sel.querySelector('.schedule-time').textContent : 'later';
+          showMiniToast('Call rescheduled — ' + time);
+        }
+      }));
+    }
+
+    if (label === 'Dismiss') {
+      btn.addEventListener('click', () => {
+        const annotation = btn.closest('.gmail-karoline-annotation');
+        if (annotation) {
+          annotation.style.transition = 'opacity 0.2s';
+          annotation.style.opacity = '0';
+          setTimeout(() => annotation.style.display = 'none', 220);
+        }
+      });
+    }
+
+    if (label === 'Flag Marcus') {
+      btn.addEventListener('click', () => {
+        btn.textContent = '✓ Flagged';
+        btn.disabled = true;
+        showMiniToast('Marcus flagged for Q4 financials dependency');
+      });
+    }
+
+    if (label === 'Snooze 1 week') {
+      btn.addEventListener('click', () => {
+        btn.textContent = '✓ Snoozed';
+        btn.disabled = true;
+        showMiniToast('Jordan Reed snoozed for 1 week');
+      });
+    }
+  });
+
+  // ── Investor k-btn "Draft update" (primary, but inline check) ──
+  // Already handled above in k-btn.primary loop
+
+  // ── Toolbar: Triage Settings ──────────────────────────────
+  const triageSettingsBtn = document.getElementById('gmailTriageSettingsBtn');
+  const triagePopover     = document.getElementById('gmailTriagePopover');
+  const triagePopoverClose= document.getElementById('gmailTriagePopoverClose');
+
+  if (triageSettingsBtn && triagePopover) {
+    triageSettingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      triagePopover.classList.toggle('hidden');
+    });
+  }
+  if (triagePopoverClose && triagePopover) {
+    triagePopoverClose.addEventListener('click', () => triagePopover.classList.add('hidden'));
+  }
+
+  // Toggle switches in triage popover
+  document.querySelectorAll('.triage-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => toggle.classList.toggle('on'));
+  });
+
+  // Close triage popover on outside click
+  document.addEventListener('click', e => {
+    if (triagePopover && !triagePopover.classList.contains('hidden')) {
+      if (!triagePopover.contains(e.target) && e.target !== triageSettingsBtn) {
+        triagePopover.classList.add('hidden');
+      }
+    }
+  });
+
+  // ── Toolbar: Pause / Resume Agents ───────────────────────
+  const pauseAgentsBtn = document.getElementById('gmailPauseAgentsBtn');
+  let agentsPaused = false;
+  if (pauseAgentsBtn) {
+    pauseAgentsBtn.addEventListener('click', () => {
+      agentsPaused = !agentsPaused;
+      if (agentsPaused) {
+        pauseAgentsBtn.textContent = 'Resume Agents';
+        pauseAgentsBtn.classList.remove('ghost');
+        pauseAgentsBtn.classList.add('paused');
+        // Dim the toolbar status dot
+        const dot = document.querySelector('.toolbar-status-dot');
+        if (dot) { dot.style.background = '#666670'; dot.style.animation = 'none'; }
+        showMiniToast('Agents paused — no new drafts will be created');
+      } else {
+        pauseAgentsBtn.textContent = 'Pause Agents';
+        pauseAgentsBtn.classList.remove('paused');
+        pauseAgentsBtn.classList.add('ghost');
+        const dot = document.querySelector('.toolbar-status-dot');
+        if (dot) { dot.style.background = ''; dot.style.animation = ''; }
+        showMiniToast('Agents resumed');
+      }
+    });
+  }
 
   // ── Calendar view interactions ──────────────────────────
 
