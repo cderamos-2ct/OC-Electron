@@ -4690,6 +4690,566 @@ html, body {
   .modal-glass  { width: calc(100vw - 24px); }
 }
 
+/* ============================================================
+   VIEW: VAULT — Themis Gatekeeper
+   ============================================================ */
+#view-vault { flex-direction: row; }
+
+.vault-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  min-width: 0;
+  position: relative;
+}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+.vault-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 48px;
+  background: #0d0d11;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.vault-topbar-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+.vault-search {
+  flex: 1;
+  max-width: 280px;
+  background: #1a1a1e;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.12s;
+}
+.vault-search::placeholder { color: var(--dimmer); }
+.vault-search:focus { border-color: var(--accent); }
+.vault-filter-pills {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.vault-pill {
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--muted);
+  border: 1px solid var(--border-2);
+  background: transparent;
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  white-space: nowrap;
+}
+.vault-pill:hover  { background: var(--border-2); color: var(--text); }
+.vault-pill.active { background: var(--accent-bg); color: #ffb8a0; border-color: rgba(232,93,58,0.35); }
+.vault-add-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.vault-add-btn:hover { opacity: 0.88; }
+.vault-conn-status {
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.vault-conn-status .conn-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #6bffb0;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* ── Scrollable body ─────────────────────────────────────── */
+.vault-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Pending approval card ───────────────────────────────── */
+.vault-pending-card {
+  background: #1a1408;
+  border: 1px solid #5e4010;
+  border-left: 3px solid #ffb86b;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: opacity 0.3s, max-height 0.4s, padding 0.3s, margin 0.3s;
+  overflow: hidden;
+  max-height: 400px;
+}
+.vault-pending-card.collapsing {
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+}
+.vault-pending-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.vault-pending-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #ffb86b;
+  margin-bottom: 4px;
+}
+.vault-pending-agent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vault-pending-agent-avatar {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: #3d2810;
+  border: 1px solid #5e4010;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.vault-pending-agent-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.vault-pending-secret {
+  font-size: 12px;
+  color: #ffb86b;
+  font-weight: 500;
+}
+.vault-pending-reason {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+.vault-pending-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.vault-pending-meta span { display: flex; align-items: center; gap: 4px; }
+.vault-themis-note {
+  background: #1e1810;
+  border: 1px solid #3a2e10;
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vault-themis-note .note-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.vault-pending-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vault-approve-btn {
+  padding: 7px 16px;
+  border-radius: 7px;
+  background: #1a3d28;
+  border: 1px solid #2e6040;
+  color: #6bffb0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+.vault-approve-btn:hover { background: #20472e; }
+.vault-deny-btn {
+  padding: 7px 16px;
+  border-radius: 7px;
+  background: transparent;
+  border: 1px solid #5e2020;
+  color: #ff6b6b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+.vault-deny-btn:hover { background: #2a1010; }
+.vault-conditions-btn {
+  padding: 7px 16px;
+  border-radius: 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+.vault-conditions-btn:hover { background: var(--border-2); color: var(--text); }
+
+/* ── Secret items grid ───────────────────────────────────── */
+.vault-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (max-width: 900px) {
+  .vault-grid { grid-template-columns: 1fr; }
+}
+
+.vault-item {
+  background: #141418;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: border-color 0.12s;
+}
+.vault-item:hover { border-color: var(--border); }
+.vault-item[data-category="api"]    { border-left: 3px solid #4a9fff; }
+.vault-item[data-category="token"]  { border-left: 3px solid #6bffb0; }
+.vault-item[data-category="pass"]   { border-left: 3px solid #ffb86b; }
+.vault-item[data-category="ssh"]    { border-left: 3px solid #ff6b6b; }
+.vault-item[data-category="cert"]   { border-left: 3px solid #c084fc; }
+
+.vault-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.vault-item-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.vault-item-name .secret-icon { font-size: 14px; }
+.vault-cat-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+.vault-cat-pill.api   { background: rgba(74,159,255,0.15); color: #4a9fff; }
+.vault-cat-pill.token { background: rgba(107,255,176,0.12); color: #6bffb0; }
+.vault-cat-pill.pass  { background: rgba(255,184,107,0.12); color: #ffb86b; }
+.vault-cat-pill.ssh   { background: rgba(255,107,107,0.12); color: #ff6b6b; }
+.vault-cat-pill.cert  { background: rgba(192,132,252,0.12); color: #c084fc; }
+
+.vault-item-value {
+  font-size: 12px;
+  color: var(--dim);
+  font-family: 'SF Mono', 'Menlo', monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vault-item-value .val-label { color: var(--dimmer); font-size: 11px; font-family: inherit; }
+.vault-item-value .val-masked { letter-spacing: 1px; }
+.vault-item-value .val-revealed { color: #4a9fff; word-break: break-all; font-size: 11px; display: none; }
+
+.vault-item-last {
+  font-size: 11px;
+  color: var(--dimmer);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vault-lease-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.vault-lease-dot.active   { background: #6bffb0; box-shadow: 0 0 5px rgba(107,255,176,0.5); }
+.vault-lease-dot.dormant  { background: #444448; }
+
+.vault-item-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+.vault-item-btn {
+  padding: 4px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s;
+}
+.vault-item-btn:hover { background: var(--border-2); color: var(--text); }
+.vault-item-btn.copied { background: rgba(107,255,176,0.15); color: #6bffb0; border-color: rgba(107,255,176,0.3); }
+
+/* ── Access log table ────────────────────────────────────── */
+.vault-log-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vault-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+.vault-log-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+}
+.vault-log-viewall {
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+}
+.vault-log-viewall:hover { text-decoration: underline; }
+.vault-log-table {
+  background: #141418;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.vault-log-row {
+  display: grid;
+  grid-template-columns: 60px 110px 1fr 140px 90px;
+  align-items: center;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border-2);
+  gap: 10px;
+  font-size: 12px;
+}
+.vault-log-row:last-child { border-bottom: none; }
+.vault-log-row:hover { background: rgba(255,255,255,0.02); }
+.vault-log-time  { color: var(--dim); font-size: 11px; white-space: nowrap; }
+.vault-log-agent { color: var(--text-3); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vault-log-secret { color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vault-log-action { color: var(--muted); }
+.vault-log-status { text-align: right; white-space: nowrap; }
+.vault-log-status.approved  { color: #6bffb0; }
+.vault-log-status.pending   { color: #ffb86b; }
+.vault-log-status.denied    { color: #ff6b6b; }
+.vault-log-status.revoked   { color: var(--dim); }
+
+/* ── Agent overlay toolbar (vault) ──────────────────────── */
+#vault-toolbar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+}
+
+/* ── Vault modals ────────────────────────────────────────── */
+.vault-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.vault-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.vault-modal {
+  background: #18181c;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 24px;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+  transform: translateY(8px) scale(0.98);
+  transition: transform 0.2s;
+}
+.vault-modal-backdrop.open .vault-modal { transform: translateY(0) scale(1); }
+.vault-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.vault-modal-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.vault-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.vault-modal-cancel {
+  padding: 8px 18px;
+  border-radius: 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.vault-modal-cancel:hover { background: var(--border-2); }
+.vault-modal-revoke {
+  padding: 8px 18px;
+  border-radius: 7px;
+  background: #3d1010;
+  border: 1px solid #5e2020;
+  color: #ff6b6b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+.vault-modal-revoke:hover { background: #4d1414; }
+
+/* ── Policy panel modal ──────────────────────────────────── */
+.vault-policy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.vault-policy-rule {
+  background: var(--bg-mid);
+  border: 1px solid var(--border-2);
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+.vault-policy-rule-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 4px;
+}
+.vault-policy-rule-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Add Secret modal ────────────────────────────────────── */
+.vault-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+.vault-modal-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.vault-modal-input,
+.vault-modal-select {
+  background: #1a1a1e;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.12s;
+  width: 100%;
+}
+.vault-modal-input:focus,
+.vault-modal-select:focus { border-color: var(--accent); }
+.vault-modal-input::placeholder { color: var(--dimmer); }
+.vault-modal-select { cursor: pointer; }
+.vault-modal-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+.vault-modal-toggle {
+  width: 32px; height: 18px;
+  border-radius: 9px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.vault-modal-toggle::after {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  top: 3px; left: 3px;
+  transition: transform 0.15s;
+}
+.vault-modal-toggle.on { background: #6bffb0; }
+.vault-modal-toggle.on::after { transform: translateX(14px); }
+
 </style>
 </head>
 <body>
@@ -4737,6 +5297,9 @@ html, body {
   </div>
   <div class="tab nav-tab" data-view="browser">
     <span>🌐</span><span class="tab-text"> Browser</span>
+  </div>
+  <div class="tab nav-tab" data-view="vault">
+    <span>🔐</span><span class="tab-text"> Vault</span>
   </div>
   <div class="tab">
     <span>💬</span><span class="tab-text"> Slack</span>
@@ -8033,6 +8596,498 @@ html, body {
     </div><!-- .browser-wrap -->
   </div><!-- #view-browser -->
 
+  <!-- ============================================================
+       VAULT VIEW — Themis Gatekeeper
+       ============================================================ -->
+  <div class="view" id="view-vault">
+
+    <!-- Main vault content -->
+    <div class="vault-wrap">
+
+      <!-- Top bar -->
+      <div class="vault-topbar">
+        <div class="vault-topbar-title">🔐 Vault</div>
+        <input class="vault-search" id="vaultSearch" type="text" placeholder="Search secrets..." />
+        <div class="vault-filter-pills" id="vaultFilterPills">
+          <button class="vault-pill active" data-cat="all">All</button>
+          <button class="vault-pill" data-cat="api">API Keys</button>
+          <button class="vault-pill" data-cat="pass">Passwords</button>
+          <button class="vault-pill" data-cat="token">Tokens</button>
+          <button class="vault-pill" data-cat="cert">Certificates</button>
+          <button class="vault-pill" data-cat="ssh">SSH Keys</button>
+        </div>
+        <button class="vault-add-btn" id="vaultAddSecretBtn">＋ Add Secret</button>
+        <div class="vault-conn-status"><span class="conn-dot"></span>Vaultwarden · Connected · vault.openclaw.local</div>
+      </div>
+
+      <!-- Scrollable body -->
+      <div class="vault-body">
+
+        <!-- Pending approval card -->
+        <div class="vault-pending-card" id="vaultPendingCard">
+          <div class="vault-pending-label">⏳ Pending Approval</div>
+          <div class="vault-pending-top">
+            <div class="vault-pending-agent">
+              <div class="vault-pending-agent-avatar">📡</div>
+              <div>
+                <div class="vault-pending-agent-name">Hermes requesting <span class="vault-pending-secret">Stripe Secret Key</span></div>
+                <div class="vault-pending-reason">Need to verify pending invoice payment for Q1 reconciliation</div>
+              </div>
+            </div>
+          </div>
+          <div class="vault-pending-meta">
+            <span>🔒 Read-only</span>
+            <span>·</span>
+            <span>⏱ 30-minute lease</span>
+            <span>·</span>
+            <span>Finance lane</span>
+          </div>
+          <div class="vault-themis-note">
+            <span class="note-icon">⚖️</span>
+            <span><strong style="color:var(--text-2);">Themis:</strong> Approve — Hermes has finance-lane clearance for read operations.</span>
+          </div>
+          <div class="vault-pending-actions">
+            <button class="vault-approve-btn" id="vaultApproveBtn">Approve</button>
+            <button class="vault-deny-btn" id="vaultDenyBtn">Deny</button>
+            <button class="vault-conditions-btn">Approve with conditions</button>
+          </div>
+        </div>
+
+        <!-- Secret items grid -->
+        <div class="vault-grid" id="vaultGrid">
+
+          <!-- 1: Gmail API OAuth -->
+          <div class="vault-item" data-category="api">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> Gmail API OAuth</div>
+              <span class="vault-cat-pill api">API Key</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">key:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">AIzaSyD-xxxxxxxxxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot active"></div>
+              Last: 🌹 Karoline, 2 min ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 2: GitHub PAT -->
+          <div class="vault-item" data-category="token">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> GitHub PAT (openclaw)</div>
+              <span class="vault-cat-pill token">Token</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">token:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot active"></div>
+              Last: 🔥 Vulcan, 14 min ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 3: Supabase Service Key -->
+          <div class="vault-item" data-category="api">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> Supabase Service Key</div>
+              <span class="vault-cat-pill api">API Key</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">key:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot dormant"></div>
+              Last: CD, 1 hr ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 4: iMessage Bridge Auth -->
+          <div class="vault-item" data-category="token">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> iMessage Bridge Auth</div>
+              <span class="vault-cat-pill token">Token</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">token:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">imsg_tok_xxxxxxxxxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot active"></div>
+              Last: 🌈 Iris, 8 min ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 5: Twilio VOIP SID -->
+          <div class="vault-item" data-category="api">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> Twilio VOIP SID</div>
+              <span class="vault-cat-pill api">API Key</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">sid:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot dormant"></div>
+              Last: 📡 Hermes, 3 hr ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 6: OpenAI API Key -->
+          <div class="vault-item" data-category="api">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> OpenAI API Key</div>
+              <span class="vault-cat-pill api">API Key</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">key:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot active"></div>
+              Last: 🔮 Socrates, 22 min ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 7: Slack Bot Token -->
+          <div class="vault-item" data-category="token">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> Slack Bot Token</div>
+              <span class="vault-cat-pill token">Token</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">token:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">xoxb-xxxxxxxx-xxxxxxxx-xxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot dormant"></div>
+              Last: 🌹 Karoline, 45 min ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 8: Linear API Key -->
+          <div class="vault-item" data-category="api">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> Linear API Key</div>
+              <span class="vault-cat-pill api">API Key</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">key:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot dormant"></div>
+              Never accessed
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 9: SSH Deploy Key -->
+          <div class="vault-item" data-category="ssh">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> SSH Deploy Key (prod)</div>
+              <span class="vault-cat-pill ssh">SSH Key</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">key:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">ssh-ed25519 AAAAC3NzaC1lZDI1NTE5xxx...</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot dormant"></div>
+              Last: 🔥 Vulcan, 2 days ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+          <!-- 10: Anthropic API Key -->
+          <div class="vault-item" data-category="api">
+            <div class="vault-item-top">
+              <div class="vault-item-name"><span class="secret-icon">🔑</span> Anthropic API Key</div>
+              <span class="vault-cat-pill api">API Key</span>
+            </div>
+            <div class="vault-item-value">
+              <span class="val-label">key:</span>
+              <span class="val-masked">••••••••••••••••</span>
+              <span class="val-revealed">sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span>
+            </div>
+            <div class="vault-item-last">
+              <div class="vault-lease-dot active"></div>
+              Last: CD, 5 min ago
+            </div>
+            <div class="vault-item-actions">
+              <button class="vault-item-btn vault-copy-btn">Copy</button>
+              <button class="vault-item-btn vault-reveal-btn">Reveal</button>
+            </div>
+          </div>
+
+        </div><!-- #vaultGrid -->
+
+        <!-- Access log -->
+        <div class="vault-log-section">
+          <div class="vault-log-header">
+            <div class="vault-log-title">Access Log</div>
+            <a class="vault-log-viewall" href="#">View all →</a>
+          </div>
+          <div class="vault-log-table">
+            <div class="vault-log-row">
+              <div class="vault-log-time">9:18 AM</div>
+              <div class="vault-log-agent">🌹 Karoline</div>
+              <div class="vault-log-secret">Gmail API OAuth</div>
+              <div class="vault-log-action">Lease renewed</div>
+              <div class="vault-log-status approved">✅ Approved</div>
+            </div>
+            <div class="vault-log-row">
+              <div class="vault-log-time">9:16 AM</div>
+              <div class="vault-log-agent">🔮 Socrates</div>
+              <div class="vault-log-secret">OpenAI API Key</div>
+              <div class="vault-log-action">New lease</div>
+              <div class="vault-log-status approved">✅ Auto-approved</div>
+            </div>
+            <div class="vault-log-row">
+              <div class="vault-log-time">9:14 AM</div>
+              <div class="vault-log-agent">🔥 Vulcan</div>
+              <div class="vault-log-secret">GitHub PAT</div>
+              <div class="vault-log-action">Lease renewed</div>
+              <div class="vault-log-status approved">✅ Approved</div>
+            </div>
+            <div class="vault-log-row">
+              <div class="vault-log-time">9:10 AM</div>
+              <div class="vault-log-agent">🌈 Iris</div>
+              <div class="vault-log-secret">iMessage Bridge</div>
+              <div class="vault-log-action">New lease</div>
+              <div class="vault-log-status approved">✅ Auto-approved</div>
+            </div>
+            <div class="vault-log-row">
+              <div class="vault-log-time">9:02 AM</div>
+              <div class="vault-log-agent">📡 Hermes</div>
+              <div class="vault-log-secret">Stripe Secret Key</div>
+              <div class="vault-log-action">Requested</div>
+              <div class="vault-log-status pending" id="vaultLogPendingRow">⏳ Pending</div>
+            </div>
+            <div class="vault-log-row">
+              <div class="vault-log-time">8:55 AM</div>
+              <div class="vault-log-agent">🌹 Karoline</div>
+              <div class="vault-log-secret">Slack Bot Token</div>
+              <div class="vault-log-action">Lease expired</div>
+              <div class="vault-log-status revoked">🔒 Revoked</div>
+            </div>
+            <div class="vault-log-row">
+              <div class="vault-log-time">8:41 AM</div>
+              <div class="vault-log-agent">🧪 Hypatia</div>
+              <div class="vault-log-secret">Prod DB Creds</div>
+              <div class="vault-log-action">Access denied</div>
+              <div class="vault-log-status denied">❌ Denied</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom padding for toolbar -->
+        <div style="height: 48px; flex-shrink: 0;"></div>
+
+      </div><!-- .vault-body -->
+
+      <!-- Themis agent overlay toolbar -->
+      <div class="agent-overlay-toolbar" id="vault-toolbar">
+        <div class="toolbar-agent-identity">
+          <div class="toolbar-agent-avatar" style="background:#1a2a3d;">
+            ⚖️
+            <div class="toolbar-status-dot"></div>
+          </div>
+          <span class="toolbar-agent-name">Themis · Vault Gatekeeper</span>
+        </div>
+        <div class="toolbar-separator"></div>
+        <div class="toolbar-summary" id="vaultToolbarSummary">
+          <span class="highlight" id="vaultActiveLeaseCount">4 active leases</span>
+          <span class="sep">·</span>
+          <span id="vaultPendingCount">1 pending</span>
+          <span class="sep">·</span>
+          <span>0 violations</span>
+        </div>
+        <div class="toolbar-actions">
+          <button class="toolbar-btn secondary" id="vaultRotationBtn">Rotation Schedule</button>
+          <button class="toolbar-btn secondary" id="vaultPoliciesBtn">Access Policies</button>
+          <button class="toolbar-btn ghost" id="vaultRevokeAllBtn" style="color: #ff6b6b;" onmouseover="this.style.color='#ff4040'" onmouseout="this.style.color='#ff6b6b'">Emergency Revoke All</button>
+        </div>
+      </div>
+
+    </div><!-- .vault-wrap -->
+
+    <!-- Right rail: Themis -->
+    <div class="right-rail" id="rail-vault">
+      <div class="rail-agent-tabs" id="railTabs-vault">
+        <div class="rail-agent-tab">🧠</div>
+        <div class="rail-agent-tab active">⚖️<span class="tab-badge">1</span></div>
+        <div class="rail-agent-tab">🔮</div>
+        <div class="rail-agent-tab">🌹</div>
+        <div class="rail-agent-tab">🔥</div>
+      </div>
+      <div class="rail-header">
+        <div class="rail-agent-info">
+          <div class="rail-avatar" style="background:#1a2a3d;">⚖️</div>
+          <div>
+            <div class="rail-name">Themis</div>
+            <div class="rail-role">Vault Gatekeeper</div>
+          </div>
+        </div>
+        <div class="rail-status">Active</div>
+      </div>
+      <div class="rail-chat">
+        <div class="chat-msg highlight">
+          <div class="msg-label">⚖️ VAULT STATUS</div>
+          <span id="railActiveLeases">4</span> active leases · 6 dormant · <span id="railPendingCount">1</span> pending · 0 violations<br>
+          Last rotation: Gmail OAuth 6 hrs ago
+        </div>
+        <div class="chat-msg agent" id="vaultRailApprovalMsg">
+          <strong>Themis</strong><br>
+          Hermes is requesting <strong>Stripe Secret Key</strong> for invoice verification. Finance-lane clearance covers this. Recommend 30-min read-only lease.
+          <div class="chat-action-row">
+            <button class="chat-btn primary" id="railApproveBtn">Approve</button>
+            <button class="chat-btn outline" id="railDenyBtn">Deny</button>
+            <button class="chat-btn secondary">View policy</button>
+          </div>
+          <div class="msg-time">9:02 AM</div>
+        </div>
+        <div class="chat-msg agent">
+          <strong>Themis</strong><br>
+          Auto-rotated Gmail OAuth at 3:14 AM. Karoline's lease seamlessly renewed. No interruption to mail operations.
+          <div class="msg-time">3:14 AM</div>
+        </div>
+      </div>
+      <div class="rail-input">
+        <input type="text" placeholder="Message Themis..." />
+      </div>
+    </div><!-- #rail-vault -->
+
+  </div><!-- #view-vault -->
+
+  <!-- ── Vault: Emergency Revoke All modal ─────────────────── -->
+  <div class="vault-modal-backdrop" id="vaultRevokeModal">
+    <div class="vault-modal">
+      <div class="vault-modal-title">🚨 Emergency Revoke All</div>
+      <div class="vault-modal-sub">Revoke all <strong id="revokeLeaseCountText" style="color:#ff6b6b;">4</strong> active leases? Agents will lose access immediately and will need to re-request credentials.</div>
+      <div style="background:#1a0808;border:1px solid #3d1010;border-radius:7px;padding:10px 12px;font-size:12px;color:#ff9999;line-height:1.5;">
+        ⚠️ This will interrupt active agent workflows. Karoline, Vulcan, Iris, and Socrates currently hold active leases.
+      </div>
+      <div class="vault-modal-actions">
+        <button class="vault-modal-cancel" id="vaultRevokeCancelBtn">Cancel</button>
+        <button class="vault-modal-revoke" id="vaultRevokeConfirmBtn">🚨 Revoke All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Vault: Access Policies modal ─────────────────────── -->
+  <div class="vault-modal-backdrop" id="vaultPoliciesModal">
+    <div class="vault-modal">
+      <div class="vault-modal-title">⚖️ Access Policies</div>
+      <div class="vault-modal-sub">Rules governing how agents may request and use vault secrets.</div>
+      <div class="vault-policy-list">
+        <div class="vault-policy-rule">
+          <div class="vault-policy-rule-name">Finance Lane — Auto-approve Read</div>
+          <div class="vault-policy-rule-desc">Agents with finance-lane clearance (Hermes, CD) may auto-approve read-only requests for financial API keys. Lease max: 60 minutes.</div>
+        </div>
+        <div class="vault-policy-rule">
+          <div class="vault-policy-rule-name">Comms Agents — Persistent Leases</div>
+          <div class="vault-policy-rule-desc">Karoline and Iris hold persistent leases on communication credentials (Gmail OAuth, iMessage Bridge, Slack). Auto-renewed every 30 minutes.</div>
+        </div>
+        <div class="vault-policy-rule">
+          <div class="vault-policy-rule-name">Production Secrets — Human Approval Required</div>
+          <div class="vault-policy-rule-desc">SSH Deploy Key (prod) and Prod DB Creds require explicit human approval. No auto-approval regardless of clearance level.</div>
+        </div>
+        <div class="vault-policy-rule">
+          <div class="vault-policy-rule-name">Write Operations — Always Require Approval</div>
+          <div class="vault-policy-rule-desc">Any write or delete credential operation must be explicitly approved by CD. Auto-approve only applies to read-only leases.</div>
+        </div>
+        <div class="vault-policy-rule">
+          <div class="vault-policy-rule-name">Rotation Schedule — Weekly</div>
+          <div class="vault-policy-rule-desc">All API keys rotate on a 7-day schedule at 3:00 AM. Themis coordinates seamless handoff to prevent agent downtime.</div>
+        </div>
+      </div>
+      <div class="vault-modal-actions">
+        <button class="vault-modal-cancel" id="vaultPoliciesCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Vault: Add Secret modal ──────────────────────────── -->
+  <div class="vault-modal-backdrop" id="vaultAddModal">
+    <div class="vault-modal">
+      <div class="vault-modal-title">＋ Add Secret</div>
+      <div class="vault-modal-sub">Store a new credential in the vault. Themis will enforce access policies.</div>
+      <div class="vault-modal-field">
+        <label class="vault-modal-label">Name</label>
+        <input class="vault-modal-input" type="text" placeholder="e.g. Stripe Secret Key" />
+      </div>
+      <div class="vault-modal-field">
+        <label class="vault-modal-label">Category</label>
+        <select class="vault-modal-select">
+          <option value="api">API Key</option>
+          <option value="token">Token</option>
+          <option value="pass">Password</option>
+          <option value="ssh">SSH Key</option>
+          <option value="cert">Certificate</option>
+        </select>
+      </div>
+      <div class="vault-modal-field">
+        <label class="vault-modal-label">Value</label>
+        <input class="vault-modal-input" type="password" placeholder="sk-..." />
+      </div>
+      <div class="vault-modal-toggle-row">
+        <span>Auto-rotate (weekly)</span>
+        <div class="vault-modal-toggle on" id="addSecretToggle"></div>
+      </div>
+      <div class="vault-modal-actions">
+        <button class="vault-modal-cancel" id="vaultAddCancelBtn">Cancel</button>
+        <button class="vault-approve-btn" id="vaultAddSaveBtn" style="padding:8px 18px;">Save Secret</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- end .app-shell -->
 
 <!-- ============================================================
@@ -9744,6 +10799,253 @@ html, body {
       showMiniToast(label.textContent + ' — done');
     });
   });
+
+  // ── VAULT INTERACTIVITY ───────────────────────────────────
+
+  let vaultActiveLeasesCount = 4;
+  let vaultPendingCardVisible = true;
+
+  // Helper: update pending count displays
+  function vaultSetPending(count) {
+    const toolbarPending = document.getElementById('vaultPendingCount');
+    const railPending    = document.getElementById('railPendingCount');
+    const tabBadge       = document.querySelector('#rail-vault .tab-badge');
+    if (toolbarPending) toolbarPending.textContent = count + ' pending';
+    if (railPending)    railPending.textContent = count;
+    if (tabBadge)       tabBadge.textContent = count > 0 ? count : '';
+  }
+
+  // Helper: collapse pending card with flash
+  function collapseVaultPendingCard(flashClass) {
+    if (!vaultPendingCardVisible) return;
+    vaultPendingCardVisible = false;
+    const card = document.getElementById('vaultPendingCard');
+    if (!card) return;
+    card.style.background = flashClass === 'green'
+      ? 'rgba(107,255,176,0.12)'
+      : 'rgba(255,107,107,0.12)';
+    card.style.borderColor = flashClass === 'green' ? '#2e6040' : '#5e2020';
+    setTimeout(() => {
+      card.classList.add('collapsing');
+      vaultSetPending(0);
+      // Update log row
+      const logRow = document.getElementById('vaultLogPendingRow');
+      if (logRow) {
+        if (flashClass === 'green') {
+          logRow.textContent = '✅ Approved';
+          logRow.className = 'vault-log-status approved';
+        } else {
+          logRow.textContent = '❌ Denied';
+          logRow.className = 'vault-log-status denied';
+        }
+      }
+      // Update rail approval msg
+      const railMsg = document.getElementById('vaultRailApprovalMsg');
+      if (railMsg) {
+        railMsg.innerHTML = flashClass === 'green'
+          ? '<strong>Themis</strong><br>Access granted to Hermes for Stripe Secret Key. 30-min read-only lease active.<div class="msg-time">9:20 AM</div>'
+          : '<strong>Themis</strong><br>Access denied for Hermes — Stripe Secret Key request rejected.<div class="msg-time">9:20 AM</div>';
+      }
+    }, 220);
+  }
+
+  // Approve button (card)
+  const vaultApproveBtn = document.getElementById('vaultApproveBtn');
+  if (vaultApproveBtn) {
+    vaultApproveBtn.addEventListener('click', () => {
+      collapseVaultPendingCard('green');
+      showMiniToast('✅ Access granted to Hermes');
+    });
+  }
+
+  // Deny button (card)
+  const vaultDenyBtn = document.getElementById('vaultDenyBtn');
+  if (vaultDenyBtn) {
+    vaultDenyBtn.addEventListener('click', () => {
+      collapseVaultPendingCard('red');
+      showMiniToast('❌ Access denied');
+    });
+  }
+
+  // Rail approve / deny buttons
+  const railApproveBtn = document.getElementById('railApproveBtn');
+  if (railApproveBtn) {
+    railApproveBtn.addEventListener('click', () => {
+      collapseVaultPendingCard('green');
+      showMiniToast('✅ Access granted to Hermes');
+    });
+  }
+  const railDenyBtn = document.getElementById('railDenyBtn');
+  if (railDenyBtn) {
+    railDenyBtn.addEventListener('click', () => {
+      collapseVaultPendingCard('red');
+      showMiniToast('❌ Access denied');
+    });
+  }
+
+  // Filter pills
+  const vaultFilterPills = document.getElementById('vaultFilterPills');
+  if (vaultFilterPills) {
+    vaultFilterPills.addEventListener('click', e => {
+      const pill = e.target.closest('.vault-pill');
+      if (!pill) return;
+      vaultFilterPills.querySelectorAll('.vault-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const cat = pill.dataset.cat;
+      document.querySelectorAll('#vaultGrid .vault-item').forEach(item => {
+        if (cat === 'all' || item.dataset.category === cat) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // Search filter
+  const vaultSearch = document.getElementById('vaultSearch');
+  if (vaultSearch) {
+    vaultSearch.addEventListener('input', () => {
+      const q = vaultSearch.value.toLowerCase().trim();
+      document.querySelectorAll('#vaultGrid .vault-item').forEach(item => {
+        const name = item.querySelector('.vault-item-name');
+        const text = name ? name.textContent.toLowerCase() : '';
+        item.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+
+  // Reveal buttons
+  document.querySelectorAll('#view-vault .vault-reveal-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const item    = btn.closest('.vault-item');
+      if (!item) return;
+      const masked   = item.querySelector('.val-masked');
+      const revealed = item.querySelector('.val-revealed');
+      if (!masked || !revealed) return;
+      const isRevealed = revealed.style.display === 'inline';
+      if (isRevealed) {
+        revealed.style.display = 'none';
+        masked.style.display   = '';
+        btn.textContent = 'Reveal';
+      } else {
+        revealed.style.display = 'inline';
+        masked.style.display   = 'none';
+        btn.textContent = 'Hide';
+      }
+    });
+  });
+
+  // Copy buttons
+  document.querySelectorAll('#view-vault .vault-copy-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove('copied');
+      }, 1600);
+    });
+  });
+
+  // Emergency Revoke All
+  const vaultRevokeAllBtn  = document.getElementById('vaultRevokeAllBtn');
+  const vaultRevokeModal   = document.getElementById('vaultRevokeModal');
+  const vaultRevokeCancelBtn  = document.getElementById('vaultRevokeCancelBtn');
+  const vaultRevokeConfirmBtn = document.getElementById('vaultRevokeConfirmBtn');
+
+  if (vaultRevokeAllBtn && vaultRevokeModal) {
+    vaultRevokeAllBtn.addEventListener('click', () => {
+      // Update lease count in modal text
+      const countEl = document.getElementById('revokeLeaseCountText');
+      if (countEl) countEl.textContent = vaultActiveLeasesCount;
+      vaultRevokeModal.classList.add('open');
+    });
+  }
+  if (vaultRevokeCancelBtn) {
+    vaultRevokeCancelBtn.addEventListener('click', () => {
+      if (vaultRevokeModal) vaultRevokeModal.classList.remove('open');
+    });
+  }
+  if (vaultRevokeConfirmBtn) {
+    vaultRevokeConfirmBtn.addEventListener('click', () => {
+      if (vaultRevokeModal) vaultRevokeModal.classList.remove('open');
+      // Revoke all active lease dots
+      document.querySelectorAll('#vaultGrid .vault-lease-dot.active').forEach(dot => {
+        dot.classList.remove('active');
+        dot.classList.add('dormant');
+      });
+      vaultActiveLeasesCount = 0;
+      const countEl = document.getElementById('vaultActiveLeaseCount');
+      if (countEl) countEl.textContent = '0 active leases';
+      const railActive = document.getElementById('railActiveLeases');
+      if (railActive) railActive.textContent = '0';
+      showMiniToast('🚨 All leases revoked — agents locked out');
+    });
+  }
+  if (vaultRevokeModal) {
+    vaultRevokeModal.addEventListener('click', e => {
+      if (e.target === vaultRevokeModal) vaultRevokeModal.classList.remove('open');
+    });
+  }
+
+  // Access Policies modal
+  const vaultPoliciesBtn      = document.getElementById('vaultPoliciesBtn');
+  const vaultPoliciesModal    = document.getElementById('vaultPoliciesModal');
+  const vaultPoliciesCloseBtn = document.getElementById('vaultPoliciesCloseBtn');
+
+  if (vaultPoliciesBtn && vaultPoliciesModal) {
+    vaultPoliciesBtn.addEventListener('click', () => vaultPoliciesModal.classList.add('open'));
+  }
+  if (vaultPoliciesCloseBtn) {
+    vaultPoliciesCloseBtn.addEventListener('click', () => {
+      if (vaultPoliciesModal) vaultPoliciesModal.classList.remove('open');
+    });
+  }
+  if (vaultPoliciesModal) {
+    vaultPoliciesModal.addEventListener('click', e => {
+      if (e.target === vaultPoliciesModal) vaultPoliciesModal.classList.remove('open');
+    });
+  }
+
+  // Rotation Schedule btn
+  const vaultRotationBtn = document.getElementById('vaultRotationBtn');
+  if (vaultRotationBtn) {
+    vaultRotationBtn.addEventListener('click', () => showMiniToast('Next rotation: Gmail OAuth in 18 hrs · GitHub PAT in 3 days'));
+  }
+
+  // Add Secret modal
+  const vaultAddSecretBtn = document.getElementById('vaultAddSecretBtn');
+  const vaultAddModal     = document.getElementById('vaultAddModal');
+  const vaultAddCancelBtn = document.getElementById('vaultAddCancelBtn');
+  const vaultAddSaveBtn   = document.getElementById('vaultAddSaveBtn');
+  const addSecretToggle   = document.getElementById('addSecretToggle');
+
+  if (vaultAddSecretBtn && vaultAddModal) {
+    vaultAddSecretBtn.addEventListener('click', () => vaultAddModal.classList.add('open'));
+  }
+  if (vaultAddCancelBtn) {
+    vaultAddCancelBtn.addEventListener('click', () => {
+      if (vaultAddModal) vaultAddModal.classList.remove('open');
+    });
+  }
+  if (vaultAddSaveBtn) {
+    vaultAddSaveBtn.addEventListener('click', () => {
+      if (vaultAddModal) vaultAddModal.classList.remove('open');
+      showMiniToast('🔐 Secret saved to vault');
+    });
+  }
+  if (vaultAddModal) {
+    vaultAddModal.addEventListener('click', e => {
+      if (e.target === vaultAddModal) vaultAddModal.classList.remove('open');
+    });
+  }
+  if (addSecretToggle) {
+    addSecretToggle.addEventListener('click', () => addSecretToggle.classList.toggle('on'));
+  }
 
 })();
 </script>
