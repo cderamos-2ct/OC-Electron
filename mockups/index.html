@@ -1558,6 +1558,170 @@ html, body {
 .reading-pane-channel-badge.imsg    { color: #6bffb0; border-color: #1a4a2e; background: #101e18; }
 .reading-pane-channel-badge.slack   { color: #c99bff; border-color: #2e1f4e; background: #18101e; }
 .reading-pane-channel-badge.social  { color: #6bc8ff; border-color: #1a3350; background: #101820; }
+.reading-pane-channel-badge.phone   { color: #ffb86b; border-color: #4e3a1f; background: #1e1810; }
+
+/* ── Phone / Voicemail channel styles ────────────────────── */
+.phone-call-log {
+  padding: 16px 24px;
+}
+.phone-call-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-2);
+}
+.phone-call-entry:last-child { border-bottom: none; }
+.phone-call-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.phone-call-icon.missed    { background: #3c1a1a; color: #ff6b6b; }
+.phone-call-icon.incoming  { background: #1a3c2a; color: #6bffb0; }
+.phone-call-icon.outgoing  { background: #1a2a3c; color: #6ba0ff; }
+.phone-call-icon.voicemail { background: #3c2e1a; color: #ffb86b; }
+.phone-call-detail {
+  flex: 1;
+  min-width: 0;
+}
+.phone-call-detail .call-type {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.phone-call-detail .call-type.missed    { color: #ff6b6b; }
+.phone-call-detail .call-type.voicemail { color: #ffb86b; }
+.phone-call-detail .call-type.incoming  { color: #6bffb0; }
+.phone-call-detail .call-type.outgoing  { color: #6ba0ff; }
+.phone-call-detail .call-time-detail {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.phone-call-detail .call-duration {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 1px;
+}
+.phone-call-actions {
+  display: flex;
+  gap: 6px;
+}
+.phone-call-actions button {
+  padding: 5px 10px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--border-2);
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.phone-call-actions button:hover { background: var(--border-2); color: var(--text); }
+.phone-call-actions button.callback {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.phone-call-actions button.callback:hover {
+  background: var(--accent-bg);
+}
+
+/* Voicemail player */
+.voicemail-player {
+  margin: 16px 24px;
+  padding: 14px 16px;
+  background: #1a1814;
+  border: 1px solid #3c341e;
+  border-radius: 10px;
+}
+.voicemail-player-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.voicemail-player-header .vm-icon {
+  font-size: 18px;
+}
+.voicemail-player-header .vm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffb86b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.voicemail-player-header .vm-duration {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+}
+.voicemail-waveform {
+  height: 32px;
+  background: #141210;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  overflow: hidden;
+}
+.voicemail-waveform .bar {
+  width: 3px;
+  border-radius: 2px;
+  background: #5e4a2a;
+  flex-shrink: 0;
+}
+.voicemail-waveform .bar.played {
+  background: #ffb86b;
+}
+.voicemail-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.voicemail-controls .vm-play-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #ffb86b;
+  border: none;
+  color: #1a1410;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+}
+.voicemail-controls .vm-play-btn:hover { background: #ffc98a; }
+.voicemail-controls .vm-time {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.voicemail-transcript {
+  margin: 12px 24px 0;
+  padding: 12px 14px;
+  background: #16140e;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+}
+.voicemail-transcript-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--faint);
+  margin-bottom: 6px;
+}
+.voicemail-transcript-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-3);
+  font-style: italic;
+}
 
 /* iMessage thread view */
 .imsg-thread {
@@ -4217,11 +4381,11 @@ html, body {
           <div class="gmail-nav-section-label">Inboxes</div>
           <div class="gmail-nav-item active">
             <span class="gmail-nav-icon">&#128229;</span> All Inbound
-            <span class="gmail-nav-count">14</span>
+            <span class="gmail-nav-count">16</span>
           </div>
           <div class="gmail-nav-item">
             <span class="gmail-nav-icon">&#8617;</span> Needs Reply
-            <span class="gmail-nav-count">4</span>
+            <span class="gmail-nav-count">5</span>
           </div>
           <div class="gmail-nav-item">
             <span class="gmail-nav-icon">&#9873;</span> Flagged
@@ -4245,6 +4409,10 @@ html, body {
             <span class="gmail-nav-icon">&#127758;</span> Social DMs
             <span class="gmail-nav-count">1</span>
           </div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon">&#128222;</span> Phone
+            <span class="gmail-nav-count">2</span>
+          </div>
 
           <div class="gmail-nav-section-label">Labels</div>
           <div class="gmail-nav-item">
@@ -4266,9 +4434,10 @@ html, body {
 
             <!-- Channel sub-tabs -->
             <div class="comms-subtabs" id="commsSubtabs">
-              <div class="comms-subtab active" data-channel="all">All <span class="subtab-count">14</span></div>
+              <div class="comms-subtab active" data-channel="all">All <span class="subtab-count">16</span></div>
               <div class="comms-subtab" data-channel="email">Email <span class="subtab-count">8</span></div>
               <div class="comms-subtab" data-channel="imsg">iMessage <span class="subtab-count">3</span></div>
+              <div class="comms-subtab" data-channel="phone">Phone <span class="subtab-count">2</span></div>
               <div class="comms-subtab" data-channel="slack">Slack <span class="subtab-count">2</span></div>
               <div class="comms-subtab" data-channel="social">Social <span class="subtab-count">1</span></div>
             </div>
@@ -4356,7 +4525,43 @@ html, body {
                 </div>
               </div>
 
-              <!-- Row 5: #engineering — Slack -->
+              <!-- Row 5: Kyle Lasseter — Phone — missed call -->
+              <div class="gmail-email-row unread" data-channel="phone" data-reading="kyle-phone">
+                <div class="gmail-unread-dot"></div>
+                <span class="gmail-email-channel-icon">📞</span>
+                <div class="gmail-email-avatar" style="background:#4e3d1f;">KL</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Kyle Lasseter</span>
+                    <span class="gmail-email-time">8:38 AM</span>
+                  </div>
+                  <div class="gmail-email-subject" style="color:#ff6b6b;">Missed Call (0:00)</div>
+                  <div class="gmail-email-snippet">No voicemail left · Called from (512) 555-0147</div>
+                  <div style="margin-top:5px;display:flex;gap:4px;">
+                    <span class="gmail-agent-badge flagged">&#9873; Flagged</span>
+                    <span class="gmail-agent-badge" style="background:#3c2e1a;color:#ffb86b;border-color:#5e4a2a;">&#128222; Call back</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 6: Mom — Phone — voicemail -->
+              <div class="gmail-email-row" data-channel="phone" data-reading="mom-phone">
+                <span class="gmail-email-channel-icon">📞</span>
+                <div class="gmail-email-avatar" style="background:#5e1f3d;">M</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Mom</span>
+                    <span class="gmail-email-time">8:20 AM</span>
+                  </div>
+                  <div class="gmail-email-subject" style="color:#ffb86b;">Voicemail (0:24)</div>
+                  <div class="gmail-email-snippet">"Hey mijo, just calling to check in about Nashville. Call me back when..."</div>
+                  <div style="margin-top:5px;">
+                    <span class="gmail-agent-badge triaged">&#10003; Triaged</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 7: #engineering — Slack -->
               <div class="gmail-email-row" data-channel="slack" data-reading="slack-eng">
                 <span class="gmail-email-channel-icon">💼</span>
                 <div class="gmail-email-avatar" style="background:#1e1e2e;">#</div>
@@ -4881,6 +5086,158 @@ html, body {
               </div>
             </div>
 
+            <!-- Reading: Kyle Lasseter — Missed Call -->
+            <div id="reading-kyle-phone" style="display:none;">
+              <span class="reading-pane-channel-badge phone">📞 via Phone</span>
+              <div class="gmail-email-open-header">
+                <div class="gmail-email-open-subject">Kyle Lasseter — Missed Call</div>
+                <div class="gmail-email-open-meta">
+                  <div class="gmail-sender-avatar-lg" style="background:#4e3d1f;">KL</div>
+                  <div>
+                    <div class="gmail-email-open-from">Kyle Lasseter · (512) 555-0147</div>
+                    <div class="gmail-email-open-to">Missed call &middot; Today, 8:38 AM</div>
+                  </div>
+                </div>
+                <div class="gmail-email-open-actions">
+                  <button class="gmail-reply-btn primary">&#128222; Call Back</button>
+                  <button class="gmail-reply-btn">&#128172; Text Instead</button>
+                  <button class="gmail-reply-btn">&#8942;</button>
+                </div>
+              </div>
+              <div class="gmail-divider"></div>
+              <div class="phone-call-log">
+                <div class="phone-call-entry">
+                  <div class="phone-call-icon missed">&#128685;</div>
+                  <div class="phone-call-detail">
+                    <div class="call-type missed">Missed Call</div>
+                    <div class="call-time-detail">Today, 8:38 AM · No voicemail</div>
+                    <div class="call-duration">Duration: 0:00 · Rang 4 times</div>
+                  </div>
+                  <div class="phone-call-actions">
+                    <button class="callback">&#128222; Call back</button>
+                  </div>
+                </div>
+                <div class="phone-call-entry">
+                  <div class="phone-call-icon outgoing">&#128225;</div>
+                  <div class="phone-call-detail">
+                    <div class="call-type outgoing">Outgoing Call</div>
+                    <div class="call-time-detail">Yesterday, 4:12 PM</div>
+                    <div class="call-duration">Duration: 3:47</div>
+                  </div>
+                </div>
+                <div class="phone-call-entry">
+                  <div class="phone-call-icon incoming">&#128224;</div>
+                  <div class="phone-call-detail">
+                    <div class="call-type incoming">Incoming Call</div>
+                    <div class="call-time-detail">Mar 12, 11:30 AM</div>
+                    <div class="call-duration">Duration: 8:21</div>
+                  </div>
+                </div>
+              </div>
+              <div class="gmail-karoline-annotation" style="margin:0 24px 16px;">
+                <div class="k-avatar">🌹</div>
+                <div>
+                  <div class="k-label">Karoline — Missed Call</div>
+                  <div class="k-text">Kyle called right after his iMessage about the Riverside job. This is the 2nd attempt today — likely urgent. I've blocked 30 min at 10:30 AM on your calendar and drafted a quick "calling you back" text.</div>
+                  <div class="k-actions">
+                    <button class="k-btn primary">&#128222; Call now</button>
+                    <button class="k-btn outline">Send text</button>
+                    <button class="k-btn outline">Reschedule</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reading: Mom — Voicemail -->
+            <div id="reading-mom-phone" style="display:none;">
+              <span class="reading-pane-channel-badge phone">📞 via Phone</span>
+              <div class="gmail-email-open-header">
+                <div class="gmail-email-open-subject">Mom — Voicemail</div>
+                <div class="gmail-email-open-meta">
+                  <div class="gmail-sender-avatar-lg" style="background:#5e1f3d;">M</div>
+                  <div>
+                    <div class="gmail-email-open-from">Mom · (956) 555-0198</div>
+                    <div class="gmail-email-open-to">Voicemail &middot; Today, 8:20 AM</div>
+                  </div>
+                </div>
+                <div class="gmail-email-open-actions">
+                  <button class="gmail-reply-btn primary">&#128222; Call Back</button>
+                  <button class="gmail-reply-btn">&#128172; Text Instead</button>
+                  <button class="gmail-reply-btn">&#8942;</button>
+                </div>
+              </div>
+              <div class="gmail-divider"></div>
+              <div class="voicemail-player">
+                <div class="voicemail-player-header">
+                  <span class="vm-icon">&#128264;</span>
+                  <span class="vm-label">Voicemail</span>
+                  <span class="vm-duration">0:24</span>
+                </div>
+                <div class="voicemail-waveform">
+                  <div class="bar played" style="height:8px"></div>
+                  <div class="bar played" style="height:14px"></div>
+                  <div class="bar played" style="height:20px"></div>
+                  <div class="bar played" style="height:16px"></div>
+                  <div class="bar played" style="height:24px"></div>
+                  <div class="bar played" style="height:18px"></div>
+                  <div class="bar played" style="height:12px"></div>
+                  <div class="bar played" style="height:22px"></div>
+                  <div class="bar played" style="height:26px"></div>
+                  <div class="bar played" style="height:20px"></div>
+                  <div class="bar played" style="height:14px"></div>
+                  <div class="bar played" style="height:18px"></div>
+                  <div class="bar" style="height:22px"></div>
+                  <div class="bar" style="height:16px"></div>
+                  <div class="bar" style="height:10px"></div>
+                  <div class="bar" style="height:14px"></div>
+                  <div class="bar" style="height:20px"></div>
+                  <div class="bar" style="height:8px"></div>
+                  <div class="bar" style="height:12px"></div>
+                  <div class="bar" style="height:6px"></div>
+                  <div class="bar" style="height:10px"></div>
+                  <div class="bar" style="height:16px"></div>
+                  <div class="bar" style="height:8px"></div>
+                  <div class="bar" style="height:4px"></div>
+                </div>
+                <div class="voicemail-controls">
+                  <button class="vm-play-btn">&#9654;</button>
+                  <span class="vm-time">0:12 / 0:24</span>
+                </div>
+              </div>
+              <div class="voicemail-transcript">
+                <div class="voicemail-transcript-label">&#128196; Transcript (AI-generated)</div>
+                <div class="voicemail-transcript-text">"Hey mijo, just calling to check in about Nashville. Ashley said y'all confirmed the dates, so I just wanted to make sure Dash's food and his little bed are... you know, the ones he likes. Call me back when you get a chance. Love you."</div>
+              </div>
+              <div class="phone-call-log" style="padding-top:8px;">
+                <div class="phone-call-entry">
+                  <div class="phone-call-icon voicemail">&#128264;</div>
+                  <div class="phone-call-detail">
+                    <div class="call-type voicemail">Voicemail Received</div>
+                    <div class="call-time-detail">Today, 8:20 AM · 0:24</div>
+                  </div>
+                </div>
+                <div class="phone-call-entry">
+                  <div class="phone-call-icon outgoing">&#128225;</div>
+                  <div class="phone-call-detail">
+                    <div class="call-type outgoing">Outgoing Call</div>
+                    <div class="call-time-detail">Yesterday, 6:30 PM</div>
+                    <div class="call-duration">Duration: 12:04</div>
+                  </div>
+                </div>
+              </div>
+              <div class="gmail-karoline-annotation" style="margin:0 24px 16px;">
+                <div class="k-avatar">🌈</div>
+                <div>
+                  <div class="k-label">Iris — Personal</div>
+                  <div class="k-text">Mom's voicemail is about Nashville trip logistics — Dash's supplies. Low urgency. Cross-referenced with Ashley's iMessage — everything is confirmed. You could call back anytime today.</div>
+                  <div class="k-actions">
+                    <button class="k-btn primary">Add call reminder</button>
+                    <button class="k-btn outline">Dismiss</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div><!-- #commsReadingPane -->
 
         </div><!-- .gmail-main -->
@@ -4992,7 +5349,7 @@ html, body {
           <span class="sep">&middot;</span>
           <span>3 flagged</span>
           <span class="sep">&middot;</span>
-          <span>14 triaged across 4 channels</span>
+          <span>16 triaged across 5 channels</span>
         </div>
         <div class="toolbar-actions">
           <button class="toolbar-btn primary" id="gmailReviewDraftsBtn">Review Drafts</button>
@@ -5029,8 +5386,8 @@ html, body {
         <div class="chat-msg highlight">
           <div class="msg-label">🌹 COMMS SUMMARY</div>
           4 drafts pending (3 email, 1 iMessage)<br>
-          3 channels active &middot; 14 messages triaged<br>
-          2 items flagged (Lynn, Kyle)
+          5 channels active &middot; 16 messages triaged<br>
+          3 items flagged (Lynn, Kyle ×2)
         </div>
         <div class="chat-msg agent">
           <strong>Karoline</strong><br>
