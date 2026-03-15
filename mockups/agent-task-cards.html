@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1707, initial-scale=1">
+<title>Task Cards — OpenClaw Shell</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+    background: #0a0a0e;
+    color: #e0e0e8;
+    width: 1707px;
+    height: 1204px;
+    overflow: hidden;
+  }
+  .traffic-lights { display: flex; gap: 8px; position: absolute; top: 14px; left: 16px; }
+  .traffic-light { width: 12px; height: 12px; border-radius: 50%; }
+  .traffic-light.red { background: #ff5f57; }
+  .traffic-light.yellow { background: #febc2e; }
+  .traffic-light.green { background: #28c840; }
+  .title-bar { height: 38px; display: flex; align-items: center; justify-content: center; background: #0a0a0e; position: relative; }
+  .title-bar .title { font-size: 12px; color: #555558; }
+
+  .tab-bar {
+    display: flex; align-items: center; height: 40px;
+    background: #111115; border-bottom: 1px solid #252528; padding: 0 12px;
+  }
+  .tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; font-size: 13px; color: #888890;
+    cursor: pointer; border-right: 1px solid #252528;
+  }
+  .tab.active { color: #e0e0e8; background: #1a1a1e; }
+  .tab .badge { background: #e74c3c; color: #fff; font-size: 10px; padding: 1px 5px; border-radius: 8px; font-weight: 600; }
+  .tab-add { padding: 8px 14px; color: #555558; font-size: 16px; }
+
+  .shell { display: flex; height: calc(100% - 78px); }
+  .main-content { flex: 1; padding: 32px 40px; overflow-y: auto; }
+  .right-rail {
+    width: 340px; background: #111115; border-left: 1px solid #252528;
+    display: flex; flex-direction: column;
+  }
+
+  /* Page header */
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .page-header h1 { font-size: 28px; font-weight: 600; color: #fff; }
+  .page-header .subtitle { font-size: 14px; color: #666670; margin-top: 2px; }
+  .filter-bar { display: flex; gap: 8px; align-items: center; }
+  .filter-pill {
+    padding: 6px 14px; border-radius: 16px; font-size: 12px;
+    background: #161618; border: 1px solid #252528; color: #888890; cursor: pointer;
+  }
+  .filter-pill.active { background: #3d1a12; border-color: #e85d3a; color: #ffc8c8; }
+
+  /* Task cards */
+  .task-grid { display: flex; flex-direction: column; gap: 10px; }
+  .task-card {
+    background: #161618; border: 1px solid #252528; border-radius: 10px;
+    padding: 16px 18px; display: flex; gap: 14px; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .task-card:hover { border-color: #e85d3a; }
+  .task-card.urgent { border-left: 3px solid #e74c3c; }
+  .task-card.approval { border-left: 3px solid #f39c12; }
+  .task-card.running { border-left: 3px solid #e85d3a; }
+  .task-card.queued { border-left: 3px solid #555558; }
+  .task-card.done { border-left: 3px solid #2ecc71; opacity: 0.7; }
+
+  .task-agent-avatar {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .task-agent-avatar.shield { background: #5e1f2d; }
+  .task-agent-avatar.brain { background: #3d1a12; }
+  .task-agent-avatar.hourglass { background: #5e4e1f; }
+  .task-agent-avatar.fire { background: #5e2d1f; }
+  .task-agent-avatar.temple { background: #1f3d5e; }
+  .task-agent-avatar.crystal { background: #3d1f5e; }
+  .task-agent-avatar.home { background: #5e3d1f; }
+  .task-agent-avatar.eye { background: #2d2d5e; }
+
+  .task-body { flex: 1; min-width: 0; }
+  .task-top-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .task-id { font-size: 11px; font-weight: 600; color: #e85d3a; font-family: 'SF Mono', monospace; }
+  .task-title { font-size: 14px; font-weight: 500; color: #fff; }
+  .task-status-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .task-status-badge.running { background: #2d1a1a; color: #ff7b5b; }
+  .task-status-badge.approval { background: #5e4e1f; color: #f5c842; }
+  .task-status-badge.blocked { background: #5e1f1f; color: #ff6b6b; }
+  .task-status-badge.queued { background: #252528; color: #888890; }
+  .task-status-badge.done { background: #1f5e2d; color: #6bffb0; }
+
+  .task-description { font-size: 12px; color: #888890; margin-top: 4px; line-height: 1.4; }
+  .task-meta-row { display: flex; gap: 16px; margin-top: 8px; align-items: center; }
+  .task-meta {
+    font-size: 11px; color: #666670;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .task-meta .agent-name { color: #b0b0b5; font-weight: 500; }
+  .task-meta .time { color: #555558; }
+
+  .task-actions { display: flex; gap: 6px; margin-left: auto; flex-shrink: 0; align-self: center; }
+  .task-action-btn {
+    padding: 5px 12px; border-radius: 6px; font-size: 11px;
+    font-weight: 500; cursor: pointer; border: none;
+  }
+  .task-action-btn.primary { background: #e85d3a; color: #fff; }
+  .task-action-btn.secondary { background: #252528; color: #b0b0b5; }
+  .task-action-btn.danger { background: #5e1f1f; color: #ff8888; }
+
+  /* Agent attribution tag */
+  .agent-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    background: #161618; border: 1px solid #252528;
+  }
+  .agent-tag .emoji { font-size: 12px; }
+  .agent-tag .name { color: #b0b0b5; font-weight: 500; }
+
+  /* Right rail */
+  .rail-agent-tabs {
+    display: flex; padding: 8px 12px; gap: 4px;
+    border-bottom: 1px solid #252528; overflow-x: auto;
+  }
+  .rail-agent-tab {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; cursor: pointer; position: relative;
+    background: transparent; border: 1px solid transparent;
+  }
+  .rail-agent-tab.active { background: #5e1f2d; border-color: #e74c3c; }
+  .rail-agent-tab:hover { background: #1a1a1e; }
+  .rail-agent-tab .tab-badge {
+    position: absolute; top: -2px; right: -2px;
+    width: 14px; height: 14px; background: #e74c3c; color: #fff;
+    font-size: 8px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .rail-header {
+    padding: 16px 20px; border-bottom: 1px solid #252528;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .rail-agent-info { display: flex; align-items: center; gap: 8px; }
+  .rail-avatar {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; background: #5e1f2d;
+  }
+  .rail-name { font-size: 15px; font-weight: 600; color: #fff; }
+  .rail-role { font-size: 11px; color: #666670; }
+  .rail-status { font-size: 12px; color: #2ecc71; font-weight: 500; }
+
+  .rail-chat {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .chat-msg {
+    padding: 12px 14px; border-radius: 10px;
+    font-size: 13px; line-height: 1.5; max-width: 95%;
+  }
+  .chat-msg.agent { background: #1a1a1e; color: #c8c8cc; align-self: flex-start; }
+  .chat-msg.highlight { background: #3d1f2d; border: 1px solid #e74c3c40; color: #e0e0e4; }
+  .chat-msg .msg-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #f39c12; margin-bottom: 6px;
+  }
+  .chat-msg .msg-time { font-size: 10px; color: #555558; margin-top: 6px; text-align: right; }
+  .chat-action-row { display: flex; gap: 8px; margin-top: 8px; }
+  .chat-btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 12px;
+    font-weight: 500; cursor: pointer; border: none;
+  }
+  .chat-btn.primary { background: #e85d3a; color: #fff; }
+  .chat-btn.secondary { background: #252528; color: #b0b0b5; }
+  .chat-btn.outline { background: transparent; border: 1px solid #3a3a3e; color: #888890; }
+
+  .rail-input { padding: 12px 16px; border-top: 1px solid #252528; }
+  .rail-input input {
+    width: 100%; background: #161618; border: 1px solid #252528;
+    border-radius: 8px; padding: 10px 14px; color: #e0e0e8;
+    font-size: 13px; outline: none;
+  }
+  .rail-input input::placeholder { color: #555558; }
+
+  /* Draft preview */
+  .draft-preview {
+    background: #111115; border: 1px solid #252528; border-radius: 8px;
+    padding: 12px; margin-top: 8px;
+  }
+  .draft-preview .draft-header {
+    font-size: 11px; color: #666670; margin-bottom: 6px;
+    display: flex; justify-content: space-between;
+  }
+  .draft-preview .draft-to { font-size: 12px; color: #b0b0b5; font-weight: 500; }
+  .draft-preview .draft-subject { font-size: 12px; color: #fff; font-weight: 500; margin: 4px 0; }
+  .draft-preview .draft-body { font-size: 12px; color: #888890; line-height: 1.5; }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333338; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #444448; }
+  * { scrollbar-width: thin; scrollbar-color: #333338 transparent; }
+
+  /* Draft Modal */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: #111115; border: 1px solid #252528; border-radius: 14px;
+    width: 720px; max-height: 80vh; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; border-bottom: 1px solid #252528;
+  }
+  .modal-header-left { display: flex; align-items: center; gap: 10px; }
+  .modal-header-avatar {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; background: #5e1f2d;
+  }
+  .modal-header-title { font-size: 15px; font-weight: 600; color: #fff; }
+  .modal-header-subtitle { font-size: 11px; color: #666670; }
+  .modal-close {
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    background: #1a1a1e; color: #888890; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: #252528; }
+  .modal-body { padding: 24px; }
+  .modal-field { margin-bottom: 16px; }
+  .modal-field-label {
+    font-size: 11px; font-weight: 600; color: #666670;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .modal-field-value {
+    font-size: 14px; color: #e0e0e8; padding: 10px 14px;
+    background: #0a0a0e; border: 1px solid #252528; border-radius: 8px;
+  }
+  .modal-field-value.editable {
+    min-height: 140px; line-height: 1.6; color: #c8c8cc;
+  }
+  .modal-field-value .greeting { color: #e0e0e8; }
+  .modal-field-value .signature { color: #888890; margin-top: 12px; }
+  .modal-tone-bar {
+    display: flex; gap: 8px; margin-bottom: 20px;
+    padding: 10px 14px; background: #0a0a0e; border: 1px solid #252528; border-radius: 8px;
+  }
+  .tone-tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 12px;
+    background: #1a1a1e; color: #888890; border: 1px solid #252528;
+  }
+  .tone-tag.active { background: #3d1a12; border-color: #e85d3a; color: #e85d3a; }
+  .modal-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-top: 1px solid #252528;
+  }
+  .modal-footer-left { display: flex; align-items: center; gap: 8px; }
+  .modal-footer-note { font-size: 11px; color: #555558; }
+  .modal-footer-right { display: flex; gap: 8px; }
+  .modal-btn {
+    padding: 8px 20px; border-radius: 8px; font-size: 13px;
+    font-weight: 500; cursor: pointer; border: none;
+  }
+  .modal-btn.primary { background: #e85d3a; color: #fff; }
+  .modal-btn.secondary { background: #252528; color: #b0b0b5; }
+  .modal-btn.outline { background: transparent; border: 1px solid #3a3a3e; color: #888890; }
+  .modal-btn.ghost { background: transparent; color: #666670; }
+  .modal-btn.redraft { background: #1a1a2e; border: 1px solid #e85d3a; color: #e85d3a; }
+  .modal-btn.redraft:hover { background: #2d1a12; }
+
+  /* Redraft Chat Panel */
+  .redraft-panel {
+    display: flex; gap: 0; height: 420px;
+    border: 1px solid #252528; border-radius: 10px; overflow: hidden;
+    margin-top: 4px;
+  }
+  .redraft-draft-side {
+    flex: 1; padding: 16px; background: #0a0a0e; overflow-y: auto;
+    border-right: 1px solid #252528;
+  }
+  .redraft-draft-side .draft-label {
+    font-size: 10px; font-weight: 600; color: #e85d3a;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .redraft-draft-side .draft-content {
+    font-size: 13px; color: #c8c8cc; line-height: 1.6;
+  }
+  .redraft-draft-side .draft-content .edit-highlight {
+    background: #3d1a12; padding: 1px 4px; border-radius: 3px; color: #ff9b7b;
+  }
+  .redraft-chat-side {
+    width: 300px; display: flex; flex-direction: column; background: #111115;
+  }
+  .redraft-chat-header {
+    padding: 10px 14px; border-bottom: 1px solid #252528;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .redraft-chat-header .participants {
+    font-size: 11px; color: #888890;
+  }
+  .redraft-chat-header .participants strong { color: #e0e0e8; }
+  .redraft-chat-thread {
+    flex: 1; overflow-y: auto; padding: 12px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .redraft-msg {
+    padding: 10px 12px; border-radius: 8px;
+    font-size: 12px; line-height: 1.5;
+  }
+  .redraft-msg.you { background: #1a2a1a; align-self: flex-end; max-width: 85%; color: #c8e8c8; }
+  .redraft-msg.karoline { background: #2d1a1a; align-self: flex-start; max-width: 85%; color: #e8c8c8; }
+  .redraft-msg.cd { background: #1a1a2d; align-self: flex-start; max-width: 85%; color: #c8c8e8; }
+  .redraft-msg .sender {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .redraft-msg.you .sender { color: #6bffb0; }
+  .redraft-msg.karoline .sender { color: #ff8888; }
+  .redraft-msg.cd .sender { color: #88aaff; }
+  .redraft-msg .msg-time { font-size: 9px; color: #555558; margin-top: 4px; text-align: right; }
+  .redraft-chat-input {
+    padding: 10px 12px; border-top: 1px solid #252528;
+    display: flex; gap: 8px;
+  }
+  .redraft-chat-input input {
+    flex: 1; background: #0a0a0e; border: 1px solid #252528;
+    border-radius: 6px; padding: 8px 12px; color: #e0e0e8;
+    font-size: 12px; outline: none;
+  }
+  .redraft-chat-input input::placeholder { color: #555558; }
+  .redraft-chat-input button {
+    padding: 8px 14px; border-radius: 6px; border: none;
+    background: #e85d3a; color: #fff; font-size: 12px; font-weight: 500; cursor: pointer;
+  }
+  .redraft-version-bar {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .redraft-version-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    background: #1a1a1e; color: #888890; border: 1px solid #252528;
+  }
+  .redraft-version-tag.active { background: #3d1a12; border-color: #e85d3a; color: #e85d3a; }
+  .redraft-version-tag.current { background: #1a2d1a; border-color: #2ecc71; color: #6bffb0; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+  <div class="title-bar">
+    <div class="traffic-lights">
+      <div class="traffic-light red"></div>
+      <div class="traffic-light yellow"></div>
+      <div class="traffic-light green"></div>
+    </div>
+    <span class="title">OpenClaw Shell</span>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active"><span>🏠</span> Command Center</div>
+    <div class="tab"><span>✉️</span> Gmail <span class="badge">4</span></div>
+    <div class="tab"><span>📅</span> Calendar</div>
+    <div class="tab"><span>⚡</span> GitHub <span class="badge">2</span></div>
+    <div class="tab"><span>💬</span> Slack</div>
+    <div class="tab"><span>📋</span> Linear</div>
+    <div class="tab"><span>></span> code-server</div>
+    <div class="tab-add">+</div>
+  </div>
+
+  <div class="shell">
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Operator Overview</h1>
+          <div class="subtitle">Phase 1 &mdash; Command Center</div>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-pill active">All</div>
+          <div class="filter-pill">Needs Me</div>
+          <div class="filter-pill">Running</div>
+          <div class="filter-pill">Blocked</div>
+          <div class="filter-pill">By Agent</div>
+        </div>
+      </div>
+
+      <div class="task-grid">
+        <!-- Urgent: Karoline draft -->
+        <div class="task-card approval">
+          <div class="task-agent-avatar shield">🛡️</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">OPS-024</span>
+              <span class="task-status-badge approval">Approval</span>
+            </div>
+            <div class="task-title">Draft reply to Sequoia partner email</div>
+            <div class="task-description">Karoline drafted response &mdash; confirms March 21 meeting, references Q4 growth metrics. Tone: professional but warm.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">🛡️</span><span class="name">Karoline</span></div>
+              <div class="task-meta"><span class="time">8:44 AM</span></div>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-action-btn primary">Approve & Send</button>
+            <button class="task-action-btn secondary">Edit tone</button>
+          </div>
+        </div>
+
+        <!-- Urgent: Decision -->
+        <div class="task-card urgent">
+          <div class="task-agent-avatar temple">🏛️</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">OPS-019</span>
+              <span class="task-status-badge blocked">Blocked</span>
+            </div>
+            <div class="task-title">Budget approval needed for Q2 infrastructure</div>
+            <div class="task-description">Marcus needs sign-off on $4,200 hosting upgrade. Breakdown attached. Hermes flagged &mdash; this vendor has been reliable.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">🏛️</span><span class="name">Marcus</span></div>
+              <div class="task-meta"><span class="time">Yesterday</span></div>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-action-btn primary">Review</button>
+            <button class="task-action-btn secondary">Defer</button>
+          </div>
+        </div>
+
+        <!-- Running: Karoline email triage -->
+        <div class="task-card running">
+          <div class="task-agent-avatar shield">🛡️</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">RUN-045</span>
+              <span class="task-status-badge running">Running</span>
+            </div>
+            <div class="task-title">Email triage batch (47 unread)</div>
+            <div class="task-description">38 auto-archived (newsletters), 9 labeled important, 3 drafts created for review. Dispatched 2 invoices to Marcus.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">🛡️</span><span class="name">Karoline</span></div>
+              <span style="color:#666670;font-size:11px;">&#8594;</span>
+              <div class="agent-tag"><span class="emoji">🏛️</span><span class="name">Marcus</span></div>
+              <div class="task-meta"><span class="time">8:42 AM</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Running: Build -->
+        <div class="task-card running">
+          <div class="task-agent-avatar fire">🔥</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">RUN-055</span>
+              <span class="task-status-badge running">Running</span>
+            </div>
+            <div class="task-title">Electron shell &mdash; tab bar + IPC bridge</div>
+            <div class="task-description">Tab system rendering, IPC bridge connected. Gateway WebSocket client integrated. Remaining: window state persistence.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">🔥</span><span class="name">Vulcan</span></div>
+              <div class="task-meta"><span class="time">Running 45m</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Running: Calendar sync -->
+        <div class="task-card queued">
+          <div class="task-agent-avatar hourglass">⏳</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">RUN-051</span>
+              <span class="task-status-badge queued">Queued</span>
+            </div>
+            <div class="task-title">Calendar sync &mdash; recurring events</div>
+            <div class="task-description">Prep briefs for 3 meetings today. 10:00 Investor sync (prep ready), 2:00 VG standup, 4:30 PrintDeed review.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">⏳</span><span class="name">Kronos</span></div>
+              <div class="task-meta"><span class="time">Next sync: 5m</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ada: Fireflies processing -->
+        <div class="task-card running">
+          <div class="task-agent-avatar crystal">🔮</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">RUN-060</span>
+              <span class="task-status-badge running">Running</span>
+            </div>
+            <div class="task-title">Fireflies recap processing &mdash; 2 meetings</div>
+            <div class="task-description">Extracting action items from Kyle/Lynn sync and VG partner review. 5 tasks created, 2 follow-ups pending.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">🔮</span><span class="name">Ada</span></div>
+              <span style="color:#666670;font-size:11px;">&#8594;</span>
+              <div class="agent-tag"><span class="emoji">🛡️</span><span class="name">Karoline</span></div>
+              <div class="task-meta"><span class="time">8:38 AM</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vesta: Nashville trip -->
+        <div class="task-card approval">
+          <div class="task-agent-avatar home">🏠</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">RUN-062</span>
+              <span class="task-status-badge approval">Needs You</span>
+            </div>
+            <div class="task-title">Nashville cheer comp &mdash; book flights for Bella + Christian</div>
+            <div class="task-description">March 26-29. Calendar event created. Vesta found 3 flight options. Need your pick to book.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">🏠</span><span class="name">Vesta</span></div>
+              <div class="task-meta"><span class="time">Yesterday</span></div>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-action-btn primary">View Options</button>
+          </div>
+        </div>
+
+        <!-- Hermes alert -->
+        <div class="task-card urgent">
+          <div class="task-agent-avatar compass" style="background:#1f4e5e;">📡</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">ALERT</span>
+              <span class="task-status-badge blocked">Risk</span>
+            </div>
+            <div class="task-title">Lynn Nelson &mdash; 3 deliverables overdue, Kyle adding more</div>
+            <div class="task-description">Hermes: risk score elevated. Buckner site on hold, Alphagraphics Q2 prints stacking. Kyle sold another project without clearing backlog.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">📡</span><span class="name">Hermes</span></div>
+              <div class="task-meta"><span class="time">Flagged 1m ago</span></div>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-action-btn danger">Escalate</button>
+            <button class="task-action-btn secondary">View Graph</button>
+          </div>
+        </div>
+
+        <!-- Done: recent -->
+        <div class="task-card done">
+          <div class="task-agent-avatar eye">👁️</div>
+          <div class="task-body">
+            <div class="task-top-row">
+              <span class="task-id">OPS-010</span>
+              <span class="task-status-badge done">Done</span>
+            </div>
+            <div class="task-title">Gateway WebSocket RPC &mdash; 40 methods typed</div>
+            <div class="task-description">Contracts, auth, heartbeat all passing. Argus verified &mdash; all green.</div>
+            <div class="task-meta-row">
+              <div class="agent-tag"><span class="emoji">🔥</span><span class="name">Vulcan</span></div>
+              <span style="color:#666670;font-size:11px;">verified by</span>
+              <div class="agent-tag"><span class="emoji">👁️</span><span class="name">Argus</span></div>
+              <div class="task-meta"><span class="time">7:55 AM</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Rail: Karoline active -->
+    <div class="right-rail">
+      <div class="rail-agent-tabs">
+        <div class="rail-agent-tab">🧠</div>
+        <div class="rail-agent-tab active">🛡️<span class="tab-badge">3</span></div>
+        <div class="rail-agent-tab">🌈</div>
+        <div class="rail-agent-tab">📡</div>
+        <div class="rail-agent-tab">⏳</div>
+        <div class="rail-agent-tab">🏛️</div>
+        <div class="rail-agent-tab">🔮</div>
+        <div class="rail-agent-tab">🏠</div>
+      </div>
+      <div class="rail-header">
+        <div class="rail-agent-info">
+          <div class="rail-avatar">🛡️</div>
+          <div>
+            <div class="rail-name">Karoline</div>
+            <div class="rail-role">Comms Commander</div>
+          </div>
+        </div>
+        <div class="rail-status">Active</div>
+      </div>
+
+      <div class="rail-chat">
+        <div class="chat-msg highlight">
+          <div class="msg-label">🛡️ 3 DRAFTS READY</div>
+          1. Sequoia partner reply<br>
+          2. Lynn Nelson &mdash; Buckner hold<br>
+          3. Kyle Lasseter &mdash; pipeline ping
+        </div>
+
+        <div class="chat-msg agent">
+          <strong>Karoline</strong><br>
+          Sequoia draft is ready. Key points: confirms March 21 meeting, references Q4 growth, asks about Series B timeline. Tone is professional but warm.
+          <div class="draft-preview">
+            <div class="draft-header">
+              <span>DRAFT</span>
+              <span>Gmail &middot; r8518913...</span>
+            </div>
+            <div class="draft-to">To: Marcus Chen &lt;marcus@sequoia...&gt;</div>
+            <div class="draft-subject">Re: Series A Term Sheet</div>
+            <div class="draft-body">Marcus, thank you for the follow-up. Yes sir, March 21st works perfectly for the deeper dive. I've attached our Q4 metrics as discussed...</div>
+          </div>
+          <div class="chat-action-row">
+            <button class="chat-btn primary">Approve & send</button>
+            <button class="chat-btn secondary">Edit tone</button>
+            <button class="chat-btn outline">Defer to Monday</button>
+          </div>
+          <div class="msg-time">8:44 AM</div>
+        </div>
+
+        <div class="chat-msg agent">
+          <strong>Karoline</strong><br>
+          Also &mdash; Kyle just sent Lynn another project. That's 4 active now with 3 overdue. Want me to draft the pipeline review email, or are you handling this one directly?
+          <div class="chat-action-row">
+            <button class="chat-btn primary">Draft it</button>
+            <button class="chat-btn secondary">I'll handle</button>
+          </div>
+          <div class="msg-time">8:46 AM</div>
+        </div>
+      </div>
+
+      <div class="rail-input">
+        <input type="text" placeholder="Message Karoline...">
+      </div>
+    </div>
+  </div>
+<script src="nav.js"></script>
+</body>
+</html>
