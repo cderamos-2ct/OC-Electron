@@ -3758,6 +3758,938 @@ html, body {
 @media (max-width: 900px)  { .gh-sidebar { display:none; } .gh-right-col { display:none; } .gh-toast { width:280px; right:8px; } }
 @media (max-width: 599px)  { .gh-pr-row-top { padding:10px 12px; } .gh-pr-expanded { padding:0 12px 14px 22px; } .gh-section-header { padding:8px 12px; } .gh-toast { width:calc(100vw - 16px); right:8px; left:8px; } }
 
+/* ============================================================
+   ADD APP TAB BUTTON
+   ============================================================ */
+.add-app-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 2px 6px;
+  border-radius: 6px;
+  border: 1px dashed var(--faint);
+  color: var(--dimmer);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.add-app-tab:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-bg2);
+}
+
+/* ============================================================
+   BROWSER VIEW
+   ============================================================ */
+.browser-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Browser chrome (toolbar) */
+.browser-chrome {
+  flex-shrink: 0;
+  background: var(--bg-mid);
+  border-bottom: 1px solid var(--border);
+  padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.browser-chrome-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+}
+.browser-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.browser-nav-btn:hover { background: var(--border-2); color: var(--text); }
+.browser-url-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 30px;
+  cursor: text;
+  transition: border-color 0.15s;
+}
+.browser-url-bar:focus-within { border-color: var(--accent); }
+.browser-url-lock {
+  font-size: 11px;
+  color: var(--green);
+  flex-shrink: 0;
+}
+.browser-url-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: inherit;
+}
+.browser-bookmark-star {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.browser-bookmark-star:hover { color: var(--yellow); }
+
+/* Bookmarks bar */
+.browser-bookmarks-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.browser-bookmarks-bar::-webkit-scrollbar { height: 0; }
+.browser-bookmark-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.browser-bookmark-item:hover { background: var(--border-2); color: var(--text-2); }
+
+/* Browser body */
+.browser-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.browser-page-area {
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+  background: #0d0d0f;
+}
+
+/* ── Product Hunt Mockup ── */
+.ph-page {
+  min-height: 100%;
+  background: #0d0d0f;
+}
+.ph-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: 52px;
+  background: #111113;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.ph-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.ph-logo-icon {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, #da552f 0%, #ff6740 100%);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.ph-search {
+  flex: 1;
+  max-width: 360px;
+  height: 32px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ph-topbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ph-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+.ph-btn.orange { background: #da552f; color: #fff; }
+.ph-btn.ghost-ph { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: var(--text-2); }
+
+.ph-content {
+  display: flex;
+  gap: 0;
+  max-width: 100%;
+}
+.ph-main-feed {
+  flex: 1;
+  padding: 20px;
+  min-width: 0;
+}
+.ph-feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ph-feed-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.ph-feed-date {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* Product cards */
+.ph-product-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+.ph-product-row:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.09);
+}
+.ph-rank {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dim);
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.ph-product-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+.ph-product-info {
+  flex: 1;
+  min-width: 0;
+}
+.ph-product-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ph-product-tagline {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ph-product-tags {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+.ph-tag {
+  padding: 2px 7px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--dim);
+}
+.ph-upvote-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+  min-width: 52px;
+}
+.ph-upvote-btn:hover, .ph-upvote-btn.voted {
+  background: rgba(232,93,58,0.12);
+  border-color: rgba(232,93,58,0.4);
+}
+.ph-upvote-arrow {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1;
+}
+.ph-upvote-btn.voted .ph-upvote-arrow { color: var(--accent); }
+.ph-upvote-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  line-height: 1;
+}
+.ph-upvote-btn.voted .ph-upvote-count { color: var(--accent); }
+.ph-trending-badge {
+  position: absolute;
+  top: -1px;
+  right: 70px;
+  background: linear-gradient(90deg, #e85d3a, #ff7a5a);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 0 0 6px 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Browser right rail */
+.browser-rail {
+  width: var(--rail-w);
+  min-width: var(--rail-w);
+  background: var(--bg-mid);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.browser-rail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.browser-rail-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.browser-rail-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.browser-rail-subtitle {
+  font-size: 10px;
+  color: var(--dim);
+}
+.browser-rail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+}
+.browser-context-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.browser-context-bubble p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.browser-context-bubble strong {
+  color: var(--text);
+}
+.browser-context-highlight {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--accent-bg2);
+  border: 1px solid var(--accent-bg);
+  border-radius: 7px;
+  font-size: 11px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.browser-action-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+.browser-action-btn-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.browser-action-btn-item:hover {
+  background: var(--border-2);
+  border-color: rgba(255,255,255,0.1);
+}
+.browser-action-btn-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.browser-action-btn-label {
+  font-size: 12px;
+  color: var(--text-2);
+  flex: 1;
+}
+.browser-action-btn-arrow {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* Browser agent toolbar (bottom bar) */
+.browser-toolbar {
+  flex-shrink: 0;
+  background: var(--bg-mid);
+  border-top: 1px solid var(--border);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.browser-toolbar-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.browser-toolbar-info {
+  flex: 1;
+  min-width: 0;
+}
+.browser-toolbar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.browser-toolbar-status {
+  font-size: 10px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.browser-toolbar-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.browser-toolbar-btn {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-3);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.browser-toolbar-btn:hover { background: var(--border-2); color: var(--text); }
+.browser-toolbar-btn.save-app-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.browser-toolbar-btn.save-app-btn:hover { opacity: 0.88; }
+
+/* ============================================================
+   ADD APP MODAL
+   ============================================================ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal-glass {
+  background: rgba(22,22,26,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 80px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(8px) scale(0.98);
+  transition: transform 0.2s ease;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+.modal-backdrop.open .modal-glass {
+  transform: translateY(0) scale(1);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.modal-step-indicator {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.modal-step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--faint);
+  transition: background 0.2s;
+}
+.modal-step-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+.modal-step-dot.done   { background: var(--green); }
+.modal-close {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  margin-left: auto;
+}
+.modal-close:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+/* Modal steps */
+.modal-step { display: none; }
+.modal-step.active { display: block; }
+
+/* Form fields */
+.modal-field {
+  margin-bottom: 16px;
+}
+.modal-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+  display: block;
+}
+.modal-input {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.modal-input:focus { border-color: var(--accent); }
+.modal-select {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666670'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.modal-select:focus { border-color: var(--accent); }
+
+/* Detected app card */
+.modal-detected-app {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.modal-detected-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #da552f 0%, #ff6740 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.modal-detected-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.modal-detected-desc {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 2px;
+}
+.modal-detected-check {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(46,204,113,0.15);
+  border: 1px solid var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+/* Icon picker */
+.modal-icon-picker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.modal-icon-opt {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.modal-icon-opt:hover { background: var(--border-2); }
+.modal-icon-opt.selected { border-color: var(--accent); background: var(--accent-bg2); }
+
+/* Toggle switch */
+.modal-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.modal-toggle-row:last-child { border-bottom: none; }
+.modal-toggle-label {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.modal-toggle-sub {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 1px;
+}
+.modal-toggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--faint);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.modal-toggle.on { background: var(--accent); }
+.modal-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+.modal-toggle.on::after { transform: translateX(16px); }
+
+/* Agent assignment card */
+.modal-agent-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--accent-bg2);
+  border: 1px solid var(--accent-bg);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.modal-agent-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.modal-agent-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.modal-agent-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+/* Capability checkboxes */
+.modal-capability-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.modal-capability-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+.modal-cap-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: transparent;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.modal-cap-check.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.modal-cap-label {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* Step 3 success */
+.modal-success {
+  text-align: center;
+  padding: 20px 0;
+}
+.modal-success-check {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(46,204,113,0.1);
+  border: 2px solid var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 16px;
+  animation: successPop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes successPop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.modal-success-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.modal-success-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+.modal-success-tab-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--text-2);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Section divider in modal */
+.modal-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--dim);
+  margin: 16px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+@media (max-width: 900px) {
+  .browser-rail { display: none; }
+  .modal-glass  { width: calc(100vw - 24px); }
+}
+
 </style>
 </head>
 <body>
@@ -3803,6 +4735,9 @@ html, body {
     <span>⚡</span><span class="tab-text"> GitHub</span>
     <span class="badge">2</span>
   </div>
+  <div class="tab nav-tab" data-view="browser">
+    <span>🌐</span><span class="tab-text"> Browser</span>
+  </div>
   <div class="tab">
     <span>💬</span><span class="tab-text"> Slack</span>
   </div>
@@ -3813,6 +4748,7 @@ html, body {
     <span style="font-family:monospace;">&gt;</span><span class="tab-text"> code-server</span>
   </div>
   <div class="tab-add">+</div>
+  <div class="tab add-app-tab" id="addAppBtn"><span>+</span></div>
 </div>
 
 <!-- Rail overlay backdrop -->
@@ -6878,7 +7814,418 @@ html, body {
 
   </div><!-- #view-github -->
 
+  <!-- ============================================================
+       BROWSER VIEW
+       ============================================================ -->
+  <div class="view" id="view-browser">
+    <div class="browser-wrap">
+
+      <!-- Browser chrome -->
+      <div class="browser-chrome">
+        <div class="browser-chrome-top">
+          <button class="browser-nav-btn" title="Back">&#8592;</button>
+          <button class="browser-nav-btn" title="Forward">&#8594;</button>
+          <button class="browser-nav-btn" title="Reload">&#8635;</button>
+          <div class="browser-url-bar">
+            <span class="browser-url-lock">&#128274;</span>
+            <input class="browser-url-input" value="https://producthunt.com" readonly />
+            <button class="browser-bookmark-star" title="Bookmark">&#9733;</button>
+          </div>
+        </div>
+        <div class="browser-bookmarks-bar">
+          <div class="browser-bookmark-item">&#127968; Home</div>
+          <div class="browser-bookmark-item">&#128201; Trending</div>
+          <div class="browser-bookmark-item">&#128293; Launches</div>
+          <div class="browser-bookmark-item">&#127942; Collections</div>
+          <div class="browser-bookmark-item">&#128172; Discussions</div>
+          <div class="browser-bookmark-item">&#128222; Newsletter</div>
+        </div>
+      </div>
+
+      <!-- Browser body: page + rail -->
+      <div class="browser-body">
+
+        <!-- Product Hunt page mockup -->
+        <div class="browser-page-area">
+          <div class="ph-page">
+
+            <!-- PH top bar -->
+            <div class="ph-topbar">
+              <div class="ph-logo">
+                <div class="ph-logo-icon">&#128007;</div>
+                Product Hunt
+              </div>
+              <div class="ph-search">
+                <span style="font-size:11px;color:var(--dim)">&#128269;</span>
+                <span style="font-size:12px;color:var(--dim)">Search products...</span>
+              </div>
+              <div class="ph-topbar-actions">
+                <button class="ph-btn ghost-ph">Sign in</button>
+                <button class="ph-btn orange">&#43; Submit</button>
+              </div>
+            </div>
+
+            <!-- Feed -->
+            <div class="ph-content">
+              <div class="ph-main-feed">
+                <div class="ph-feed-header">
+                  <div class="ph-feed-title">Top Products — Today</div>
+                  <div class="ph-feed-date">March 15, 2026</div>
+                </div>
+
+                <!-- Product 1: Gemini Ultra -->
+                <div class="ph-product-row">
+                  <div class="ph-rank">1</div>
+                  <div class="ph-product-icon" style="background:linear-gradient(135deg,#1a73e8,#34a853);">&#128161;</div>
+                  <div class="ph-product-info">
+                    <div class="ph-product-name">Gemini Ultra 3.0 <span style="font-size:10px;color:var(--dim);font-weight:400;">by Google DeepMind</span></div>
+                    <div class="ph-product-tagline">The most capable AI model ever — reasoning, code, and multimodal in one</div>
+                    <div class="ph-product-tags">
+                      <span class="ph-tag">AI</span>
+                      <span class="ph-tag">Productivity</span>
+                      <span class="ph-tag">Developer Tools</span>
+                    </div>
+                  </div>
+                  <div class="ph-upvote-btn">
+                    <div class="ph-upvote-arrow">▲</div>
+                    <div class="ph-upvote-count">1,204</div>
+                  </div>
+                </div>
+
+                <!-- Product 2: OpenClaw — TRENDING -->
+                <div class="ph-product-row">
+                  <div class="ph-trending-badge">🔥 Trending</div>
+                  <div class="ph-rank" style="color:var(--accent);">2</div>
+                  <div class="ph-product-icon" style="background:linear-gradient(135deg,#3d1a12,#7a2e16);border:1px solid var(--accent);">🦀</div>
+                  <div class="ph-product-info">
+                    <div class="ph-product-name" style="color:var(--text);">OpenClaw <span style="font-size:10px;color:var(--dim);font-weight:400;">by Christian De Ramos</span></div>
+                    <div class="ph-product-tagline">AI agents that actually run your business</div>
+                    <div class="ph-product-tags">
+                      <span class="ph-tag">AI Agents</span>
+                      <span class="ph-tag">Automation</span>
+                      <span class="ph-tag">Operations</span>
+                    </div>
+                  </div>
+                  <div class="ph-upvote-btn voted">
+                    <div class="ph-upvote-arrow">▲</div>
+                    <div class="ph-upvote-count">847</div>
+                  </div>
+                </div>
+
+                <!-- Product 3: Linear AI -->
+                <div class="ph-product-row">
+                  <div class="ph-rank">3</div>
+                  <div class="ph-product-icon" style="background:linear-gradient(135deg,#1a1a2e,#5c5cff);">&#9889;</div>
+                  <div class="ph-product-info">
+                    <div class="ph-product-name">Linear AI Copilot <span style="font-size:10px;color:var(--dim);font-weight:400;">by Linear</span></div>
+                    <div class="ph-product-tagline">Your AI teammate for planning, writing issues, and closing cycles faster</div>
+                    <div class="ph-product-tags">
+                      <span class="ph-tag">Project Management</span>
+                      <span class="ph-tag">AI</span>
+                    </div>
+                  </div>
+                  <div class="ph-upvote-btn">
+                    <div class="ph-upvote-arrow">▲</div>
+                    <div class="ph-upvote-count">632</div>
+                  </div>
+                </div>
+
+                <!-- Product 4: Vercel v0 3 -->
+                <div class="ph-product-row">
+                  <div class="ph-rank">4</div>
+                  <div class="ph-product-icon" style="background:#111;border:1px solid #333;">▲</div>
+                  <div class="ph-product-info">
+                    <div class="ph-product-name">v0 3.0 <span style="font-size:10px;color:var(--dim);font-weight:400;">by Vercel</span></div>
+                    <div class="ph-product-tagline">Ship full-stack apps from a single prompt. Now with real-time collaboration</div>
+                    <div class="ph-product-tags">
+                      <span class="ph-tag">Developer Tools</span>
+                      <span class="ph-tag">No-Code</span>
+                    </div>
+                  </div>
+                  <div class="ph-upvote-btn">
+                    <div class="ph-upvote-arrow">▲</div>
+                    <div class="ph-upvote-count">511</div>
+                  </div>
+                </div>
+
+              </div><!-- .ph-main-feed -->
+            </div><!-- .ph-content -->
+
+          </div><!-- .ph-page -->
+        </div><!-- .browser-page-area -->
+
+        <!-- CD agent right rail -->
+        <div class="browser-rail">
+          <div class="browser-rail-header">
+            <div class="browser-rail-avatar">CD</div>
+            <div>
+              <div class="browser-rail-name">CD · Browser Assistant</div>
+              <div class="browser-rail-subtitle">Context-aware for this page</div>
+            </div>
+          </div>
+          <div class="browser-rail-body">
+
+            <div class="browser-context-bubble">
+              <p>You're browsing <strong>Product Hunt</strong>. I notice <strong>OpenClaw</strong> is trending at <strong>#2 today</strong> with 847 upvotes — up from #6 this morning.</p>
+              <div class="browser-context-highlight">
+                🔥 OpenClaw is in the top 3 for 6 hours straight
+              </div>
+            </div>
+
+            <div class="section-label">Quick Actions</div>
+            <div class="browser-action-btns">
+              <div class="browser-action-btn-item">
+                <span class="browser-action-btn-icon">💬</span>
+                <span class="browser-action-btn-label">Share to Slack</span>
+                <span class="browser-action-btn-arrow">›</span>
+              </div>
+              <div class="browser-action-btn-item">
+                <span class="browser-action-btn-icon">🐦</span>
+                <span class="browser-action-btn-label">Draft tweet</span>
+                <span class="browser-action-btn-arrow">›</span>
+              </div>
+              <div class="browser-action-btn-item">
+                <span class="browser-action-btn-icon">🔖</span>
+                <span class="browser-action-btn-label">Save bookmark</span>
+                <span class="browser-action-btn-arrow">›</span>
+              </div>
+            </div>
+
+            <div class="section-label">Page Stats</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                <span style="color:var(--muted);">Products today</span>
+                <span style="color:var(--text-2);font-weight:600;">28</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                <span style="color:var(--muted);">OpenClaw rank</span>
+                <span style="color:var(--accent);font-weight:700;">#2 🔥</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                <span style="color:var(--muted);">Total upvotes</span>
+                <span style="color:var(--text-2);font-weight:600;">847</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                <span style="color:var(--muted);">Comments</span>
+                <span style="color:var(--text-2);font-weight:600;">43</span>
+              </div>
+            </div>
+
+          </div><!-- .browser-rail-body -->
+        </div><!-- .browser-rail -->
+
+      </div><!-- .browser-body -->
+
+      <!-- Agent toolbar at bottom -->
+      <div class="browser-toolbar">
+        <div class="browser-toolbar-avatar">CD</div>
+        <div class="browser-toolbar-info">
+          <div class="browser-toolbar-label">CD · Browser Assistant</div>
+          <div class="browser-toolbar-status">Browsing Product Hunt · No blocked trackers · Secure connection</div>
+        </div>
+        <div class="browser-toolbar-actions">
+          <button class="browser-toolbar-btn" id="browserBookmarkBtn">Bookmark</button>
+          <button class="browser-toolbar-btn" id="browserShareBtn">Share</button>
+          <button class="browser-toolbar-btn save-app-btn" id="browserSaveAsAppBtn">Save as App</button>
+        </div>
+      </div>
+
+    </div><!-- .browser-wrap -->
+  </div><!-- #view-browser -->
+
 </div><!-- end .app-shell -->
+
+<!-- ============================================================
+     ADD APP MODAL
+     ============================================================ -->
+<div class="modal-backdrop" id="addAppModal">
+  <div class="modal-glass">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="addAppModalTitle">Add App to OpenClaw</div>
+      </div>
+      <div class="modal-step-indicator" id="addAppStepIndicator">
+        <div class="modal-step-dot active" id="stepDot1"></div>
+        <div class="modal-step-dot" id="stepDot2"></div>
+        <div class="modal-step-dot" id="stepDot3"></div>
+      </div>
+      <button class="modal-close" id="addAppModalClose">&#10005;</button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+
+      <!-- Step 1: Add App -->
+      <div class="modal-step active" id="addAppStep1">
+
+        <div class="modal-field">
+          <label class="modal-label">Website URL</label>
+          <input class="modal-input" id="addAppUrlInput" type="url" value="https://producthunt.com" placeholder="https://..." />
+        </div>
+
+        <!-- Auto-detected -->
+        <div class="modal-detected-app" id="addAppDetected">
+          <div class="modal-detected-icon">🐱</div>
+          <div>
+            <div class="modal-detected-name">Product Hunt</div>
+            <div class="modal-detected-desc">The best new products in tech</div>
+          </div>
+          <div class="modal-detected-check">&#10003;</div>
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">App Name</label>
+          <input class="modal-input" id="addAppNameInput" type="text" value="Product Hunt" placeholder="Name this app..." />
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">Icon</label>
+          <div class="modal-icon-picker">
+            <div class="modal-icon-opt selected" data-icon="🐱">🐱</div>
+            <div class="modal-icon-opt" data-icon="🌐">🌐</div>
+            <div class="modal-icon-opt" data-icon="🚀">🚀</div>
+            <div class="modal-icon-opt" data-icon="🔥">🔥</div>
+            <div class="modal-icon-opt" data-icon="⚡">⚡</div>
+            <div class="modal-icon-opt" data-icon="📊">📊</div>
+            <div class="modal-icon-opt" data-icon="💡">💡</div>
+            <div class="modal-icon-opt" data-icon="🎯">🎯</div>
+            <div class="modal-icon-opt" data-icon="📱">📱</div>
+            <div class="modal-icon-opt" data-icon="🛠️">🛠️</div>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">Assign Agent</label>
+          <select class="modal-select">
+            <option value="cd" selected>🔴 CD — Personal AI</option>
+            <option value="karoline">🟠 Karoline — Research</option>
+            <option value="vulcan">⚡ Vulcan — Engineering</option>
+            <option value="hermes">📨 Hermes — Comms</option>
+            <option value="iris">👁 Iris — Intelligence</option>
+          </select>
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">Channel Category</label>
+          <select class="modal-select">
+            <option value="browser" selected>🌐 Browser App</option>
+            <option value="communication">💬 Communication</option>
+            <option value="development">⚡ Development</option>
+            <option value="finance">💰 Finance</option>
+            <option value="productivity">📋 Productivity</option>
+          </select>
+        </div>
+
+        <div class="modal-toggle-row">
+          <div>
+            <div class="modal-toggle-label">Pin to tab bar</div>
+            <div class="modal-toggle-sub">Show this app in the main navigation</div>
+          </div>
+          <div class="modal-toggle on" data-toggle="pin"></div>
+        </div>
+        <div class="modal-toggle-row">
+          <div>
+            <div class="modal-toggle-label">Enable agent overlay</div>
+            <div class="modal-toggle-sub">Show CD's context panel while browsing</div>
+          </div>
+          <div class="modal-toggle on" data-toggle="overlay"></div>
+        </div>
+
+      </div><!-- #addAppStep1 -->
+
+      <!-- Step 2: Configure -->
+      <div class="modal-step" id="addAppStep2">
+
+        <div class="modal-agent-card">
+          <div class="modal-agent-avatar">CD</div>
+          <div>
+            <div class="modal-agent-name">CD assigned</div>
+            <div class="modal-agent-desc">CD will monitor this app and can help you with navigation, content extraction, and notifications.</div>
+          </div>
+        </div>
+
+        <div class="modal-section-title">Notification Settings</div>
+        <div class="modal-toggle-row">
+          <div><div class="modal-toggle-label">Notify on new launches</div></div>
+          <div class="modal-toggle on" data-toggle="notif-launches"></div>
+        </div>
+        <div class="modal-toggle-row">
+          <div><div class="modal-toggle-label">Daily digest</div></div>
+          <div class="modal-toggle on" data-toggle="notif-digest"></div>
+        </div>
+        <div class="modal-toggle-row">
+          <div><div class="modal-toggle-label">Trending alerts</div></div>
+          <div class="modal-toggle on" data-toggle="notif-trending"></div>
+        </div>
+
+        <div class="modal-section-title">Agent Capabilities</div>
+        <div class="modal-capability-list">
+          <div class="modal-capability-item">
+            <div class="modal-cap-check checked">&#10003;</div>
+            <span class="modal-cap-label">Read page content</span>
+          </div>
+          <div class="modal-capability-item">
+            <div class="modal-cap-check checked">&#10003;</div>
+            <span class="modal-cap-label">Extract data</span>
+          </div>
+          <div class="modal-capability-item">
+            <div class="modal-cap-check checked">&#10003;</div>
+            <span class="modal-cap-label">Click &amp; navigate (Playwright)</span>
+          </div>
+          <div class="modal-capability-item">
+            <div class="modal-cap-check">&#10003;</div>
+            <span class="modal-cap-label">Submit forms</span>
+          </div>
+          <div class="modal-capability-item">
+            <div class="modal-cap-check">&#10003;</div>
+            <span class="modal-cap-label">Post comments</span>
+          </div>
+        </div>
+
+        <div class="modal-section-title">Privacy</div>
+        <div class="modal-toggle-row">
+          <div>
+            <div class="modal-toggle-label">Block trackers</div>
+            <div class="modal-toggle-sub">Prevent third-party tracking scripts</div>
+          </div>
+          <div class="modal-toggle on" data-toggle="privacy-trackers"></div>
+        </div>
+        <div class="modal-toggle-row">
+          <div>
+            <div class="modal-toggle-label">Clear cookies on close</div>
+            <div class="modal-toggle-sub">Remove session data when tab is closed</div>
+          </div>
+          <div class="modal-toggle" data-toggle="privacy-cookies"></div>
+        </div>
+
+      </div><!-- #addAppStep2 -->
+
+      <!-- Step 3: Success -->
+      <div class="modal-step" id="addAppStep3">
+        <div class="modal-success">
+          <div class="modal-success-check">&#10003;</div>
+          <div class="modal-success-title">Product Hunt added!</div>
+          <div class="modal-success-sub">Your new app is ready in OpenClaw</div>
+          <div class="modal-success-tab-preview">
+            <span>🐱</span>
+            <span>Product Hunt</span>
+          </div>
+          <div style="margin-top:14px;font-size:11px;color:var(--dim);" id="addAppAutoClose">Auto-closing in <span id="addAppCountdown">3</span>s…</div>
+        </div>
+      </div><!-- #addAppStep3 -->
+
+    </div><!-- .modal-body -->
+
+    <!-- Footer -->
+    <div class="modal-footer" id="addAppModalFooter">
+      <button class="action-btn secondary" id="addAppBackBtn" style="display:none;">Back</button>
+      <button class="action-btn primary" id="addAppNextBtn">Next: Configure</button>
+    </div>
+
+  </div><!-- .modal-glass -->
+</div><!-- #addAppModal -->
 
 <script>
 // ============================================================
@@ -8211,6 +9558,190 @@ html, body {
           pending.textContent = '✓ Approved';
         }
       }
+    });
+  });
+
+  // ── Browser view toolbar buttons ─────────────────────────
+  const browserBookmarkBtn  = document.getElementById('browserBookmarkBtn');
+  const browserShareBtn     = document.getElementById('browserShareBtn');
+  const browserSaveAsAppBtn = document.getElementById('browserSaveAsAppBtn');
+
+  if (browserBookmarkBtn) {
+    browserBookmarkBtn.addEventListener('click', () => {
+      browserBookmarkBtn.textContent = '★ Saved';
+      browserBookmarkBtn.style.color = 'var(--yellow)';
+      setTimeout(() => {
+        browserBookmarkBtn.textContent = 'Bookmark';
+        browserBookmarkBtn.style.color = '';
+      }, 2000);
+    });
+  }
+  if (browserShareBtn) {
+    browserShareBtn.addEventListener('click', () => showMiniToast('Link copied to clipboard'));
+  }
+  if (browserSaveAsAppBtn) {
+    browserSaveAsAppBtn.addEventListener('click', () => openAddAppModal());
+  }
+
+  // ── Browser page interactivity ────────────────────────────
+  document.querySelectorAll('#view-browser .ph-upvote-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const wasVoted = btn.classList.contains('voted');
+      const countEl  = btn.querySelector('.ph-upvote-count');
+      if (!countEl) return;
+      const cur = parseInt(countEl.textContent.replace(/,/g, ''), 10) || 0;
+      if (wasVoted) {
+        btn.classList.remove('voted');
+        countEl.textContent = (cur - 1).toLocaleString();
+      } else {
+        btn.classList.add('voted');
+        countEl.textContent = (cur + 1).toLocaleString();
+      }
+    });
+  });
+
+  // ── Add App Modal ─────────────────────────────────────────
+  const addAppModal      = document.getElementById('addAppModal');
+  const addAppModalClose = document.getElementById('addAppModalClose');
+  const addAppNextBtn    = document.getElementById('addAppNextBtn');
+  const addAppBackBtn    = document.getElementById('addAppBackBtn');
+  const addAppBtn        = document.getElementById('addAppBtn');
+
+  let addAppCurrentStep = 1;
+  let addAppCountdownTimer = null;
+
+  function openAddAppModal(prefillUrl) {
+    addAppCurrentStep = 1;
+    updateAddAppModal();
+    if (prefillUrl) {
+      const inp = document.getElementById('addAppUrlInput');
+      if (inp) inp.value = prefillUrl;
+    }
+    if (addAppModal) addAppModal.classList.add('open');
+  }
+
+  function closeAddAppModal() {
+    if (addAppModal) addAppModal.classList.remove('open');
+    if (addAppCountdownTimer) { clearInterval(addAppCountdownTimer); addAppCountdownTimer = null; }
+  }
+
+  function updateAddAppModal() {
+    const step1  = document.getElementById('addAppStep1');
+    const step2  = document.getElementById('addAppStep2');
+    const step3  = document.getElementById('addAppStep3');
+    const title  = document.getElementById('addAppModalTitle');
+    const footer = document.getElementById('addAppModalFooter');
+    const dot1   = document.getElementById('stepDot1');
+    const dot2   = document.getElementById('stepDot2');
+    const dot3   = document.getElementById('stepDot3');
+
+    [step1, step2, step3].forEach(s => { if (s) s.classList.remove('active'); });
+
+    // Update dots
+    [dot1, dot2, dot3].forEach((d, i) => {
+      if (!d) return;
+      d.classList.remove('active', 'done');
+      if (i + 1 < addAppCurrentStep) d.classList.add('done');
+      else if (i + 1 === addAppCurrentStep) d.classList.add('active');
+    });
+
+    if (addAppCurrentStep === 1) {
+      if (step1) step1.classList.add('active');
+      if (title) title.textContent = 'Add App to OpenClaw';
+      if (addAppNextBtn) { addAppNextBtn.style.display = ''; addAppNextBtn.textContent = 'Next: Configure'; }
+      if (addAppBackBtn) addAppBackBtn.style.display = 'none';
+      if (footer) footer.style.display = '';
+    } else if (addAppCurrentStep === 2) {
+      if (step2) step2.classList.add('active');
+      if (title) title.textContent = 'Configure Product Hunt';
+      if (addAppNextBtn) { addAppNextBtn.style.display = ''; addAppNextBtn.textContent = 'Save App'; }
+      if (addAppBackBtn) addAppBackBtn.style.display = '';
+      if (footer) footer.style.display = '';
+    } else if (addAppCurrentStep === 3) {
+      if (step3) step3.classList.add('active');
+      if (title) title.textContent = 'App Added!';
+      if (footer) footer.style.display = 'none';
+      startSuccessCountdown();
+    }
+  }
+
+  function startSuccessCountdown() {
+    const countdownEl = document.getElementById('addAppCountdown');
+    let remaining = 3;
+    if (addAppCountdownTimer) clearInterval(addAppCountdownTimer);
+    addAppCountdownTimer = setInterval(() => {
+      remaining--;
+      if (countdownEl) countdownEl.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(addAppCountdownTimer);
+        addAppCountdownTimer = null;
+        closeAddAppModal();
+      }
+    }, 1000);
+  }
+
+  if (addAppNextBtn) {
+    addAppNextBtn.addEventListener('click', () => {
+      if (addAppCurrentStep < 3) {
+        addAppCurrentStep++;
+        updateAddAppModal();
+      }
+    });
+  }
+
+  if (addAppBackBtn) {
+    addAppBackBtn.addEventListener('click', () => {
+      if (addAppCurrentStep > 1) {
+        addAppCurrentStep--;
+        updateAddAppModal();
+      }
+    });
+  }
+
+  if (addAppModalClose) {
+    addAppModalClose.addEventListener('click', closeAddAppModal);
+  }
+
+  // Close on backdrop click
+  if (addAppModal) {
+    addAppModal.addEventListener('click', e => {
+      if (e.target === addAppModal) closeAddAppModal();
+    });
+  }
+
+  // "+" tab button opens modal
+  if (addAppBtn) {
+    addAppBtn.addEventListener('click', () => openAddAppModal());
+  }
+
+  // Icon picker interaction
+  document.querySelectorAll('#addAppStep1 .modal-icon-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('#addAppStep1 .modal-icon-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    });
+  });
+
+  // Toggle switches in modal
+  document.querySelectorAll('#addAppModal .modal-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => toggle.classList.toggle('on'));
+  });
+
+  // Capability checkbox toggles
+  document.querySelectorAll('#addAppStep2 .modal-capability-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const check = item.querySelector('.modal-cap-check');
+      if (check) check.classList.toggle('checked');
+    });
+  });
+
+  // Rail action buttons in browser view
+  document.querySelectorAll('#view-browser .browser-action-btn-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const label = btn.querySelector('.browser-action-btn-label');
+      if (!label) return;
+      showMiniToast(label.textContent + ' — done');
     });
   });
 
