@@ -2850,7 +2850,7 @@ html, body {
 .gh-toast-action:hover { text-decoration: underline; }
 .gh-toast-dismiss { background:transparent; border:none; color:var(--dimmer); font-size:14px; cursor:pointer; flex-shrink:0; padding:0; line-height:1; margin-top:1px; }
 .gh-toast-dismiss:hover { color: var(--text); }
-.gh-toast-progress { position:absolute; bottom:0; left:0; height:2px; background:var(--accent); border-radius:0 0 0 8px; animation:toastProgressBar 6s linear forwards; opacity:0.6; }
+.gh-toast-progress { position:absolute; bottom:0; left:0; height:2px; background:var(--accent); border-radius:0 0 0 8px; animation:toastProgress 6s linear forwards; opacity:0.6; }
 
 /* GitHub responsive */
 @media (max-width: 1199px) { .gh-right-col { width: 240px; min-width: 220px; } }
@@ -2898,7 +2898,7 @@ html, body {
   <div class="tab nav-tab" data-view="calendar">
     <span>📅</span><span class="tab-text"> Calendar</span>
   </div>
-  <div class="tab">
+  <div class="tab nav-tab" data-view="github">
     <span>⚡</span><span class="tab-text"> GitHub</span>
     <span class="badge">2</span>
   </div>
@@ -2945,7 +2945,7 @@ html, body {
     <div class="mobile-drawer-item" data-drawer-view="calendar">
       <span class="drawer-icon">📅</span> Calendar
     </div>
-    <div class="mobile-drawer-item">
+    <div class="mobile-drawer-item" data-drawer-view="github">
       <span class="drawer-icon">⚡</span> GitHub
       <span class="drawer-badge">2</span>
     </div>
@@ -4825,6 +4825,385 @@ html, body {
 
   </div><!-- #view-calendar -->
 
+  <!-- ===========================================================
+       VIEW: GITHUB CHANNEL — Vulcan Overlay
+       =========================================================== -->
+  <div class="view" id="view-github">
+
+    <div class="gh-wrap">
+
+      <!-- Browser chrome -->
+      <div class="gh-chrome">
+        <div class="gh-chrome-nav">
+          <div class="gh-chrome-nav-btn">&#8592;</div>
+          <div class="gh-chrome-nav-btn">&#8594;</div>
+          <div class="gh-chrome-nav-btn">&#8635;</div>
+        </div>
+        <div class="gh-chrome-url">
+          <span class="lock">&#128274;</span>
+          <span class="url">github.com/openclaw — Pull Requests</span>
+        </div>
+      </div>
+
+      <!-- GitHub app -->
+      <div class="gh-app">
+
+        <!-- Left icon nav rail -->
+        <div class="gh-sidebar">
+          <div class="gh-nav-icon active" title="Pull Requests">
+            &#9878;
+            <div class="nav-dot"></div>
+          </div>
+          <div class="gh-nav-icon" title="Issues">&#9888;</div>
+          <div class="gh-nav-icon" title="Actions">&#9654;</div>
+          <div class="gh-nav-icon" title="Code">&#128196;</div>
+          <div class="gh-nav-icon" title="Insights">&#128200;</div>
+        </div>
+
+        <!-- Main PR panel -->
+        <div class="gh-main">
+
+          <div class="gh-section-header">
+            <span class="gh-section-title">Pull Requests</span>
+            <div class="gh-filter-tabs">
+              <div class="gh-filter-tab active">Needs Review <span class="gh-tab-count">2</span></div>
+              <div class="gh-filter-tab">Mine <span class="gh-tab-count">4</span></div>
+              <div class="gh-filter-tab">All <span class="gh-tab-count">11</span></div>
+            </div>
+          </div>
+
+          <div class="gh-main-scroll">
+
+            <!-- PR 1: gateway WebSocket RPC — expanded, Vulcan reviewed -->
+            <div class="gh-pr-row expanded" id="ghPrGateway">
+              <div class="gh-pr-row-top">
+                <div class="gh-ci-dot pass"></div>
+                <div class="gh-pr-meta">
+                  <div class="gh-pr-top-line">
+                    <span class="gh-pr-repo"><span class="repo-name">openclaw/gateway</span> #47</span>
+                    <span class="gh-pr-title">WebSocket RPC — type all 40 gateway methods with Zod schemas</span>
+                  </div>
+                  <div class="gh-pr-bottom-line">
+                    <div class="gh-author-chip">
+                      <div class="gh-author-avatar" style="background:#1f3d2d;">VB</div>
+                      vulcan-bot
+                    </div>
+                    <span class="gh-status-badge open">&#9679; Open</span>
+                    <span class="gh-status-badge approved">&#10003; Approved</span>
+                    <span class="gh-agent-badge auto-approved">&#9889; Auto-approved</span>
+                  </div>
+                </div>
+                <span class="gh-pr-time">32m ago</span>
+              </div>
+
+              <!-- Expanded detail -->
+              <div class="gh-pr-expanded">
+                <p class="gh-pr-desc">Adds complete Zod type coverage to all 40 WebSocket RPC methods in the gateway layer. Includes runtime validation, auto-generated TypeScript types, and updated API surface documentation. Required for the Shell integration milestone.</p>
+                <div class="gh-pr-stats-row">
+                  <span class="gh-pr-stat">&#128196; <span class="stat-val">18 files</span> changed</span>
+                  <span class="gh-pr-stat">&#43;<span class="stat-val">1,204</span></span>
+                  <span class="gh-pr-stat">&#8722;<span class="stat-val">87</span></span>
+                  <span class="gh-pr-stat">&#128101; <span class="stat-val">2</span> reviewers</span>
+                </div>
+
+                <!-- Vulcan review card -->
+                <div class="gh-vulcan-card">
+                  <div class="gh-vulcan-card-header">
+                    <div class="gh-vulcan-avatar">&#128293;</div>
+                    <span class="gh-vulcan-label">Vulcan — Analysis</span>
+                  </div>
+                  <div class="gh-vulcan-summary">All 40 RPC methods typed and verified against the gateway spec. Zod schemas enforce runtime contracts. No breaking changes to existing consumers — additive only. Test coverage at 94%. Recommended for merge.</div>
+                  <div class="gh-risk-row">
+                    <span class="gh-risk-chip low">&#9679; Low Risk</span>
+                    <span class="gh-quality-label" style="margin-left:4px;">Code quality</span>
+                    <div class="gh-quality-bar" style="margin-bottom:0;flex:1;max-width:200px;">
+                      <div class="gh-quality-track"><div class="gh-quality-fill" style="width:91%;"></div></div>
+                      <span class="gh-quality-score">91</span>
+                    </div>
+                  </div>
+                  <div class="gh-reviewers-label">Suggested reviewers</div>
+                  <div class="gh-reviewer-chips">
+                    <span class="gh-reviewer-chip">&#128101; christian (you)</span>
+                    <span class="gh-reviewer-chip">&#128101; argus-bot</span>
+                  </div>
+                  <div class="gh-pr-actions">
+                    <button class="gh-pr-btn approve">&#10003; Approve</button>
+                    <button class="gh-pr-btn changes">&#9888; Request Changes</button>
+                    <button class="gh-pr-btn diff">&#128196; View Diff</button>
+                  </div>
+                </div>
+              </div>
+            </div><!-- #ghPrGateway -->
+
+            <!-- PR 2: dashboard agent roster card view — needs you -->
+            <div class="gh-pr-row" id="ghPrDashboard">
+              <div class="gh-pr-row-top">
+                <div class="gh-ci-dot pass"></div>
+                <div class="gh-pr-meta">
+                  <div class="gh-pr-top-line">
+                    <span class="gh-pr-repo"><span class="repo-name">openclaw/dashboard</span> #31</span>
+                    <span class="gh-pr-title">AgentRosterCardView — new card grid layout with status rings</span>
+                  </div>
+                  <div class="gh-pr-bottom-line">
+                    <div class="gh-author-chip">
+                      <div class="gh-author-avatar" style="background:#3d1a2d;">CD</div>
+                      christian
+                    </div>
+                    <span class="gh-status-badge open">&#9679; Open</span>
+                    <span class="gh-status-badge pending">&#9679; Pending review</span>
+                    <span class="gh-agent-badge needs-you">&#9888; Needs you</span>
+                  </div>
+                </div>
+                <span class="gh-pr-time">1h ago</span>
+              </div>
+            </div>
+
+            <!-- PR 3: shell platform browser shell — draft -->
+            <div class="gh-pr-row" id="ghPrShell">
+              <div class="gh-pr-row-top">
+                <div class="gh-ci-dot running"></div>
+                <div class="gh-pr-meta">
+                  <div class="gh-pr-top-line">
+                    <span class="gh-pr-repo"><span class="repo-name">openclaw/shell</span> #14</span>
+                    <span class="gh-pr-title">Browser shell platform — tab routing, webview management, IPC bridge</span>
+                  </div>
+                  <div class="gh-pr-bottom-line">
+                    <div class="gh-author-chip">
+                      <div class="gh-author-avatar" style="background:#1f3d2d;">VB</div>
+                      vulcan-bot
+                    </div>
+                    <span class="gh-status-badge draft">&#9998; Draft</span>
+                    <span class="gh-status-badge pending">&#9679; CI running</span>
+                    <span class="gh-agent-badge reviewed">&#128293; Vulcan reviewed</span>
+                  </div>
+                </div>
+                <span class="gh-pr-time">2h ago</span>
+              </div>
+            </div>
+
+            <!-- PR 4: gateway auth middleware -->
+            <div class="gh-pr-row" id="ghPrAuth">
+              <div class="gh-pr-row-top">
+                <div class="gh-ci-dot pass"></div>
+                <div class="gh-pr-meta">
+                  <div class="gh-pr-top-line">
+                    <span class="gh-pr-repo"><span class="repo-name">openclaw/gateway</span> #46</span>
+                    <span class="gh-pr-title">Auth middleware — JWT validation + session token refresh</span>
+                  </div>
+                  <div class="gh-pr-bottom-line">
+                    <div class="gh-author-chip">
+                      <div class="gh-author-avatar" style="background:#1f3d2d;">VB</div>
+                      vulcan-bot
+                    </div>
+                    <span class="gh-status-badge open">&#9679; Open</span>
+                    <span class="gh-status-badge approved">&#10003; Approved</span>
+                    <span class="gh-agent-badge auto-approved">&#9889; Auto-approved</span>
+                  </div>
+                </div>
+                <span class="gh-pr-time">4h ago</span>
+              </div>
+            </div>
+
+            <!-- PR 5: dashboard personal-ops store -->
+            <div class="gh-pr-row" id="ghPrOps">
+              <div class="gh-pr-row-top">
+                <div class="gh-ci-dot fail"></div>
+                <div class="gh-pr-meta">
+                  <div class="gh-pr-top-line">
+                    <span class="gh-pr-repo"><span class="repo-name">openclaw/dashboard</span> #29</span>
+                    <span class="gh-pr-title">personal-ops-store — Zustand slice for attention center data</span>
+                  </div>
+                  <div class="gh-pr-bottom-line">
+                    <div class="gh-author-chip">
+                      <div class="gh-author-avatar" style="background:#3d1a2d;">CD</div>
+                      christian
+                    </div>
+                    <span class="gh-status-badge open">&#9679; Open</span>
+                    <span class="gh-status-badge changes">&#9650; Changes requested</span>
+                    <span class="gh-agent-badge reviewed">&#128293; Vulcan reviewed</span>
+                  </div>
+                </div>
+                <span class="gh-pr-time">6h ago</span>
+              </div>
+            </div>
+
+            <!-- PR 6: shell notification layer -->
+            <div class="gh-pr-row" id="ghPrNotif">
+              <div class="gh-pr-row-top">
+                <div class="gh-ci-dot pass"></div>
+                <div class="gh-pr-meta">
+                  <div class="gh-pr-top-line">
+                    <span class="gh-pr-repo"><span class="repo-name">openclaw/shell</span> #13</span>
+                    <span class="gh-pr-title">NotificationLayer — toast stack + agent push events</span>
+                  </div>
+                  <div class="gh-pr-bottom-line">
+                    <div class="gh-author-chip">
+                      <div class="gh-author-avatar" style="background:#1f3d2d;">VB</div>
+                      vulcan-bot
+                    </div>
+                    <span class="gh-status-badge merged">&#9654; Merged</span>
+                    <span class="gh-agent-badge auto-approved">&#9889; Auto-approved</span>
+                  </div>
+                </div>
+                <span class="gh-pr-time">Yesterday</span>
+              </div>
+            </div>
+
+          </div><!-- .gh-main-scroll -->
+
+          <!-- Vulcan agent overlay toolbar -->
+          <div class="agent-overlay-toolbar" id="ghToolbar">
+            <div class="toolbar-agent-identity">
+              <div class="toolbar-agent-avatar" style="background:#3d1a0a;">
+                &#128293;
+                <div class="toolbar-status-dot"></div>
+              </div>
+              <span class="toolbar-agent-name">Vulcan</span>
+            </div>
+            <div class="toolbar-separator"></div>
+            <div class="toolbar-summary">
+              <span class="highlight">3 PRs reviewed</span>
+              <span class="sep">&middot;</span>
+              <span>2 need you</span>
+              <span class="sep">&middot;</span>
+              <span>staging deploy in progress</span>
+            </div>
+            <div class="toolbar-actions">
+              <button class="toolbar-btn primary" id="ghReviewQueueBtn">Review Queue</button>
+              <button class="toolbar-btn secondary" id="ghDeployStatusBtn">Deploy Status</button>
+              <button class="toolbar-btn ghost">Pause Agent</button>
+            </div>
+          </div>
+
+          <!-- GitHub toast -->
+          <div class="gh-toast" id="ghToast">
+            <div class="gh-toast-icon">&#128293;</div>
+            <div class="gh-toast-body">
+              <div class="gh-toast-agent">Vulcan</div>
+              <div class="gh-toast-text">PR #47 gateway WebSocket RPC — CI passed, auto-approved (low risk)</div>
+              <span class="gh-toast-action" id="ghToastView">View PR &rarr;</span>
+            </div>
+            <button class="gh-toast-dismiss" id="ghToastDismiss" title="Dismiss">&#10005;</button>
+            <div class="gh-toast-progress"></div>
+          </div>
+
+        </div><!-- .gh-main -->
+
+        <!-- Right column: Deploy Status + Issues -->
+        <div class="gh-right-col">
+
+          <!-- Deploy status -->
+          <div class="gh-right-section">
+            <div class="gh-right-section-title">Deploy Status</div>
+
+            <div class="gh-deploy-card prod">
+              <div class="gh-deploy-top">
+                <span class="gh-deploy-env">Production</span>
+                <span class="gh-deploy-status-chip live">&#9679; Live</span>
+              </div>
+              <div class="gh-deploy-meta">
+                <span class="commit-hash">a3f8c91</span> &middot; vulcan-bot &middot; <span class="deploy-time">4h ago</span>
+              </div>
+            </div>
+
+            <div class="gh-deploy-card staging">
+              <div class="gh-deploy-top">
+                <span class="gh-deploy-env">Staging</span>
+                <span class="gh-deploy-status-chip deploying">&#8635; Deploying…</span>
+              </div>
+              <div class="gh-deploy-meta">
+                <span class="commit-hash">e91b2d4</span> &middot; vulcan-bot &middot; <span class="deploy-time">just now</span>
+              </div>
+              <div class="gh-deploy-progress">
+                <div class="gh-deploy-progress-fill"></div>
+              </div>
+            </div>
+
+            <div class="gh-deploy-card preview">
+              <div class="gh-deploy-top">
+                <span class="gh-deploy-env">Preview</span>
+                <span class="gh-deploy-status-chip ready">&#10003; Ready</span>
+              </div>
+              <div class="gh-deploy-meta">
+                <span class="commit-hash">7c4a1f8</span> &middot; christian &middot; <span class="deploy-time">1h ago</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Open issues -->
+          <div class="gh-right-section">
+            <div class="gh-right-section-title">Issues &mdash; Flagged</div>
+
+            <div class="gh-issue-row">
+              <div class="gh-priority-dot high"></div>
+              <div class="gh-issue-body">
+                <div class="gh-issue-title">Gateway: session timeout not propagating to shell</div>
+                <div class="gh-issue-meta">
+                  <span class="gh-issue-num">#82</span>
+                  <span>openclaw/gateway</span>
+                  <span>assigned: you</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="gh-issue-row">
+              <div class="gh-priority-dot high"></div>
+              <div class="gh-issue-body">
+                <div class="gh-issue-title">Dashboard: agent heartbeat polling causes memory leak</div>
+                <div class="gh-issue-meta">
+                  <span class="gh-issue-num">#44</span>
+                  <span>openclaw/dashboard</span>
+                  <span>Vulcan flagged</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="gh-issue-row">
+              <div class="gh-priority-dot med"></div>
+              <div class="gh-issue-body">
+                <div class="gh-issue-title">Shell: mobile drawer z-index conflict with toast stack</div>
+                <div class="gh-issue-meta">
+                  <span class="gh-issue-num">#17</span>
+                  <span>openclaw/shell</span>
+                  <span>assigned: you</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="gh-issue-row">
+              <div class="gh-priority-dot med"></div>
+              <div class="gh-issue-body">
+                <div class="gh-issue-title">Gateway: Zod parse errors swallowed in dev mode</div>
+                <div class="gh-issue-meta">
+                  <span class="gh-issue-num">#78</span>
+                  <span>openclaw/gateway</span>
+                  <span>Vulcan flagged</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="gh-issue-row">
+              <div class="gh-priority-dot low"></div>
+              <div class="gh-issue-body">
+                <div class="gh-issue-title">Dashboard: tab bar overflow on narrow viewports</div>
+                <div class="gh-issue-meta">
+                  <span class="gh-issue-num">#38</span>
+                  <span>openclaw/dashboard</span>
+                  <span>low priority</span>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- issues section -->
+
+        </div><!-- .gh-right-col -->
+
+      </div><!-- .gh-app -->
+
+    </div><!-- .gh-wrap -->
+
+  </div><!-- #view-github -->
+
 </div><!-- end .app-shell -->
 
 <script>
@@ -5306,6 +5685,104 @@ html, body {
       if (grid) grid.scrollTo({ top: 20, behavior: 'smooth' });
     });
   }
+
+  // ── GitHub view interactions ─────────────────────────────
+  const ghToast        = document.getElementById('ghToast');
+  const ghToastDismiss = document.getElementById('ghToastDismiss');
+  const ghToastView    = document.getElementById('ghToastView');
+
+  function dismissGhToast() {
+    if (ghToast) {
+      ghToast.classList.add('dismissed');
+      setTimeout(() => { ghToast.style.display = 'none'; }, 260);
+    }
+  }
+  if (ghToastDismiss) ghToastDismiss.addEventListener('click', dismissGhToast);
+  if (ghToastView) {
+    ghToastView.addEventListener('click', () => {
+      dismissGhToast();
+      // Expand the gateway PR
+      const pr = document.getElementById('ghPrGateway');
+      if (pr) {
+        pr.classList.add('expanded');
+        pr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+  // Auto-dismiss GitHub toast after 6s
+  setTimeout(() => {
+    if (ghToast && !ghToast.classList.contains('dismissed')) dismissGhToast();
+  }, 6200);
+
+  // PR row expand/collapse toggle
+  document.querySelectorAll('.gh-pr-row').forEach(row => {
+    row.addEventListener('click', e => {
+      // Don't collapse if a button inside was clicked
+      if (e.target.closest('.gh-pr-btn')) return;
+      const wasExpanded = row.classList.contains('expanded');
+      document.querySelectorAll('.gh-pr-row').forEach(r => r.classList.remove('expanded'));
+      if (!wasExpanded) row.classList.add('expanded');
+    });
+  });
+
+  // GitHub filter tabs
+  document.querySelectorAll('#view-github .gh-filter-tab').forEach(tab => {
+    tab.addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('#view-github .gh-filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // GitHub sidebar nav icons
+  document.querySelectorAll('#view-github .gh-nav-icon').forEach(icon => {
+    icon.addEventListener('click', () => {
+      document.querySelectorAll('#view-github .gh-nav-icon').forEach(i => i.classList.remove('active'));
+      icon.classList.add('active');
+    });
+  });
+
+  // Toolbar "Review Queue" — scroll PR list to top and ensure first PR expanded
+  const ghReviewQueueBtn  = document.getElementById('ghReviewQueueBtn');
+  const ghDeployStatusBtn = document.getElementById('ghDeployStatusBtn');
+  if (ghReviewQueueBtn) {
+    ghReviewQueueBtn.addEventListener('click', () => {
+      const scroll = document.querySelector('#view-github .gh-main-scroll');
+      if (scroll) scroll.scrollTo({ top: 0, behavior: 'smooth' });
+      const first = document.getElementById('ghPrGateway');
+      if (first) {
+        document.querySelectorAll('.gh-pr-row').forEach(r => r.classList.remove('expanded'));
+        first.classList.add('expanded');
+      }
+    });
+  }
+  // Toolbar "Deploy Status" — scroll right col into view on mobile (no-op on desktop)
+  if (ghDeployStatusBtn) {
+    ghDeployStatusBtn.addEventListener('click', () => {
+      const col = document.querySelector('#view-github .gh-right-col');
+      if (col) col.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // PR action buttons — approve feedback
+  document.querySelectorAll('#view-github .gh-pr-btn.approve').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      btn.textContent = '✓ Approved';
+      btn.style.background = '#1a2d1a';
+      btn.style.color = '#6bffb0';
+      btn.disabled = true;
+      // Flip status badge in row
+      const row = btn.closest('.gh-pr-row');
+      if (row) {
+        const pending = row.querySelector('.gh-status-badge.pending');
+        if (pending) {
+          pending.className = 'gh-status-badge approved';
+          pending.textContent = '✓ Approved';
+        }
+      }
+    });
+  });
 
 })();
 </script>
