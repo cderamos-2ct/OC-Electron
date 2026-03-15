@@ -1047,8 +1047,132 @@ html, body {
   .draft-action-bar-left { display: none; }
   .version-bar { flex-wrap: nowrap; }
 
-  .tab { padding: 0 10px; font-size: 12px; }
-  .tab .tab-text { display: none; }
+  /* Hide the horizontal tab bar, show hamburger */
+  .tab-bar { display: none !important; }
+  .mobile-menu-btn { display: flex !important; }
+  :root { --tabbar-h: 0px; }
+
+  /* Title bar adjustments for mobile */
+  .title-bar { justify-content: space-between; padding: 0 12px; }
+  .traffic-lights { position: static; }
+  .title-bar-text { position: static; }
+}
+
+/* Mobile hamburger button — in title bar */
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 20px;
+  -webkit-app-region: no-drag;
+  z-index: 60;
+}
+
+/* Mobile nav drawer */
+.mobile-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 199;
+}
+.mobile-drawer-overlay.visible { display: block; }
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background: var(--bg-mid);
+  border-right: 1px solid var(--border);
+  z-index: 200;
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.mobile-drawer.open { transform: translateX(0); }
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-drawer-logo {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mobile-drawer-logo span { color: var(--accent); }
+.mobile-drawer-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-drawer-section {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-2);
+}
+.mobile-drawer-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  padding: 4px 20px 8px;
+}
+.mobile-drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  font-size: 15px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.mobile-drawer-item:hover,
+.mobile-drawer-item:active {
+  background: var(--border-2);
+  color: var(--text);
+}
+.mobile-drawer-item.active {
+  color: var(--accent);
+  background: var(--accent-bg2);
+}
+.mobile-drawer-item .drawer-icon {
+  font-size: 20px;
+  width: 28px;
+  text-align: center;
+}
+.mobile-drawer-item .drawer-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 600;
 }
 
 /* Rail toggle button — only shown on narrow screens */
@@ -1078,6 +1202,7 @@ html, body {
      TITLE BAR
      ============================================================ -->
 <div class="title-bar">
+  <button class="mobile-menu-btn" id="mobileMenuBtn" title="Menu">☰</button>
   <div class="traffic-lights">
     <div class="traffic-light red"></div>
     <div class="traffic-light yellow"></div>
@@ -1128,6 +1253,53 @@ html, body {
 
 <!-- Rail overlay backdrop -->
 <div class="rail-overlay" id="railOverlay"></div>
+
+<!-- Mobile nav drawer -->
+<div class="mobile-drawer-overlay" id="mobileDrawerOverlay"></div>
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <div class="mobile-drawer-logo"><span>OC</span> OpenClaw</div>
+    <button class="mobile-drawer-close" id="mobileDrawerClose">✕</button>
+  </div>
+  <div class="mobile-drawer-section">
+    <div class="mobile-drawer-section-label">Navigation</div>
+    <div class="mobile-drawer-item active" data-drawer-view="home">
+      <span class="drawer-icon">🏠</span> Home
+    </div>
+    <div class="mobile-drawer-item" data-drawer-view="tasks">
+      <span class="drawer-icon">📋</span> Tasks
+    </div>
+    <div class="mobile-drawer-item" data-drawer-view="agents">
+      <span class="drawer-icon">👥</span> Agents
+    </div>
+  </div>
+  <div class="mobile-drawer-section">
+    <div class="mobile-drawer-section-label">Channels</div>
+    <div class="mobile-drawer-item">
+      <span class="drawer-icon">✉️</span> Gmail
+      <span class="drawer-badge">4</span>
+    </div>
+    <div class="mobile-drawer-item">
+      <span class="drawer-icon">📅</span> Calendar
+    </div>
+    <div class="mobile-drawer-item">
+      <span class="drawer-icon">⚡</span> GitHub
+      <span class="drawer-badge">2</span>
+    </div>
+    <div class="mobile-drawer-item">
+      <span class="drawer-icon">💬</span> Slack
+    </div>
+    <div class="mobile-drawer-item">
+      <span class="drawer-icon">📋</span> Linear
+    </div>
+  </div>
+  <div class="mobile-drawer-section">
+    <div class="mobile-drawer-section-label">Tools</div>
+    <div class="mobile-drawer-item">
+      <span class="drawer-icon" style="font-family:monospace;">&gt;</span> code-server
+    </div>
+  </div>
+</div>
 
 <!-- Rail toggle (mobile) -->
 <button class="rail-toggle-btn" id="railToggle" title="Toggle Agent Rail">💬</button>
@@ -2303,6 +2475,52 @@ html, body {
   // ── Resize: auto-close rail if going wide ─────────────────
   window.addEventListener('resize', () => {
     if (window.innerWidth > 900 && railOpen) closeRail();
+    if (window.innerWidth > 599) closeMobileDrawer();
+  });
+
+  // ── Mobile drawer ────────────────────────────────────────
+  const mobileMenuBtn     = document.getElementById('mobileMenuBtn');
+  const mobileDrawer      = document.getElementById('mobileDrawer');
+  const mobileOverlay     = document.getElementById('mobileDrawerOverlay');
+  const mobileDrawerClose = document.getElementById('mobileDrawerClose');
+  const drawerItems       = document.querySelectorAll('[data-drawer-view]');
+
+  function openMobileDrawer() {
+    mobileDrawer.classList.add('open');
+    mobileOverlay.classList.add('visible');
+  }
+  function closeMobileDrawer() {
+    mobileDrawer.classList.remove('open');
+    mobileOverlay.classList.remove('visible');
+  }
+
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileDrawer.classList.contains('open') ? closeMobileDrawer() : openMobileDrawer();
+    });
+  }
+  if (mobileOverlay) mobileOverlay.addEventListener('click', closeMobileDrawer);
+  if (mobileDrawerClose) mobileDrawerClose.addEventListener('click', closeMobileDrawer);
+
+  // Drawer nav items
+  drawerItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const view = item.dataset.drawerView;
+      if (view) {
+        showView(view);
+        // Update active state
+        drawerItems.forEach(d => d.classList.remove('active'));
+        item.classList.add('active');
+      }
+      closeMobileDrawer();
+    });
+  });
+
+  // ESC also closes drawer
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && mobileDrawer.classList.contains('open')) {
+      closeMobileDrawer();
+    }
   });
 
 })();
