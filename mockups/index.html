@@ -1194,6 +1194,739 @@ html, body {
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
+/* ============================================================
+   VIEW 5: GMAIL CHANNEL
+   ============================================================ */
+#view-gmail {
+  flex-direction: row;
+}
+
+/* The webview wrapper — this is what would host the real BrowserView */
+.gmail-webview-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: #111115;
+  min-width: 0;
+}
+
+/* ── Simulated Gmail chrome ──────────────────────────────── */
+.gmail-chrome {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  height: 36px;
+  background: #0d0d11;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.gmail-chrome-url {
+  flex: 1;
+  background: #1a1a1e;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gmail-chrome-url .lock { color: var(--green); font-size: 10px; }
+.gmail-chrome-url .url  { color: var(--muted); }
+.gmail-chrome-nav {
+  display: flex;
+  gap: 4px;
+}
+.gmail-chrome-nav-btn {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--dimmer);
+  font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.gmail-chrome-nav-btn:hover { background: var(--border-2); color: var(--text-2); }
+
+/* ── Simulated Gmail app ─────────────────────────────────── */
+.gmail-app {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Gmail sidebar */
+.gmail-sidebar {
+  width: 200px;
+  min-width: 200px;
+  background: #0e0e12;
+  border-right: 1px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+.gmail-compose-btn {
+  margin: 8px 12px 16px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: #3c1e17;
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.12s;
+}
+.gmail-compose-btn:hover { background: #4d2820; }
+.gmail-compose-btn .compose-icon { font-size: 16px; }
+
+.gmail-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-3);
+  cursor: pointer;
+  border-radius: 0 20px 20px 0;
+  margin-right: 8px;
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+.gmail-nav-item:hover  { background: var(--border-2); color: var(--text); }
+.gmail-nav-item.active { background: var(--accent-bg); color: #ffc8c8; font-weight: 500; }
+.gmail-nav-item .gmail-nav-icon { width: 20px; text-align: center; font-size: 15px; }
+.gmail-nav-item .gmail-nav-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.gmail-nav-item.active .gmail-nav-count { color: var(--accent); }
+
+.gmail-nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--faint);
+  padding: 12px 16px 4px;
+}
+
+/* ── Gmail main panel (list + open email) ────────────────── */
+.gmail-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.gmail-list-pane {
+  width: 380px;
+  min-width: 280px;
+  border-right: 1px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.gmail-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-2);
+  flex-shrink: 0;
+}
+.gmail-list-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text);
+}
+.gmail-list-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gmail-icon-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.gmail-icon-btn:hover { background: var(--border-2); color: var(--text); }
+
+.gmail-email-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.gmail-email-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.1s;
+}
+.gmail-email-row:hover { background: #18181c; }
+.gmail-email-row.unread { background: #141418; }
+.gmail-email-row.open   { background: #1d1a14; border-left: 2px solid var(--accent); }
+.gmail-email-row.open:hover { background: #211e18; }
+
+.gmail-email-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #fff;
+}
+
+.gmail-email-body { flex: 1; min-width: 0; }
+.gmail-email-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.gmail-email-sender {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gmail-email-row:not(.unread) .gmail-email-sender { font-weight: 400; color: var(--text-3); }
+.gmail-email-time {
+  font-size: 11px;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+.gmail-email-row.unread .gmail-email-time { color: var(--text-2); font-weight: 500; }
+
+.gmail-email-subject {
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.gmail-email-row:not(.unread) .gmail-email-subject { color: var(--muted); }
+.gmail-email-snippet {
+  font-size: 12px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Agent indicator badges on emails */
+.gmail-agent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.gmail-agent-badge.triaged { background: #1a2d1a; color: #6bffb0; border: 1px solid #2a4a2a; }
+.gmail-agent-badge.draft   { background: var(--accent-bg2); color: #ff9b7b; border: 1px solid #4d1f15; }
+.gmail-agent-badge.flagged { background: #2d2a14; color: var(--yellow); border: 1px solid #4a421a; }
+.gmail-agent-badge.archived{ background: var(--border-2); color: var(--dimmer); border: 1px solid var(--border); }
+
+/* Unread dot */
+.gmail-unread-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+/* ── Open email reading pane ─────────────────────────────── */
+.gmail-reading-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  min-width: 0;
+  padding-bottom: 80px; /* space for agent toolbar */
+}
+
+.gmail-email-open-header {
+  margin-bottom: 20px;
+}
+.gmail-email-open-subject {
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.gmail-email-open-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.gmail-sender-avatar-lg {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  flex-shrink: 0;
+  background: #1f3d5e;
+  color: #fff;
+}
+.gmail-email-open-from {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.gmail-email-open-to {
+  font-size: 12px;
+  color: var(--dim);
+}
+.gmail-email-open-time {
+  font-size: 12px;
+  color: var(--dim);
+  margin-left: auto;
+}
+.gmail-email-open-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.gmail-reply-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
+  font-family: inherit;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gmail-reply-btn:hover { background: var(--border-2); color: var(--text); }
+.gmail-reply-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.gmail-reply-btn.primary:hover { opacity: 0.88; }
+
+.gmail-divider { height: 1px; background: var(--border-2); margin: 16px 0; }
+
+.gmail-email-open-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-2);
+}
+.gmail-email-open-body p { margin-bottom: 14px; }
+.gmail-email-open-body .greeting-line { color: var(--text); }
+.gmail-email-open-body .sign-off { color: var(--muted); margin-top: 20px; }
+
+/* Karoline annotation on open email */
+.gmail-karoline-annotation {
+  background: #1e1218;
+  border: 1px solid #4d1f2d;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.gmail-karoline-annotation .k-avatar {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: #5e1f2d;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.gmail-karoline-annotation .k-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #ff8888;
+  margin-bottom: 3px;
+}
+.gmail-karoline-annotation .k-text {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+.gmail-karoline-annotation .k-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.gmail-karoline-annotation .k-btn {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+.gmail-karoline-annotation .k-btn.primary { background: var(--accent); color: #fff; }
+.gmail-karoline-annotation .k-btn.outline { background: transparent; border: 1px solid #4d1f2d; color: var(--muted); }
+
+/* ── Agent Overlay Toolbar ───────────────────────────────── */
+.agent-overlay-toolbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: rgba(14, 14, 18, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(232, 93, 58, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 16px;
+  z-index: 20;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
+}
+
+.toolbar-agent-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+.toolbar-agent-avatar {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: #5e1f2d;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  position: relative;
+}
+.toolbar-status-dot {
+  position: absolute;
+  bottom: -2px; right: -2px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 2px solid #0e0e12;
+}
+.toolbar-agent-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 14px;
+  flex-shrink: 0;
+}
+
+.toolbar-summary {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.toolbar-summary .highlight { color: var(--accent); font-weight: 500; }
+.toolbar-summary .sep       { color: var(--border); margin: 0 4px; }
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 14px;
+}
+.toolbar-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: opacity 0.12s, background 0.12s;
+}
+.toolbar-btn:hover { opacity: 0.85; }
+.toolbar-btn.primary   { background: var(--accent); color: #fff; }
+.toolbar-btn.secondary { background: var(--border); color: var(--text-3); }
+.toolbar-btn.ghost     { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+/* ── Toast notification ──────────────────────────────────── */
+.gmail-toast {
+  position: absolute;
+  top: 48px; /* below chrome bar */
+  right: 16px;
+  width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px 14px;
+  z-index: 30;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.2s ease-out;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.gmail-toast.dismissed {
+  animation: toastOut 0.25s ease-in forwards;
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-6px) scale(0.96); }
+}
+.toast-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: #5e1f2d;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.toast-body { flex: 1; min-width: 0; }
+.toast-agent {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+.toast-text {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.toast-action {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  display: inline-block;
+}
+.toast-action:hover { text-decoration: underline; }
+.toast-dismiss {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--dimmer);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.toast-dismiss:hover { background: var(--border); color: var(--text); }
+
+/* Auto-dismiss progress bar */
+.toast-progress {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 0 0 0 8px;
+  width: 100%;
+  animation: toastProgress 6s linear forwards;
+}
+@keyframes toastProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+/* ── Draft Review Panel (popover above toolbar) ──────────── */
+.draft-panel {
+  position: absolute;
+  bottom: 60px; /* above toolbar */
+  right: 16px;
+  width: 440px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  z-index: 25;
+  overflow: hidden;
+  animation: panelIn 0.18s ease-out;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.draft-panel.hidden { display: none; }
+
+.draft-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #121216;
+}
+.draft-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.draft-panel-count {
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+.draft-panel-close {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  color: var(--dimmer);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.draft-panel-close:hover { background: var(--border); color: var(--text); }
+
+.draft-panel-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.draft-panel-item:last-child { border-bottom: none; }
+.draft-panel-item:hover { background: #161618; }
+
+.draft-panel-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.draft-panel-body { flex: 1; min-width: 0; }
+.draft-panel-recipient {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1px;
+}
+.draft-panel-subject {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.draft-panel-snippet {
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.draft-panel-item-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+  align-self: center;
+}
+.dp-btn {
+  padding: 4px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: opacity 0.1s;
+  white-space: nowrap;
+}
+.dp-btn:hover { opacity: 0.82; }
+.dp-btn.approve { background: var(--accent); color: #fff; }
+.dp-btn.edit    { background: var(--border); color: var(--text-3); }
+.dp-btn.discard { background: transparent; border: 1px solid #4d1f1f; color: #ff6b6b; }
+
+/* ── Gmail responsive ────────────────────────────────────── */
+@media (max-width: 1199px) {
+  .gmail-sidebar { width: 160px; min-width: 160px; }
+  .gmail-list-pane { width: 300px; min-width: 240px; }
+}
+@media (max-width: 900px) {
+  .gmail-sidebar { display: none; }
+  .gmail-list-pane { width: 260px; min-width: 220px; }
+  .draft-panel { width: 320px; right: 8px; }
+  .gmail-toast { width: 260px; right: 8px; }
+  .toolbar-summary { display: none; }
+}
+@media (max-width: 599px) {
+  .gmail-list-pane { display: none; }
+  .gmail-reading-pane { padding: 16px 14px 70px; }
+  .agent-overlay-toolbar { padding: 0 10px; }
+  .toolbar-agent-name { font-size: 12px; }
+  .toolbar-btn.ghost { display: none; }
+  .draft-panel { width: calc(100vw - 16px); right: 8px; left: 8px; }
+  .gmail-toast { width: calc(100vw - 16px); right: 8px; left: 8px; }
+}
+
 </style>
 </head>
 <body>
@@ -1228,7 +1961,7 @@ html, body {
   <div class="tab nav-tab" data-view="agents">
     <span>👥</span><span class="tab-text"> Agents</span>
   </div>
-  <div class="tab">
+  <div class="tab nav-tab" data-view="gmail">
     <span>✉️</span><span class="tab-text"> Gmail</span>
     <span class="badge">4</span>
   </div>
@@ -1275,7 +2008,7 @@ html, body {
   </div>
   <div class="mobile-drawer-section">
     <div class="mobile-drawer-section-label">Channels</div>
-    <div class="mobile-drawer-item">
+    <div class="mobile-drawer-item" data-drawer-view="gmail">
       <span class="drawer-icon">✉️</span> Gmail
       <span class="drawer-badge">4</span>
     </div>
@@ -2303,6 +3036,423 @@ html, body {
     </div>
   </div>
 
+
+  <!-- ===========================================================
+       VIEW 5: GMAIL CHANNEL — Karoline Overlay
+       =========================================================== -->
+  <div class="view" id="view-gmail">
+
+    <!-- Simulated webview wrapper -->
+    <div class="gmail-webview-wrap">
+
+      <!-- Browser chrome strip -->
+      <div class="gmail-chrome">
+        <div class="gmail-chrome-nav">
+          <div class="gmail-chrome-nav-btn">&#8592;</div>
+          <div class="gmail-chrome-nav-btn">&#8594;</div>
+          <div class="gmail-chrome-nav-btn">&#8635;</div>
+        </div>
+        <div class="gmail-chrome-url">
+          <span class="lock">&#128274;</span>
+          <span class="url">mail.google.com/mail/u/0/#inbox</span>
+        </div>
+      </div>
+
+      <!-- Simulated Gmail app -->
+      <div class="gmail-app">
+
+        <!-- Gmail sidebar -->
+        <div class="gmail-sidebar">
+          <button class="gmail-compose-btn">
+            <span class="compose-icon">&#9998;</span> Compose
+          </button>
+          <div class="gmail-nav-item active">
+            <span class="gmail-nav-icon">&#128229;</span> Inbox
+            <span class="gmail-nav-count">14</span>
+          </div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon">&#11088;</span> Starred
+          </div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon">&#128336;</span> Snoozed
+          </div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon">&#128228;</span> Sent
+          </div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon">&#128196;</span> Drafts
+            <span class="gmail-nav-count" style="color:var(--accent);">3</span>
+          </div>
+          <div class="gmail-nav-section-label">Labels</div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon" style="color:#4a9fff;">&#11044;</span> Investors
+          </div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon" style="color:#ff8888;">&#11044;</span> Action Required
+          </div>
+          <div class="gmail-nav-item">
+            <span class="gmail-nav-icon" style="color:#6bffb0;">&#11044;</span> Triaged
+          </div>
+        </div>
+
+        <!-- Email list + reading pane -->
+        <div class="gmail-main">
+
+          <!-- Email list -->
+          <div class="gmail-list-pane">
+            <div class="gmail-list-header">
+              <div class="gmail-list-title">Inbox</div>
+              <div class="gmail-list-controls">
+                <div class="gmail-icon-btn">&#128269;</div>
+                <div class="gmail-icon-btn">&#8942;</div>
+              </div>
+            </div>
+
+            <div class="gmail-email-list">
+
+              <!-- Row 1: Lynn Nelson — open/expanded -->
+              <div class="gmail-email-row open" id="gmailRowLynn">
+                <div class="gmail-email-avatar" style="background:#1f4e5e;">LN</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Lynn Nelson</span>
+                    <span class="gmail-email-time">9:14 AM</span>
+                  </div>
+                  <div class="gmail-email-subject">Re: Buckner Site — Status Update</div>
+                  <div class="gmail-email-snippet">Hey Christian, just following up on the Buckner deliverables. Kyle mentioned a new...</div>
+                  <div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap;">
+                    <span class="gmail-agent-badge flagged">&#9873; Flagged</span>
+                    <span class="gmail-agent-badge draft">&#128196; Draft ready</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 2: Marcus Chen (Sequoia) — unread -->
+              <div class="gmail-email-row unread">
+                <div class="gmail-unread-dot"></div>
+                <div class="gmail-email-avatar" style="background:#1f3d2d;">MC</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Marcus Chen</span>
+                    <span class="gmail-email-time">8:51 AM</span>
+                  </div>
+                  <div class="gmail-email-subject">Re: Series A Term Sheet — Follow Up</div>
+                  <div class="gmail-email-snippet">Christian — confirming March 21st works on our end. Looking forward to the deeper...</div>
+                  <div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap;">
+                    <span class="gmail-agent-badge draft">&#128196; Draft ready</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 3: Sarah Chen — triaged -->
+              <div class="gmail-email-row">
+                <div class="gmail-email-avatar" style="background:#3d2d5e;">SC</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Sarah Chen</span>
+                    <span class="gmail-email-time">8:22 AM</span>
+                  </div>
+                  <div class="gmail-email-subject">Q1 Design Review — Slides ready for your feedback</div>
+                  <div class="gmail-email-snippet">Hi, attached are the final slide deck revisions. Can you review before Thursday?...</div>
+                  <div style="margin-top:5px;">
+                    <span class="gmail-agent-badge triaged">&#10003; Triaged</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 4: Investor Relations — unread -->
+              <div class="gmail-email-row unread">
+                <div class="gmail-unread-dot"></div>
+                <div class="gmail-email-avatar" style="background:#2d1f4e;">IR</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Investor Relations</span>
+                    <span class="gmail-email-time">7:58 AM</span>
+                  </div>
+                  <div class="gmail-email-subject">Q4 Reporting Deadline — Action Required</div>
+                  <div class="gmail-email-snippet">This is a reminder that Q4 reporting materials are due by March 20. Please submit...</div>
+                  <div style="margin-top:5px;">
+                    <span class="gmail-agent-badge flagged">&#9873; Flagged</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 5: Kyle Lasseter — triaged -->
+              <div class="gmail-email-row">
+                <div class="gmail-email-avatar" style="background:#4e3d1f;">KL</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Kyle Lasseter</span>
+                    <span class="gmail-email-time">7:31 AM</span>
+                  </div>
+                  <div class="gmail-email-subject">Alphagraphics Q2 — Adding the Riverside print run</div>
+                  <div class="gmail-email-snippet">Hey, I know Lynn's backlog is a little full but this one's a quick turnaround and...</div>
+                  <div style="margin-top:5px;display:flex;gap:4px;">
+                    <span class="gmail-agent-badge flagged">&#9873; Flagged</span>
+                    <span class="gmail-agent-badge triaged">&#10003; Triaged</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 6: GitHub Notifications — archived -->
+              <div class="gmail-email-row">
+                <div class="gmail-email-avatar" style="background:#222228;">GH</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">GitHub Notifications</span>
+                    <span class="gmail-email-time">6:44 AM</span>
+                  </div>
+                  <div class="gmail-email-subject">[openclaw/gateway] PR #47 merged by vulcan-bot</div>
+                  <div class="gmail-email-snippet">Gateway WebSocket RPC contracts — all 40 methods typed and verified by Argus...</div>
+                  <div style="margin-top:5px;">
+                    <span class="gmail-agent-badge archived">&#128448; Archived</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 7: Ashley De Ramos -->
+              <div class="gmail-email-row">
+                <div class="gmail-email-avatar" style="background:#5e3d1f;">AD</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Ashley De Ramos</span>
+                    <span class="gmail-email-time">Yesterday</span>
+                  </div>
+                  <div class="gmail-email-subject">Nashville — Dash staying with grandparents &#x2713;</div>
+                  <div class="gmail-email-snippet">Confirmed! Mom said she's happy to take Dash for the whole weekend. I'll drop him...</div>
+                  <div style="margin-top:5px;">
+                    <span class="gmail-agent-badge triaged">&#10003; Triaged</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 8: Southwest Airlines -->
+              <div class="gmail-email-row">
+                <div class="gmail-email-avatar" style="background:#1f3d1f;">SW</div>
+                <div class="gmail-email-body">
+                  <div class="gmail-email-top">
+                    <span class="gmail-email-sender">Southwest Airlines</span>
+                    <span class="gmail-email-time">Yesterday</span>
+                  </div>
+                  <div class="gmail-email-subject">Flight options: Nashville (BNA) Mar 26–29</div>
+                  <div class="gmail-email-snippet">We found 3 round-trip options matching your search. Prices start from $218 per...</div>
+                  <div style="margin-top:5px;">
+                    <span class="gmail-agent-badge triaged">&#10003; Triaged</span>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- .gmail-email-list -->
+          </div><!-- .gmail-list-pane -->
+
+          <!-- Reading pane — Lynn Nelson email open -->
+          <div class="gmail-reading-pane">
+            <div class="gmail-email-open-header">
+              <div class="gmail-email-open-subject">Re: Buckner Site — Status Update</div>
+              <div class="gmail-email-open-meta">
+                <div class="gmail-sender-avatar-lg">LN</div>
+                <div>
+                  <div class="gmail-email-open-from">Lynn Nelson &lt;l.nelson@alphagraphics-austin.com&gt;</div>
+                  <div class="gmail-email-open-to">to me &middot; Mar 15, 9:14 AM</div>
+                </div>
+                <div class="gmail-email-open-time">9:14 AM</div>
+              </div>
+              <div class="gmail-email-open-actions">
+                <button class="gmail-reply-btn primary">&#8617; Reply with Draft</button>
+                <button class="gmail-reply-btn">&#8617; Reply</button>
+                <button class="gmail-reply-btn">&#8618; Forward</button>
+                <button class="gmail-reply-btn">&#8942;</button>
+              </div>
+            </div>
+
+            <div class="gmail-divider"></div>
+
+            <div class="gmail-email-open-body">
+              <p class="greeting-line">Hey Christian,</p>
+              <p>Just following up on the Buckner site deliverables. I know we're a bit behind, and Kyle mentioned there might be a new Riverside print run coming my way too — wanted to give you a heads up before that lands.</p>
+              <p>The three items still outstanding are the banner artwork revisions, the exterior signage proof, and the updated brand guide PDF. I can have the banner done by end of this week if we can get the revised copy from the client by tomorrow.</p>
+              <p>No pressure — just wanted to keep you in the loop so nothing falls through the cracks.</p>
+              <p class="sign-off">Best,<br>Lynn</p>
+            </div>
+
+            <!-- Karoline annotation -->
+            <div class="gmail-karoline-annotation">
+              <div class="k-avatar">&#128737;</div>
+              <div>
+                <div class="k-label">Karoline &mdash; Analysis</div>
+                <div class="k-text">3 overdue deliverables identified. Lynn is aware of pipeline pressure. Draft reply acknowledges the backlog, sets a realistic timeline for banner copy, and gently defers the Riverside project. Hermes risk flag is referenced.</div>
+                <div class="k-actions">
+                  <button class="k-btn primary" id="gmailReviewDraftBtn">Review Draft</button>
+                  <button class="k-btn outline">View Hermes Flag</button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- .gmail-reading-pane -->
+
+        </div><!-- .gmail-main -->
+      </div><!-- .gmail-app -->
+
+      <!-- Toast notification -->
+      <div class="gmail-toast" id="gmailToast">
+        <div class="toast-icon">&#128737;</div>
+        <div class="toast-body">
+          <div class="toast-agent">Karoline</div>
+          <div class="toast-text">Drafted a reply to Lynn Nelson — addresses backlog and defers Riverside</div>
+          <span class="toast-action" id="gmailToastReview">Review &rarr;</span>
+        </div>
+        <button class="toast-dismiss" id="gmailToastDismiss" title="Dismiss">&#10005;</button>
+        <div class="toast-progress"></div>
+      </div>
+
+      <!-- Draft Review Panel -->
+      <div class="draft-panel hidden" id="gmailDraftPanel">
+        <div class="draft-panel-header">
+          <div class="draft-panel-title">
+            Pending Drafts
+            <span class="draft-panel-count">3</span>
+          </div>
+          <button class="draft-panel-close" id="gmailDraftPanelClose">&#10005;</button>
+        </div>
+
+        <!-- Draft 1: Lynn Nelson -->
+        <div class="draft-panel-item">
+          <div class="draft-panel-avatar" style="background:#1f4e5e;">LN</div>
+          <div class="draft-panel-body">
+            <div class="draft-panel-recipient">Lynn Nelson</div>
+            <div class="draft-panel-subject">Re: Buckner Site — Status Update</div>
+            <div class="draft-panel-snippet">Lynn, thanks for the update. Here's where we stand on each item…</div>
+          </div>
+          <div class="draft-panel-item-actions">
+            <button class="dp-btn approve">Approve</button>
+            <button class="dp-btn edit">Edit</button>
+            <button class="dp-btn discard">Discard</button>
+          </div>
+        </div>
+
+        <!-- Draft 2: Marcus Chen -->
+        <div class="draft-panel-item">
+          <div class="draft-panel-avatar" style="background:#1f3d2d;">MC</div>
+          <div class="draft-panel-body">
+            <div class="draft-panel-recipient">Marcus Chen</div>
+            <div class="draft-panel-subject">Re: Series A Term Sheet — Follow Up</div>
+            <div class="draft-panel-snippet">Marcus, thank you for confirming — March 21st works perfectly…</div>
+          </div>
+          <div class="draft-panel-item-actions">
+            <button class="dp-btn approve">Approve</button>
+            <button class="dp-btn edit">Edit</button>
+            <button class="dp-btn discard">Discard</button>
+          </div>
+        </div>
+
+        <!-- Draft 3: Kyle Lasseter -->
+        <div class="draft-panel-item">
+          <div class="draft-panel-avatar" style="background:#4e3d1f;">KL</div>
+          <div class="draft-panel-body">
+            <div class="draft-panel-recipient">Kyle Lasseter</div>
+            <div class="draft-panel-subject">Re: Alphagraphics Q2 — Riverside print run</div>
+            <div class="draft-panel-snippet">Kyle — appreciate the heads up. Lynn's current load is at capacity…</div>
+          </div>
+          <div class="draft-panel-item-actions">
+            <button class="dp-btn approve">Approve</button>
+            <button class="dp-btn edit">Edit</button>
+            <button class="dp-btn discard">Discard</button>
+          </div>
+        </div>
+
+      </div><!-- .draft-panel -->
+
+      <!-- Agent Overlay Toolbar -->
+      <div class="agent-overlay-toolbar">
+        <div class="toolbar-agent-identity">
+          <div class="toolbar-agent-avatar">
+            &#128737;
+            <div class="toolbar-status-dot"></div>
+          </div>
+          <span class="toolbar-agent-name">Karoline &#127801;</span>
+        </div>
+        <div class="toolbar-separator"></div>
+        <div class="toolbar-summary">
+          <span class="highlight">3 drafts ready</span>
+          <span class="sep">&middot;</span>
+          <span>2 flagged for review</span>
+          <span class="sep">&middot;</span>
+          <span>12 triaged</span>
+        </div>
+        <div class="toolbar-actions">
+          <button class="toolbar-btn primary" id="gmailReviewDraftsBtn">Review Drafts</button>
+          <button class="toolbar-btn secondary">Triage Settings</button>
+          <button class="toolbar-btn ghost">Pause Agent</button>
+        </div>
+      </div>
+
+    </div><!-- .gmail-webview-wrap -->
+
+    <!-- Right Rail: Karoline on Gmail -->
+    <div class="right-rail" id="rail-gmail">
+      <div class="rail-agent-tabs" id="railTabs-gmail">
+        <div class="rail-agent-tab">🧠</div>
+        <div class="rail-agent-tab active">🛡️<span class="tab-badge">3</span></div>
+        <div class="rail-agent-tab">🌈</div>
+        <div class="rail-agent-tab">📡</div>
+        <div class="rail-agent-tab">⏳</div>
+        <div class="rail-agent-tab">🏛️</div>
+        <div class="rail-agent-tab">🔮</div>
+        <div class="rail-agent-tab">🏠</div>
+      </div>
+      <div class="rail-header">
+        <div class="rail-agent-info">
+          <div class="rail-avatar" style="background:#5e1f2d;">🛡️</div>
+          <div>
+            <div class="rail-name">Karoline</div>
+            <div class="rail-role">Comms Commander</div>
+          </div>
+        </div>
+        <div class="rail-status">Active</div>
+      </div>
+      <div class="rail-chat">
+        <div class="chat-msg highlight">
+          <div class="msg-label">&#128737; GMAIL SUMMARY</div>
+          3 drafts pending approval<br>
+          2 items flagged (Lynn, Investor Relations)<br>
+          12 triaged since midnight
+        </div>
+        <div class="chat-msg agent">
+          <strong>Karoline</strong><br>
+          Lynn Nelson's email is open. I've drafted a reply that acknowledges the 3 overdue items and sets a realistic timeline. It also gently defers Kyle's new Riverside project.
+          <div class="draft-preview">
+            <div class="draft-header">
+              <span>DRAFT</span>
+              <span>Gmail &middot; r9821744</span>
+            </div>
+            <div class="draft-to">To: Lynn Nelson &lt;l.nelson@alphagraphics...&gt;</div>
+            <div class="draft-subject">Re: Buckner Site — Status Update</div>
+            <div class="draft-body">Lynn, thanks for keeping me posted. Here's where we stand — banner copy targeting EOW, signage proof by Monday, brand guide by next Wednesday…</div>
+          </div>
+          <div class="chat-action-row">
+            <button class="chat-btn primary">Approve &amp; send</button>
+            <button class="chat-btn secondary">Edit tone</button>
+            <button class="chat-btn outline">Defer</button>
+          </div>
+          <div class="msg-time">9:16 AM</div>
+        </div>
+        <div class="chat-msg agent">
+          <strong>Karoline</strong><br>
+          Also — Investor Relations sent a Q4 reporting deadline notice. Due March 20. Want me to draft a status update to send them, or flag it for Marcus to handle?
+          <div class="chat-action-row">
+            <button class="chat-btn primary">Draft update</button>
+            <button class="chat-btn secondary">Flag Marcus</button>
+          </div>
+          <div class="msg-time">9:17 AM</div>
+        </div>
+      </div>
+      <div class="rail-input">
+        <input type="text" placeholder="Message Karoline...">
+      </div>
+    </div>
+
+  </div><!-- #view-gmail -->
+
 </div><!-- end .app-shell -->
 
 <script>
@@ -2520,6 +3670,111 @@ html, body {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && mobileDrawer.classList.contains('open')) {
       closeMobileDrawer();
+    }
+  });
+
+  // ── Gmail view interactions ─────────────────────────────
+  const gmailDraftPanel      = document.getElementById('gmailDraftPanel');
+  const gmailDraftPanelClose = document.getElementById('gmailDraftPanelClose');
+  const gmailReviewDraftsBtn = document.getElementById('gmailReviewDraftsBtn');
+  const gmailReviewDraftBtn  = document.getElementById('gmailReviewDraftBtn');
+  const gmailToast           = document.getElementById('gmailToast');
+  const gmailToastDismiss    = document.getElementById('gmailToastDismiss');
+  const gmailToastReview     = document.getElementById('gmailToastReview');
+
+  function openDraftPanel() {
+    if (gmailDraftPanel) {
+      gmailDraftPanel.classList.remove('hidden');
+    }
+  }
+  function closeDraftPanel() {
+    if (gmailDraftPanel) {
+      gmailDraftPanel.classList.add('hidden');
+    }
+  }
+  function dismissToast() {
+    if (gmailToast) {
+      gmailToast.classList.add('dismissed');
+      setTimeout(() => { gmailToast.style.display = 'none'; }, 260);
+    }
+  }
+
+  if (gmailReviewDraftsBtn) gmailReviewDraftsBtn.addEventListener('click', openDraftPanel);
+  if (gmailReviewDraftBtn)  gmailReviewDraftBtn.addEventListener('click', openDraftPanel);
+  if (gmailDraftPanelClose) gmailDraftPanelClose.addEventListener('click', closeDraftPanel);
+  if (gmailToastDismiss)    gmailToastDismiss.addEventListener('click', dismissToast);
+  if (gmailToastReview) {
+    gmailToastReview.addEventListener('click', () => {
+      dismissToast();
+      openDraftPanel();
+    });
+  }
+
+  // Auto-dismiss toast after 6s
+  setTimeout(() => {
+    if (gmailToast && !gmailToast.classList.contains('dismissed')) {
+      dismissToast();
+    }
+  }, 6200);
+
+  // Draft panel "Approve" buttons — mark as done and remove row
+  document.querySelectorAll('.draft-panel-item .dp-btn.approve').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.draft-panel-item');
+      if (item) {
+        item.style.opacity = '0.45';
+        btn.textContent = 'Sent';
+        btn.disabled = true;
+        btn.style.background = '#1a2d1a';
+        btn.style.color = '#6bffb0';
+        setTimeout(() => {
+          item.style.transition = 'max-height 0.25s ease, opacity 0.2s';
+          item.style.maxHeight = item.offsetHeight + 'px';
+          requestAnimationFrame(() => {
+            item.style.maxHeight = '0';
+            item.style.overflow = 'hidden';
+            item.style.padding = '0';
+          });
+        }, 700);
+      }
+    });
+  });
+
+  // Draft panel "Discard" buttons
+  document.querySelectorAll('.draft-panel-item .dp-btn.discard').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.draft-panel-item');
+      if (item) {
+        item.style.opacity = '0.3';
+        setTimeout(() => {
+          item.style.transition = 'max-height 0.25s ease, opacity 0.2s';
+          item.style.maxHeight = item.offsetHeight + 'px';
+          requestAnimationFrame(() => {
+            item.style.maxHeight = '0';
+            item.style.overflow = 'hidden';
+            item.style.padding = '0';
+          });
+        }, 300);
+      }
+    });
+  });
+
+  // Email rows in gmail list — clicking switches reading pane active state
+  document.querySelectorAll('.gmail-email-row').forEach(row => {
+    row.addEventListener('click', () => {
+      document.querySelectorAll('.gmail-email-row').forEach(r => r.classList.remove('open'));
+      row.classList.add('open');
+      // Remove unread state
+      row.classList.remove('unread');
+      const dot = row.querySelector('.gmail-unread-dot');
+      if (dot) dot.style.visibility = 'hidden';
+    });
+  });
+
+  // Close draft panel with ESC when gmail view is active
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && gmailDraftPanel && !gmailDraftPanel.classList.contains('hidden')) {
+      closeDraftPanel();
     }
   });
 
