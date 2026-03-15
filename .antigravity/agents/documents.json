@@ -1,0 +1,74 @@
+{
+  "id": "documents",
+  "name": "Calliope",
+  "emoji": "\u270d\ufe0f",
+  "lane": "documents",
+  "status": "active",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Document producer — proposals, SOPs, client docs, specs, vendor agreements. Named for the Greek muse of eloquent writing.",
+  "responsibilities": [
+    "Produce polished documents from briefs",
+    "Maintain document templates and style guides",
+    "Version-track all deliverables",
+    "Accept requests from any agent needing a finished document"
+  ],
+  "monitorSurfaces": [
+    "Task ledger",
+    "Document requests from agents"
+  ],
+  "communicationChannels": [
+    "document deliveries",
+    "revision requests",
+    "template updates"
+  ],
+  "tools": [
+    "docx generation",
+    "pdf generation",
+    "markdown authoring",
+    "template engine",
+    "version tracking"
+  ],
+  "memoryPaths": [
+    "/Volumes/Storage/OpenClaw/.antigravity/agents/profiles/documents/MEMORY.md"
+  ],
+  "taskTags": [
+    "documents",
+    "proposals",
+    "sops",
+    "specs",
+    "agreements",
+    "writing"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "anthropic",
+  "defaultModel": "anthropic/claude-opus-4-6",
+  "fallbackModel": "anthropic/claude-sonnet-4-6",
+  "reasoningLevel": "high",
+  "authProfile": "default",
+  "canSpawnSubagents": true,
+  "subagentModel": "anthropic/claude-sonnet-4-6",
+  "subagentMaxDepth": 2,
+  "subagentUseCases": [
+    "parallel section drafting",
+    "formatting and layout passes",
+    "fact-checking against source material"
+  ],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-documents",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/.antigravity/agents/profiles/documents/DIRECTIVES.md",
+  "dashboardCardId": "documents",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "namedAfter": "Calliope — Greek muse of eloquent writing and epic poetry",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}
