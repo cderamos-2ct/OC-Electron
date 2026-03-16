@@ -122,7 +122,7 @@ export function FloatingMicButton() {
     return () => window.removeEventListener("keydown", handler);
   }, [toggle]);
 
-  // Handle send to chat (stubbed - will connect to OpenClaw agent)
+  // Handle send to chat (stubbed - will connect to Aegilume agent)
   const handleSendToChat = useCallback(
     (text: string) => {
       const trimmed = text.trim();
@@ -172,7 +172,7 @@ export function FloatingMicButton() {
             max-md:hidden
           "
           style={{
-            background: "var(--card, #1a1a2e)",
+            background: "var(--card, #131d33)",
             borderColor: "var(--border, #2a2a4a)",
           }}
         >

@@ -1,4 +1,4 @@
-// OpenClaw Gateway Wire Protocol Types
+// Aegilume Gateway Wire Protocol Types
 // Ported from openclaw/src/gateway/protocol/schema/*
 
 // ─── Frame Types ────────────────────────────────────────────────────────────
@@ -127,6 +127,15 @@ export type ChatEvent = {
   stopReason?: string;
 };
 
+export type LoopbackEvent = {
+  sessionKey: string;
+  kind?: string;
+  synthetic?: boolean;
+  runId?: string;
+  message?: unknown;
+  meta?: Record<string, unknown>;
+};
+
 export type ChatAbortParams = {
   sessionKey: string;
   runId?: string;
@@ -136,10 +145,17 @@ export type ChatAbortParams = {
 
 export type AgentIdentity = {
   name?: string;
+  displayName?: string;
   theme?: string;
   emoji?: string;
   avatar?: string;
   avatarUrl?: string;
+  persona?: string;
+  operatingStyle?: string;
+  strengths?: string[];
+  escalationStyle?: string;
+  signatureTone?: string;
+  supervisor?: string | null;
 };
 
 export type AgentRuntimeSummary = {
@@ -162,8 +178,15 @@ export type AgentRuntimeSummary = {
 export type AgentSummary = {
   id: string;
   name?: string;
+  displayName?: string;
   identity?: AgentIdentity;
   lane?: string;
+  persona?: string;
+  operatingStyle?: string;
+  strengths?: string[];
+  escalationStyle?: string;
+  signatureTone?: string;
+  supervisor?: string | null;
   status?: "active" | "planned" | "paused";
   runtimeAgentId?: string | null;
   description?: string;
@@ -685,6 +708,7 @@ export type GatewayEventMap = {
   "connect.challenge": { nonce: string };
   "agent": unknown;
   "chat": ChatEvent;
+  "loopback": LoopbackEvent;
   "presence": PresenceEntry[];
   "tick": { ts: number };
   "talk.mode": { enabled: boolean };
@@ -703,3 +727,195 @@ export type GatewayEventMap = {
 };
 
 export type GatewayEventName = keyof GatewayEventMap;
+
+export type AgentTaskSummary = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  ownerAgent: string | null;
+  updatedAt: string;
+  latestActivity?: string | null;
+  nextStep?: string | null;
+  blockedBy?: string[];
+  artifacts?: string[];
+  needsChristian?: boolean;
+};
+
+export type InterAgentCommunicationType =
+  | "handoff"
+  | "overlap_notice"
+  | "second_opinion"
+  | "dependency_ping"
+  | "friction_note";
+
+export type InterAgentCommunicationAudience = "internal_only" | "needs_christian";
+export type InterAgentCommunicationUrgency = "low" | "normal" | "high" | "needs_now";
+export type InterAgentCommunicationStatus = "open" | "acknowledged" | "resolved";
+
+export type InterAgentCommunicationTaskRef = {
+  id: string;
+  title?: string | null;
+};
+
+export type InterAgentCommunication = {
+  id: string;
+  type: InterAgentCommunicationType;
+  typeLabel: string;
+  senderAgentId: string;
+  senderDisplayName: string;
+  recipientAgentIds: string[];
+  recipientDisplayNames: string[];
+  primaryTaskId?: string | null;
+  taskRefs: InterAgentCommunicationTaskRef[];
+  summary: string;
+  actionRequested?: string | null;
+  contextNote?: string | null;
+  urgency: InterAgentCommunicationUrgency;
+  status: InterAgentCommunicationStatus;
+  audience: InterAgentCommunicationAudience;
+  defaultAudience: InterAgentCommunicationAudience;
+  audienceLabel: string;
+  policyNote: string;
+  escalationReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  routeBackTo?: ReplyRouteTarget | null;
+};
+
+export type InterAgentCommunicationSummary = {
+  total: number;
+  internalOnly: number;
+  needsChristian: number;
+  open: number;
+  byType: Array<{
+    type: InterAgentCommunicationType;
+    label: string;
+    total: number;
+    internalOnly: number;
+    needsChristian: number;
+  }>;
+};
+
+export type AgentRosterCard = {
+  id: string;
+  displayName: string;
+  emoji?: string;
+  lane?: string;
+  persona?: string;
+  operatingStyle?: string;
+  strengths?: string[];
+  escalationStyle?: string;
+  signatureTone?: string;
+  supervisor?: string | null;
+  status?: string;
+  runtimeState?: string | null;
+  currentTasks: AgentTaskSummary[];
+  pendingCount: number;
+  blockedCount: number;
+  recentCompleted: AgentTaskSummary[];
+  lastMeaningfulUpdate?: string | null;
+  linkedSessions: SessionSummary[];
+};
+
+export type WorkerSessionGroup = {
+  groupId: string;
+  label: string;
+  parentType: "agent" | "task" | "system";
+  parentAgentId?: string | null;
+  parentTaskId?: string | null;
+  sessionKeys: string[];
+  latestSessionAt?: number | null;
+  status?: string;
+  latestSummary?: string | null;
+  sessions: SessionSummary[];
+};
+
+export type NeedsChristianItem = {
+  id: string;
+  title: string;
+  reason: string;
+  urgency?: "fyi" | "attention_soon" | "needs_now";
+  nextStep?: string | null;
+  blockedBy?: string[];
+  artifacts?: string[];
+  ownerAgentId?: string | null;
+  status: string;
+  priority: string;
+  updatedAt: string;
+  routeBackTo?: ReplyRouteTarget | null;
+  suggestedReplies?: SuggestedReplyOption[];
+};
+
+export type SuggestedReplyOption = {
+  label: string;
+  text: string;
+};
+
+export type ReplyRouteTarget = {
+  kind: "task" | "needs_christian" | "rollup";
+  taskId: string;
+  agentId?: string | null;
+  sessionKey?: string | null;
+};
+
+export type CommandRollupCard = {
+  id: string;
+  kind: "fyi" | "blocked" | "completed" | "needs_decision" | "risk_flag";
+  title: string;
+  summary: string;
+  taskId?: string | null;
+  agentId?: string | null;
+  priority: string;
+  updatedAt: string;
+  routeBackTo?: ReplyRouteTarget | null;
+  suggestedReplies?: SuggestedReplyOption[];
+};
+
+export type TaskStateBucket = {
+  key: "current" | "pending" | "blocked" | "complete";
+  label: string;
+  description: string;
+  tasks: AgentTaskSummary[];
+  total: number;
+};
+
+export type CommandChatViewModel = {
+  commandSectionLabel: string;
+  commandSession: SessionSummary;
+  activeSessionKey: string;
+  backgroundGroups: WorkerSessionGroup[];
+  ungroupedSessions: SessionSummary[];
+  needsChristian: NeedsChristianItem[];
+  rollups: CommandRollupCard[];
+  taskState: TaskStateBucket[];
+};
+
+export type ServerVisibilitySummary = {
+  generatedAt?: string;
+  agents: AgentSummary[];
+  sessions: SessionSummary[];
+  rosterCards: AgentRosterCard[];
+  tasks: AgentTaskSummary[];
+  needsChristian: NeedsChristianItem[];
+  rollups: CommandRollupCard[];
+  taskState: TaskStateBucket[];
+  communications: InterAgentCommunication[];
+  communicationSummary: InterAgentCommunicationSummary;
+  summary: {
+    agentCount: number;
+    sessionCount: number;
+    proactiveCount: number;
+  };
+};
+
+export type OpsTaskLike = {
+  id: string;
+  title: string;
+  description?: string;
+  content?: string;
+  status: string;
+  priority: string;
+  assignee?: string | null;
+  updatedAt: string;
+};

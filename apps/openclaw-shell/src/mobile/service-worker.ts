@@ -123,8 +123,8 @@ function offlineFallback(request: Request): Response {
     return new Response(
       `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Aegilume — Offline</title>
       <meta name="viewport" content="width=device-width,initial-scale=1">
-      <style>body{background:#0a0a0e;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:12px}
-      h1{color:#e85d3a;font-size:1.5rem;margin:0}p{opacity:.6;font-size:.9rem;margin:0}</style>
+      <style>body{background:#0f172a;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:12px}
+      h1{color:#a3862a;font-size:1.5rem;margin:0}p{opacity:.6;font-size:.9rem;margin:0}</style>
       </head><body><h1>Aegilume</h1><p>You're offline. Reconnect to continue.</p></body></html>`,
       { status: 503, headers: { 'Content-Type': 'text/html' } }
     );

@@ -78,7 +78,7 @@ export default function OpenClawVoicePage() {
 function TTSSettings() {
   const { status, providers, loading, error, enable, disable, setProvider, convert } =
     useOpenClawTTS();
-  const [testText, setTestText] = useState("Hello, I am OpenClaw, your personal AI assistant.");
+  const [testText, setTestText] = useState("Hello, I am Aegilume, your personal AI assistant.");
   const [converting, setConverting] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
@@ -504,7 +504,7 @@ function TalkModeSettings() {
             Talk Mode
           </p>
           <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Enable continuous voice conversation with OpenClaw (STT + TTS loop)
+            Enable continuous voice conversation with Aegilume (STT + TTS loop)
           </p>
         </div>
         <button

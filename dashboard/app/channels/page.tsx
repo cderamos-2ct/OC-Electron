@@ -180,7 +180,7 @@ export default function OpenClawChannelsPage() {
                   No channels configured
                 </p>
                 <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-                  Configure messaging channels in your OpenClaw config
+                  Configure messaging channels in your Aegilume config
                 </p>
               </div>
             ) : (
@@ -441,7 +441,7 @@ function QRPanel({
           {state.message || "Connected!"}
         </p>
         <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
-          {channelLabel} is now linked to OpenClaw
+          {channelLabel} is now linked to Aegilume
         </p>
       </div>
     );

@@ -42,7 +42,7 @@ export function VoiceTranscriptPreview({
         animate-in slide-in-from-bottom-2 fade-in duration-200
       "
       style={{
-        background: "var(--card, #1a1a2e)",
+        background: "var(--card, #131d33)",
         borderColor: "var(--border, #2a2a4a)",
       }}
     >

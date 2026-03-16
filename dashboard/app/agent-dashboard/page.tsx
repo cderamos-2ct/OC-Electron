@@ -9,7 +9,7 @@ export default function AgentDashboardPage() {
   return (
     <EmbeddedDashboardFrame
       title="Agent Dashboard"
-      description="Mounted from the legacy OpenClaw agent dashboard server with same-origin route rewriting."
+      description="Mounted from the legacy Aegilume agent dashboard server with same-origin route rewriting."
       mountPath={mountPath}
     />
   );

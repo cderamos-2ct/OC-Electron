@@ -125,7 +125,7 @@ export default function OpenClawCronPage() {
                   No cron jobs
                 </p>
                 <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-                  Add cron jobs via the OpenClaw CLI
+                  Add cron jobs via the Aegilume CLI
                 </p>
               </div>
             ) : (

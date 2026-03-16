@@ -1,0 +1,9 @@
+export { HomeView } from './home';
+export { TasksView } from './tasks';
+export { DraftReviewView } from './draft-review';
+export { AgentsView } from './agents';
+export { CommsView } from './comms';
+export { CalendarView } from './calendar';
+export { GitHubView } from './github';
+export { BrowserView } from './browser';
+export { VaultView } from './vault';

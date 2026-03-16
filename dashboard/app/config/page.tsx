@@ -102,7 +102,7 @@ export default function OpenClawConfigPage() {
                   Configuration
                 </h2>
                 <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-                  OpenClaw system settings
+                  Aegilume system settings
                   {configData?.path ? (
                     <span className="ml-2 break-all font-mono text-xs opacity-60">
                       {configData.path}

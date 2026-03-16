@@ -1,4 +1,4 @@
-// OpenClaw Gateway WebSocket Client
+// Aegilume Gateway WebSocket Client
 // Ported from openclaw/ui/src/ui/gateway.ts to plain TypeScript (no Lit dependency)
 
 import { clearDeviceAuthToken, loadDeviceAuthToken, storeDeviceAuthToken } from "./device-auth";
@@ -90,7 +90,7 @@ export class GatewayClient {
   private connectSent = false;
   private connectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private backoffMs = 800;
+  private backoffMs = 1500;
   private pendingConnectError: GatewayRequestError | null = null;
   private tokenOnlyFallbackAttempted = false;
   private opts: Required<
@@ -157,12 +157,21 @@ export class GatewayClient {
     }
     const id = crypto.randomUUID();
     const frame = { type: "req", id, method, params };
+    // Use params.timeoutMs when present (e.g. chat.send sends 120s) so the
+    // client-side timeout matches the gateway-side timeout, plus a buffer.
+    const paramsTimeout =
+      params && typeof params === "object" && "timeoutMs" in params
+        ? (params as { timeoutMs?: number }).timeoutMs
+        : undefined;
+    const timeoutMs = paramsTimeout
+      ? paramsTimeout + 5_000 // add 5s buffer over gateway timeout
+      : this.opts.rpcTimeoutMs;
 
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`RPC timeout: ${method} (${this.opts.rpcTimeoutMs}ms)`));
-      }, this.opts.rpcTimeoutMs);
+        reject(new Error(`RPC timeout: ${method} (${timeoutMs}ms)`));
+      }, timeoutMs);
 
       this.pending.set(id, {
         resolve: (v) => resolve(v as T),
