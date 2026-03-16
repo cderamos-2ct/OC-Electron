@@ -4741,7 +4741,9 @@ html, body {
 .vault-filter-pills {
   display: flex;
   gap: 4px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow-x: auto;
 }
 .vault-pill {
   padding: 4px 11px;
@@ -4770,14 +4772,17 @@ html, body {
   font-family: inherit;
   transition: opacity 0.12s;
   white-space: nowrap;
-  flex-shrink: 0;
+  flex-shrink: 1;
 }
 .vault-add-btn:hover { opacity: 0.88; }
 .vault-conn-status {
   font-size: 11px;
   color: var(--dim);
   white-space: nowrap;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .vault-conn-status .conn-dot {
   display: inline-block;
@@ -4792,6 +4797,7 @@ html, body {
 .vault-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -4808,6 +4814,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
   transition: opacity 0.3s, max-height 0.4s, padding 0.3s, margin 0.3s;
   overflow: hidden;
   max-height: 400px;
