@@ -3,12 +3,12 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { AgentDetail, AgentFeedItem, AgentHireDraft, AgentManagerAudit, AgentManagerDelegationTrace, AgentManagerRecommendation, AgentOwnedTask, AgentRuntimeTriageItem, AgentSummary } from "@/lib/types";
 
-const ROOT_DIR = "/Volumes/Storage/OpenClaw/.antigravity";
+const ROOT_DIR = process.env.OPENCLAW_DATA_DIR || "/Volumes/Storage/OpenClaw-Data";
 const AGENTS_DIR = path.join(ROOT_DIR, "agents");
 const AGENT_PROFILES_DIR = path.join(AGENTS_DIR, "profiles");
 const TASK_INDEX_PATH = path.join(ROOT_DIR, "tasks", "index.json");
 const TASK_ITEMS_DIR = path.join(ROOT_DIR, "tasks", "items");
-const DATA_DIR = "/Volumes/Storage/OpenClaw/data";
+const DATA_DIR = path.join(ROOT_DIR, "data");
 const JOURNAL_DB_PATH = path.join(DATA_DIR, "journal.db");
 const RUNTIME_DB_PATH = path.join(DATA_DIR, "antigravity.db");
 const AGENT_RUNTIME_DIR = path.join(ROOT_DIR, "runtime");
@@ -30,8 +30,15 @@ type JoinedRosterPayload = {
 type AgentRecord = {
   id: string;
   name: string;
+  displayName?: string;
   emoji?: string;
   lane?: string;
+  persona?: string;
+  operatingStyle?: string;
+  strengths?: string[];
+  escalationStyle?: string;
+  signatureTone?: string;
+  supervisor?: string | null;
   status?: "active" | "planned" | "paused";
   runtimeAgentId?: string | null;
   default?: boolean;
@@ -121,6 +128,68 @@ function readRosterAgent(agentId: string) {
     : null;
 }
 
+const PERSONA_DEFAULTS: Record<string, { persona: string; operatingStyle: string; strengths: string[]; escalationStyle: string; signatureTone: string }> = {
+  cd: {
+    persona: "chief of staff",
+    operatingStyle: "orchestrates, prioritizes, and keeps the whole machine honest",
+    strengths: ["triage", "delegation", "context stitching"],
+    escalationStyle: "surfaces decisions early and summarizes tradeoffs",
+    signatureTone: "crisp, managerial, slightly opinionated",
+  },
+  build: {
+    persona: "pragmatic builder",
+    operatingStyle: "implementation-first and impatient with scope creep",
+    strengths: ["shipping code", "UI cleanup", "tooling fixes"],
+    escalationStyle: "flags ambiguity once, then asks for a concrete cut",
+    signatureTone: "terse, direct, mildly stubborn",
+  },
+  ops: {
+    persona: "systems fixer",
+    operatingStyle: "skeptical, cleanup-minded, and always checking the blast radius",
+    strengths: ["runtime debugging", "service health", "hardening"],
+    escalationStyle: "raises risk flags fast when the stack looks weird",
+    signatureTone: "dry, vigilant, operational",
+  },
+  notes: {
+    persona: "archivist",
+    operatingStyle: "orderly, contextual, and fussy about naming",
+    strengths: ["synthesis", "documentation", "retrieval"],
+    escalationStyle: "asks for clarity when the source material is messy",
+    signatureTone: "calm, precise, contextual",
+  },
+  research: {
+    persona: "scout",
+    operatingStyle: "curious, synthesis-heavy, trend-aware",
+    strengths: ["source gathering", "briefs", "pattern spotting"],
+    escalationStyle: "brings options with confidence notes",
+    signatureTone: "curious, sharp, forward-looking",
+  },
+  calendar: {
+    persona: "scheduler",
+    operatingStyle: "time-sensitive and dependency-aware",
+    strengths: ["timing", "briefing prep", "conflict detection"],
+    escalationStyle: "pings early when timing choices affect outcomes",
+    signatureTone: "crisp, deadline-aware",
+  },
+  comms: {
+    persona: "diplomat",
+    operatingStyle: "audience-aware and cautious with voice",
+    strengths: ["reply drafting", "triage", "follow-up"],
+    escalationStyle: "asks before sending anything risky or public",
+    signatureTone: "polished, measured",
+  },
+};
+
+function personaDefaultsFor(id: string) {
+  return PERSONA_DEFAULTS[id] ?? {
+    persona: "specialist operator",
+    operatingStyle: "focused, practical, lane-specific",
+    strengths: ["execution"],
+    escalationStyle: "raises blockers with context",
+    signatureTone: "clear, operational",
+  };
+}
+
 function summarizeJoinedRosterAgent(agent: Record<string, any>): AgentSummary {
   const runtime = (agent.runtime ?? {}) as AgentSummary["runtime"];
   const activeTasks = Array.isArray(agent.activeTasks) ? agent.activeTasks : [];
@@ -138,14 +207,32 @@ function summarizeJoinedRosterAgent(agent: Record<string, any>): AgentSummary {
     { queued: 0, running: 0, blocked: 0, done: 0, failed: 0, total: 0 },
   );
 
+  const agentId = String(agent.id || "unknown");
+  const personaDefaults = personaDefaultsFor(agentId);
+  const displayName = typeof agent.displayName === "string" ? agent.displayName : typeof agent.name === "string" ? agent.name : agentId;
+
   return {
-    id: String(agent.id || "unknown"),
+    id: agentId,
     name: typeof agent.name === "string" ? agent.name : undefined,
+    displayName,
     identity: {
       name: typeof agent.name === "string" ? agent.name : undefined,
+      displayName,
       emoji: typeof agent.emoji === "string" ? agent.emoji : undefined,
+      persona: typeof agent.persona === "string" ? agent.persona : personaDefaults.persona,
+      operatingStyle: typeof agent.operatingStyle === "string" ? agent.operatingStyle : personaDefaults.operatingStyle,
+      strengths: Array.isArray(agent.strengths) ? agent.strengths : personaDefaults.strengths,
+      escalationStyle: typeof agent.escalationStyle === "string" ? agent.escalationStyle : personaDefaults.escalationStyle,
+      signatureTone: typeof agent.signatureTone === "string" ? agent.signatureTone : personaDefaults.signatureTone,
+      supervisor: typeof agent.supervisor === "string" ? agent.supervisor : null,
     },
     lane: typeof agent.lane === "string" ? agent.lane : undefined,
+    persona: typeof agent.persona === "string" ? agent.persona : personaDefaults.persona,
+    operatingStyle: typeof agent.operatingStyle === "string" ? agent.operatingStyle : personaDefaults.operatingStyle,
+    strengths: Array.isArray(agent.strengths) ? agent.strengths : personaDefaults.strengths,
+    escalationStyle: typeof agent.escalationStyle === "string" ? agent.escalationStyle : personaDefaults.escalationStyle,
+    signatureTone: typeof agent.signatureTone === "string" ? agent.signatureTone : personaDefaults.signatureTone,
+    supervisor: typeof agent.supervisor === "string" ? agent.supervisor : null,
     status: agent.status === "active" || agent.status === "paused" || agent.status === "planned" ? agent.status : "planned",
     runtimeAgentId: typeof agent.runtimeAgentId === "string" ? agent.runtimeAgentId : null,
     description: typeof agent.description === "string" ? agent.description : undefined,
@@ -700,6 +787,7 @@ function mergedAgentSummary(params: { record?: AgentRecord | null; rosterAgent?:
 }
 
 function summarizeAgent(record: AgentRecord, tasks: TaskIndexEntry[]): AgentSummary {
+  const personaDefaults = personaDefaultsFor(record.id);
   const ownedTasks = tasks.filter((task) => task.owner_agent === record.id);
   const relatedTasks = tasks.filter((task) =>
     (record.taskTags ?? []).some((tag) => (task.tags ?? []).includes(tag)),
@@ -715,7 +803,14 @@ function summarizeAgent(record: AgentRecord, tasks: TaskIndexEntry[]): AgentSumm
   return {
     id: record.id,
     name: record.name,
+    displayName: record.displayName || record.name,
     lane: record.lane,
+    persona: record.persona || personaDefaults.persona,
+    operatingStyle: record.operatingStyle || personaDefaults.operatingStyle,
+    strengths: record.strengths?.length ? record.strengths : personaDefaults.strengths,
+    escalationStyle: record.escalationStyle || personaDefaults.escalationStyle,
+    signatureTone: record.signatureTone || personaDefaults.signatureTone,
+    supervisor: record.supervisor ?? null,
     status: record.status,
     runtimeAgentId: record.runtimeAgentId ?? null,
     description: record.description,
@@ -745,8 +840,15 @@ function summarizeAgent(record: AgentRecord, tasks: TaskIndexEntry[]): AgentSumm
     taskTags: record.taskTags ?? [],
     identity: {
       name: record.name,
+      displayName: record.displayName || record.name,
       emoji: record.emoji,
       theme: record.description,
+      persona: record.persona || personaDefaults.persona,
+      operatingStyle: record.operatingStyle || personaDefaults.operatingStyle,
+      strengths: record.strengths?.length ? record.strengths : personaDefaults.strengths,
+      escalationStyle: record.escalationStyle || personaDefaults.escalationStyle,
+      signatureTone: record.signatureTone || personaDefaults.signatureTone,
+      supervisor: record.supervisor ?? null,
     },
     taskCounts: statusCounts(visibleTasks),
     lastTaskUpdate: latest ? new Date(latest).toISOString() : null,

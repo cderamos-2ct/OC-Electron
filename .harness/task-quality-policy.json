@@ -1,5 +1,5 @@
 {
-  "appSmokeCommand": "",
+  "appSmokeCommand": "cd dashboard && npm run build",
   "mode": "strict",
   "baselineFile": ".harness/task-quality-baseline.json"
 }

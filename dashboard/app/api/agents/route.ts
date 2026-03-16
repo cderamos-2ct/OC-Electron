@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { createCanonicalAgent, listCanonicalAgents } from "@/lib/antigravity-agents";
+import { getServerVisibilitySummary } from "@/lib/antigravity-tasks";
 
 export async function GET() {
+  const visibility = getServerVisibilitySummary();
   return NextResponse.json({
     defaultId: "cd",
-    agents: listCanonicalAgents(),
+    agents: visibility.agents ?? listCanonicalAgents(),
+    visibility,
   });
 }
 

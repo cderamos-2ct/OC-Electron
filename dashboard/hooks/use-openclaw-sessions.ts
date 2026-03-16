@@ -1,17 +1,26 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useOpenClaw } from "@/contexts/OpenClawContext";
 import type { SessionSummary, SessionsListParams } from "@/lib/types";
+
+const SESSIONS_LIST_MIN_INTERVAL_MS = 2_000;
 
 export function useOpenClawSessions(params?: SessionsListParams) {
   const { rpc, isConnected } = useOpenClaw();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lastSessionsListRef = useRef<number>(0);
+  const sessionsListInFlightRef = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!isConnected) return;
+    if (sessionsListInFlightRef.current) return;
+    const now = Date.now();
+    if (now - lastSessionsListRef.current < SESSIONS_LIST_MIN_INTERVAL_MS) return;
+    sessionsListInFlightRef.current = true;
+    lastSessionsListRef.current = now;
     setLoading(true);
     setError(null);
     try {
@@ -29,6 +38,7 @@ export function useOpenClawSessions(params?: SessionsListParams) {
       setError(err instanceof Error ? err.message : "Failed to load sessions");
     } finally {
       setLoading(false);
+      sessionsListInFlightRef.current = false;
     }
   }, [rpc, isConnected, params]);
 

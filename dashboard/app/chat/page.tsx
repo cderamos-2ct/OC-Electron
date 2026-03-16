@@ -14,6 +14,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useOpenClawChat, type ChatMessage } from "@/hooks/use-openclaw-chat";
 import { useOpenClawSessions } from "@/hooks/use-openclaw-sessions";
+import { useOpenClawAgents } from "@/hooks/use-openclaw-agents";
+import { useAgentOps } from "@/hooks/use-agent-ops";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { useOpenClaw } from "@/contexts/OpenClawContext";
 import { useHeaderActions } from "@/components/HeaderActionsContext";
@@ -28,13 +30,24 @@ import {
   writeSessionTalkMode,
   writeSessionVoiceAutoSpeak,
 } from "@/lib/voice-chat";
-import type { SessionSummary } from "@/lib/types";
+import { CoordinationFeedCard } from "@/components/CoordinationFeedCard";
+import type {
+  AgentRosterCard,
+  CommandRollupCard,
+  InterAgentCommunication,
+  InterAgentCommunicationSummary,
+  SessionSummary,
+  TaskStateBucket,
+} from "@/lib/types";
+import { buildAgentRosterCards, buildCommandChatView } from "@/lib/command-chat-view";
+import { AgentRosterCardView } from "@/components/AgentRosterCardView";
 import {
   AlertCircle,
   Archive,
   Bot,
   ChevronDown,
   ChevronUp,
+  Columns3,
   Loader2,
   Mic,
   MicOff,
@@ -46,14 +59,23 @@ import {
   Sparkles,
   Square,
   Trash2,
+  Type,
   User,
   Volume2,
   VolumeX,
+  X,
 } from "lucide-react";
+import type { AgentTaskSummary, OpsTaskLike } from "@/lib/types";
 
 const DEFAULT_CHAT_SESSION_KEY = "dashboard-chat";
 const MOBILE_SESSION_STORAGE_KEY = "openclaw.chat.last-session";
 const CHAT_DRAFT_STORAGE_PREFIX = "openclaw.chat.draft.";
+const CHAT_TEXT_SCALE_STORAGE_KEY = "openclaw.chat.text-scale";
+const CHAT_MEASURE_STORAGE_KEY = "openclaw.chat.measure";
+
+type ChatTextScale = "compact" | "comfortable";
+type ChatMeasure = "narrow" | "wide";
+type RailModal = "rollups" | "needs" | "agents" | null;
 
 function isHiddenUtilitySession(session: SessionSummary) {
   if ((session.agentId || "").toLowerCase() === "heartbeat") {
@@ -73,6 +95,18 @@ function isHiddenUtilitySession(session: SessionSummary) {
 
 function isSubagentSession(session: SessionSummary) {
   return session.key.toLowerCase().includes(":subagent:");
+}
+
+function readStoredChatTextScale() {
+  if (typeof window === "undefined") return "compact" as ChatTextScale;
+  const value = window.localStorage.getItem(CHAT_TEXT_SCALE_STORAGE_KEY);
+  return value === "comfortable" ? "comfortable" : "compact";
+}
+
+function readStoredChatMeasure() {
+  if (typeof window === "undefined") return "narrow" as ChatMeasure;
+  const value = window.localStorage.getItem(CHAT_MEASURE_STORAGE_KEY);
+  return value === "wide" ? "wide" : "narrow";
 }
 
 function sessionTypeLabel(session: SessionSummary) {
@@ -123,6 +157,30 @@ function ChatPageContent({
   const { isConnected, hello, rpc, state: gatewayState } = useOpenClaw();
   const { sessions, loading: sessionsLoading, error: sessionsError, refresh, deleteSession, resetSession, compactSession } =
     useOpenClawSessions();
+  const { agents, visibility: agentVisibility } = useOpenClawAgents();
+  const { tasks, visibility: opsVisibility } = useAgentOps();
+  const serverVisibility = opsVisibility ?? agentVisibility;
+  const visibilityAgents = serverVisibility?.agents ?? agents;
+  const visibilitySessions = serverVisibility?.sessions ?? sessions;
+  const visibilityRosterCards = serverVisibility?.rosterCards ?? null;
+  const visibilityNeedsChristian = serverVisibility?.needsChristian ?? null;
+  const visibilityRollups = serverVisibility?.rollups ?? null;
+  const visibilityTaskState = serverVisibility?.taskState ?? null;
+  const visibilityCommunications = serverVisibility?.communications ?? [];
+  const visibilityCommunicationSummary: InterAgentCommunicationSummary | null = serverVisibility?.communicationSummary ?? null;
+  const visibilityTasks = useMemo<OpsTaskLike[]>(
+    () =>
+      (serverVisibility?.tasks ?? []).map((task: AgentTaskSummary) => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+        assignee: task.ownerAgent,
+        updatedAt: task.updatedAt,
+      })),
+    [serverVisibility],
+  );
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [sessionSearch, setSessionSearch] = useState("");
   const [input, setInput] = useState("");
@@ -134,7 +192,13 @@ function ChatPageContent({
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth <= 767 : false,
   );
+  const [isTablet, setIsTablet] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth > 767 && window.innerWidth <= 1180 : false,
+  );
   const [mobileSessionPickerOpen, setMobileSessionPickerOpen] = useState(false);
+  const [railModal, setRailModal] = useState<RailModal>(null);
+  const [chatTextScale, setChatTextScale] = useState<ChatTextScale>(readStoredChatTextScale);
+  const [chatMeasure, setChatMeasure] = useState<ChatMeasure>(readStoredChatMeasure);
   const defaultSessionKey = hello?.snapshot?.sessionDefaults?.mainSessionKey;
   const [preferredSessionKey, setPreferredSessionKey] = useState(() => {
     if (typeof window === "undefined") {
@@ -203,50 +267,79 @@ function ChatPageContent({
     };
   }, [workingSessionKey]);
 
-  const filteredSessions = useMemo(() => {
-    const visibleSessions = sessions.filter((session) => !isHiddenUtilitySession(session));
-    const nonSubagentSessions = visibleSessions.filter((session) => !isSubagentSession(session));
-    const workerSessions = visibleSessions.filter((session) => isSubagentSession(session));
-    const hasWorkingMain = nonSubagentSessions.some((session) => session.key === syntheticMainSession.key);
-    const orderedSessions = [
-      ...(hasWorkingMain ? [] : [syntheticMainSession]),
-      ...nonSubagentSessions,
-      ...workerSessions,
-    ];
+  const visibleSessions = useMemo(
+    () => visibilitySessions.filter((session) => !isHiddenUtilitySession(session)),
+    [visibilitySessions],
+  );
+
+  const commandChatView = useMemo(
+    () =>
+      buildCommandChatView({
+        sessions: visibleSessions,
+        agents: visibilityAgents,
+        tasks: visibilityTasks.length ? visibilityTasks : tasks,
+        activeSessionKey,
+        commandSession: syntheticMainSession,
+        needsChristianItems: visibilityNeedsChristian ?? undefined,
+        rollups: visibilityRollups ?? undefined,
+        taskState: visibilityTaskState ?? undefined,
+      }),
+    [activeSessionKey, syntheticMainSession, tasks, visibilityAgents, visibilityNeedsChristian, visibilityRollups, visibilityTaskState, visibilityTasks, visibleSessions],
+  );
+
+  const rosterCards = useMemo<AgentRosterCard[]>(() => {
+    const baseCards =
+      visibilityRosterCards ??
+      buildAgentRosterCards({
+        agents: visibilityAgents,
+        tasks: visibilityTasks.length ? visibilityTasks : tasks,
+        sessions: visibleSessions,
+      });
     const needle = sessionSearch.trim().toLowerCase();
     if (!needle) {
-      return orderedSessions;
+      return baseCards;
     }
-
-    return orderedSessions.filter((session) => {
-      return [
-        session.displayName,
-        session.key,
-        session.channel,
-        session.origin?.label,
-        session.agentId,
+    return baseCards.filter((card) =>
+      [
+        card.displayName,
+        card.id,
+        card.lane,
+        card.persona,
+        ...card.currentTasks.map((task) => task.title),
       ]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(needle));
-    });
-  }, [sessionSearch, sessions, syntheticMainSession]);
-
-  const sessionRailSessions = useMemo(() => {
-    const visibleSessions = sessions.filter((session) => !isHiddenUtilitySession(session));
-    const nonSubagentSessions = visibleSessions.filter((session) => !isSubagentSession(session));
-    const workerSessions = visibleSessions.filter((session) => isSubagentSession(session));
-    const hasWorkingMain = nonSubagentSessions.some((session) => session.key === syntheticMainSession.key);
-    return [
-      ...(hasWorkingMain ? [] : [syntheticMainSession]),
-      ...nonSubagentSessions,
-      ...workerSessions,
-    ];
-  }, [sessions, syntheticMainSession]);
+        .some((value) => String(value).toLowerCase().includes(needle)),
+    );
+  }, [sessionSearch, tasks, visibilityAgents, visibilityRosterCards, visibilityTasks, visibleSessions]);
 
   const activeSessionLabel = useMemo(() => {
-    const activeSession = sessionRailSessions.find((session) => session.key === activeSessionKey);
-    return activeSession?.displayName || activeSession?.origin?.label || activeSession?.key || "No sessions";
-  }, [activeSessionKey, sessionRailSessions]);
+    const activeSession = visibleSessions.find((session) => session.key === activeSessionKey);
+    if (activeSessionKey === commandChatView.commandSession.key) {
+      return "Command";
+    }
+    return activeSession?.displayName || activeSession?.origin?.label || activeSession?.key || "Command";
+  }, [activeSessionKey, commandChatView.commandSession.key, visibleSessions]);
+
+  const handleRouteReply = useCallback(
+    (route: { taskId: string; agentId?: string | null; kind?: string | null } | null | undefined, text: string) => {
+      const prefix = route
+        ? `[Route task=${route.taskId}${route.agentId ? ` agent=${route.agentId}` : ""}${route.kind ? ` kind=${route.kind}` : ""}]`
+        : "";
+      const next = [prefix, text].filter(Boolean).join(" ");
+      setPreferredSessionKey(commandChatView.commandSession.key);
+      if (commandChatView.commandSession.key !== defaultSessionKey) {
+        router.replace(`/chat?session=${encodeURIComponent(commandChatView.commandSession.key)}`, { scroll: false });
+      } else {
+        router.replace("/chat", { scroll: false });
+      }
+      setInput(next);
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        inputRef.current?.setSelectionRange(next.length, next.length);
+      });
+    },
+    [commandChatView.commandSession.key, defaultSessionKey, router],
+  );
 
   useEffect(() => {
     setSessionSpeakReplies(readSessionVoiceAutoSpeak(activeSessionKey));
@@ -292,21 +385,39 @@ function ChatPageContent({
       return;
     }
 
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const tabletQuery = window.matchMedia("(min-width: 768px) and (max-width: 1180px)");
     const sync = () => {
-      setIsMobile(mediaQuery.matches);
-      if (!mediaQuery.matches) {
+      setIsMobile(mobileQuery.matches);
+      setIsTablet(tabletQuery.matches);
+      if (!mobileQuery.matches) {
         setMobileSessionPickerOpen(false);
       }
     };
 
     sync();
-    mediaQuery.addEventListener("change", sync);
+    mobileQuery.addEventListener("change", sync);
+    tabletQuery.addEventListener("change", sync);
 
     return () => {
-      mediaQuery.removeEventListener("change", sync);
+      mobileQuery.removeEventListener("change", sync);
+      tabletQuery.removeEventListener("change", sync);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.localStorage.setItem(CHAT_TEXT_SCALE_STORAGE_KEY, chatTextScale);
+  }, [chatTextScale]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.localStorage.setItem(CHAT_MEASURE_STORAGE_KEY, chatMeasure);
+  }, [chatMeasure]);
 
   useEffect(() => {
     if (!isMobile) {
@@ -785,6 +896,36 @@ function ChatPageContent({
       <div className="flex items-center gap-2">
         <button
           type="button"
+          onClick={() => setChatTextScale((current) => (current === "compact" ? "comfortable" : "compact"))}
+          className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/5"
+          style={{
+            borderColor: "var(--border)",
+            color: "var(--text-secondary)",
+            background: "rgba(255, 255, 255, 0.03)",
+          }}
+          title="Toggle chat text size"
+        >
+          <Type className="h-4 w-4" />
+          <span className="hidden sm:inline">{chatTextScale === "compact" ? "Text S" : "Text M"}</span>
+        </button>
+        {!isMobile ? (
+          <button
+            type="button"
+            onClick={() => setChatMeasure((current) => (current === "narrow" ? "wide" : "narrow"))}
+            className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/5"
+            style={{
+              borderColor: "var(--border)",
+              color: "var(--text-secondary)",
+              background: "rgba(255, 255, 255, 0.03)",
+            }}
+            title="Toggle chat width"
+          >
+            <Columns3 className="h-4 w-4" />
+            <span className="hidden sm:inline">{chatMeasure === "narrow" ? "Width N" : "Width W"}</span>
+          </button>
+        ) : null}
+        <button
+          type="button"
           onClick={() =>
             setSessionSpeakReplies((current) => {
               const next = !current;
@@ -855,6 +996,37 @@ function ChatPageContent({
           {sessionTalkMode ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           <span className="hidden sm:inline">{sessionTalkMode ? "Talk on" : "Talk"}</span>
         </button>
+        {!isMobile ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setRailModal("rollups")}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/5"
+              style={{ borderColor: "var(--border)", color: "#93c5fd", background: "rgba(59, 130, 246, 0.08)" }}
+            >
+              <span className="hidden sm:inline">Rollups</span>
+              <span>{commandChatView.rollups.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRailModal("needs")}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/5"
+              style={{ borderColor: "var(--border)", color: "#fbbf24", background: "rgba(251, 191, 36, 0.08)" }}
+            >
+              <span className="hidden sm:inline">Needs</span>
+              <span>{commandChatView.needsChristian.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRailModal("agents")}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-white/5"
+              style={{ borderColor: "var(--border)", color: "var(--text-secondary)", background: "rgba(255, 255, 255, 0.03)" }}
+            >
+              <span className="hidden sm:inline">Agents</span>
+              <span>{rosterCards.length}</span>
+            </button>
+          </>
+        ) : null}
         <button
           type="button"
           onClick={() => setMobileSessionPickerOpen(true)}
@@ -872,7 +1044,7 @@ function ChatPageContent({
     );
 
     return () => setHeaderActions(null);
-  }, [activeSessionKey, activeSessionLabel, activeSpeechMessageKey, isAssistantSpeaking, lastAssistantSpokenText, mobileSessionPickerOpen, sessionSpeakReplies, sessionTalkMode, setHeaderActions, stopActiveSpeech, stopListening, speakAssistantReply]);
+  }, [activeSessionKey, activeSessionLabel, activeSpeechMessageKey, chatMeasure, chatTextScale, commandChatView.needsChristian.length, commandChatView.rollups.length, isAssistantSpeaking, isMobile, lastAssistantSpokenText, mobileSessionPickerOpen, rosterCards.length, sessionSpeakReplies, sessionTalkMode, setHeaderActions, stopActiveSpeech, stopListening, speakAssistantReply]);
 
   useEffect(() => {
     const latestAssistant = [...messages]
@@ -959,7 +1131,7 @@ function ChatPageContent({
 
   return (
     <div className="shell-chat-page h-full min-h-0 min-w-0 overflow-hidden px-2 py-2 md:px-6 md:py-6">
-      <div className="grid h-full min-h-0 flex-1 gap-3 overflow-hidden md:gap-4 md:grid-cols-[320px_minmax(0,1fr)]">
+      <div className={`grid h-full min-h-0 flex-1 gap-3 overflow-hidden md:gap-4 ${isTablet ? "md:grid-cols-[248px_minmax(0,1fr)]" : "md:grid-cols-[264px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]"}`}>
         {!isMobile ? (
           <div className="order-2 min-h-0 md:order-1 md:h-full">
             <SessionRail
@@ -973,7 +1145,11 @@ function ChatPageContent({
               onSearchChange={setSessionSearch}
               onSelectSession={handleSelectSession}
               searchValue={sessionSearch}
-              sessions={filteredSessions}
+              commandChatView={commandChatView}
+              communications={visibilityCommunications}
+              communicationSummary={visibilityCommunicationSummary}
+              rosterCards={rosterCards}
+              onUseSuggestedReply={handleRouteReply}
             />
           </div>
         ) : null}
@@ -1052,6 +1228,12 @@ function ChatPageContent({
             sessionTalkMode={sessionTalkMode}
             hasReplayableSpeech={Boolean(lastAssistantSpokenText)}
             sessions={sessions}
+            commandRollups={commandChatView.rollups}
+            taskStateBuckets={commandChatView.taskState}
+            showControlPanel={activeSessionKey === commandChatView.commandSession.key}
+            onUseSuggestedReply={handleRouteReply}
+            chatMeasure={chatMeasure}
+            chatTextScale={chatTextScale}
             onSelectSession={handleSelectSession}
             onMessagesScroll={(event) => {
               const node = event.currentTarget;
@@ -1077,10 +1259,32 @@ function ChatPageContent({
               onSearchChange={setSessionSearch}
               onSelectSession={handleSelectSession}
               searchValue={sessionSearch}
-              sessions={filteredSessions}
+              commandChatView={commandChatView}
+              communications={visibilityCommunications}
+              communicationSummary={visibilityCommunicationSummary}
+              rosterCards={rosterCards}
+              onUseSuggestedReply={handleRouteReply}
             />
           </div>
         </div>
+      ) : null}
+      {railModal ? (
+        <RailModalOverlay
+          mode={railModal}
+          rosterCards={rosterCards}
+          rollups={commandChatView.rollups}
+          needsChristian={commandChatView.needsChristian}
+          onClose={() => setRailModal(null)}
+          onSelectSession={(key) => {
+            setRailModal(null);
+            handleSelectSession(key);
+          }}
+          onUseSuggestedReply={(route, text) => {
+            setRailModal(null);
+            handleRouteReply(route, text);
+          }}
+          isTablet={isTablet}
+        />
       ) : null}
     </div>
   );
@@ -1128,6 +1332,12 @@ function ChatThread({
   sessionTalkMode,
   hasReplayableSpeech,
   sessions,
+  commandRollups,
+  taskStateBuckets,
+  showControlPanel,
+  onUseSuggestedReply,
+  chatMeasure,
+  chatTextScale,
 }: {
   abort: () => Promise<void>;
   composerRef: React.RefObject<HTMLDivElement | null>;
@@ -1170,6 +1380,12 @@ function ChatThread({
   sessionTalkMode: boolean;
   hasReplayableSpeech: boolean;
   sessions: SessionSummary[];
+  commandRollups: CommandRollupCard[];
+  taskStateBuckets: TaskStateBucket[];
+  showControlPanel: boolean;
+  onUseSuggestedReply: (route: { taskId: string; agentId?: string | null; kind?: string | null } | null | undefined, text: string) => void;
+  chatMeasure: ChatMeasure;
+  chatTextScale: ChatTextScale;
 }) {
   return (
     <section
@@ -1210,7 +1426,55 @@ function ChatThread({
           overscrollBehavior: "contain",
         }}
       >
-        <div className="space-y-4 pb-3">
+        <div className={`space-y-4 pb-3 ${chatMeasure === "narrow" ? "mx-auto w-full max-w-[780px] lg:max-w-[840px]" : "mx-auto w-full max-w-[1100px]"}`}>
+          {showControlPanel && (commandRollups.length || taskStateBuckets.length) ? (
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+              {commandRollups.length ? (
+                <div className="rounded-[1.5rem] border p-4" style={{ borderColor: "rgba(96, 165, 250, 0.2)", background: "rgba(59, 130, 246, 0.08)" }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: "#93c5fd" }}>Command Rollups</div>
+                  <div className="mt-3 space-y-3">
+                    {commandRollups.map((rollup) => (
+                      <div key={rollup.id} className="rounded-2xl border px-4 py-3" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                        <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{rollup.title}</div>
+                        <div className="mt-1 text-xs leading-5" style={{ color: "var(--text-secondary)" }}>{rollup.summary}</div>
+                        {rollup.suggestedReplies?.length ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {rollup.suggestedReplies.slice(0, 2).map((reply) => (
+                              <button
+                                key={reply.label}
+                                type="button"
+                                className="rounded-full border px-2.5 py-1 text-[11px]"
+                                style={{ borderColor: "var(--border)", color: "#93c5fd" }}
+                                onClick={() => onUseSuggestedReply(rollup.routeBackTo, reply.text)}
+                              >
+                                {reply.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {taskStateBuckets.length ? (
+                <div className="rounded-[1.5rem] border p-4" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,0.02)" }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--text-secondary)" }}>Agent Work Queue</div>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    {taskStateBuckets.map((bucket) => (
+                      <div key={bucket.key} className="rounded-2xl border px-3 py-3" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--text-secondary)" }}>{bucket.label}</div>
+                        <div className="mt-1 text-lg font-semibold" style={{ color: "var(--text-primary)" }}>{bucket.total}</div>
+                        <div className="mt-2 text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
+                          {bucket.tasks[0]?.id ? `${bucket.tasks[0].id} · ${bucket.tasks[0].title}` : "Nothing here right now."}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {messages.length === 0 ? (
             <div className="flex h-full min-h-[18rem] flex-col items-center justify-center rounded-[1.75rem] border text-center" style={{ borderColor: "var(--border)", background: "rgba(255, 255, 255, 0.02)" }}>
               <Bot className="mb-4 h-16 w-16" style={{ color: "var(--text-secondary)" }} />
@@ -1232,6 +1496,7 @@ function ChatThread({
               onResumeReading={onResumeReading}
               isReading={activeSpeechMessageKey === (message.runId || message.id) && isAssistantSpeaking}
               isReadPaused={activeSpeechMessageKey === (message.runId || message.id) && speechPaused}
+              textScale={chatTextScale}
             />
           ))}
 
@@ -1371,7 +1636,7 @@ function ChatThread({
             onPaste={onPaste}
             placeholder="Message the current session..."
             rows={1}
-            className="min-w-0 flex-1 resize-none bg-transparent text-sm leading-relaxed outline-none"
+            className={`min-w-0 flex-1 resize-none bg-transparent outline-none ${chatTextScale === "comfortable" ? "text-[15px] leading-8" : "text-[13px] leading-6"}`}
             style={{
               color: "var(--text-primary)",
               maxHeight: "192px",
@@ -1417,8 +1682,12 @@ function SessionRail({
   onRefresh,
   onSearchChange,
   onSelectSession,
+  onUseSuggestedReply,
   searchValue,
-  sessions,
+  commandChatView,
+  communications,
+  communicationSummary,
+  rosterCards,
 }: {
   activeSessionKey: string;
   actionLoading: string | null;
@@ -1431,15 +1700,15 @@ function SessionRail({
   onRefresh: () => void;
   onSearchChange: (value: string) => void;
   onSelectSession: (key: string) => void;
+  onUseSuggestedReply: (route: { taskId: string; agentId?: string | null; kind?: string | null } | null | undefined, text: string) => void;
   searchValue: string;
-  sessions: SessionSummary[];
+  commandChatView: ReturnType<typeof buildCommandChatView>;
+  communications: InterAgentCommunication[];
+  communicationSummary: InterAgentCommunicationSummary | null;
+  rosterCards: AgentRosterCard[];
 }) {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth <= 767 : false,
-  );
-  const [mobileExpanded, setMobileExpanded] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth > 767 : true,
-  );
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth <= 767 : false);
+  const [mobileExpanded, setMobileExpanded] = useState(() => typeof window !== "undefined" ? window.innerWidth > 767 : true);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -1447,168 +1716,311 @@ function SessionRail({
       setIsMobile(mediaQuery.matches);
       setMobileExpanded((current) => (mediaQuery.matches ? current : true));
     };
-
     sync();
     mediaQuery.addEventListener("change", sync);
     return () => mediaQuery.removeEventListener("change", sync);
   }, []);
 
   useEffect(() => {
-    if (!isMobile) {
-      return;
-    }
-    setMobileExpanded(false);
+    if (isMobile) setMobileExpanded(false);
   }, [activeSessionKey, isMobile]);
 
   const showBody = mobileOverlay ? true : !isMobile || mobileExpanded;
-  const sessionCountLabel = `${sessions.length} session${sessions.length === 1 ? "" : "s"}`;
-  const workingSessions = sessions.filter((session) => !isSubagentSession(session));
-  const workerSessions = sessions.filter((session) => isSubagentSession(session));
+  const sessionCount = 1 + commandChatView.backgroundGroups.reduce((sum, group) => sum + group.sessions.length, 0) + commandChatView.ungroupedSessions.length;
 
   return (
-    <aside
-      className={`relative z-0 flex h-auto min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-[var(--radius-shell)] border md:h-full ${mobileOverlay ? "h-full" : ""}`}
-      style={{
-        background: "rgba(9, 18, 24, 0.96)",
-        borderColor: "var(--border)",
-      }}
-    >
+    <aside className={`relative z-0 flex h-auto min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-[var(--radius-shell)] border md:h-full ${mobileOverlay ? "h-full" : ""}`} style={{ background: "rgba(9, 18, 24, 0.96)", borderColor: "var(--border)" }}>
       <div className="flex items-center justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "var(--border)" }}>
         <div>
-          <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-            Conversations
-          </div>
-          <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Switch sessions without leaving chat.
-          </div>
+          <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Command chat</div>
+          <div className="text-xs" style={{ color: "var(--text-secondary)" }}>One foreground thread, with agents and worker traces grouped behind it.</div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors hover:bg-white/5"
-            style={{
-              borderColor: "var(--border)",
-              color: "var(--text-secondary)",
-            }}
-            onClick={onNewSession}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>New</span>
-          </button>
-          {mobileOverlay ? (
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors hover:bg-white/5"
-              style={{
-                borderColor: "var(--border)",
-                color: "var(--text-secondary)",
-              }}
-              onClick={onClose}
-            >
-              <span>Close</span>
-            </button>
-          ) : null}
-          {isMobile ? (
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors hover:bg-white/5"
-              style={{
-                borderColor: "var(--border)",
-                color: "var(--text-secondary)",
-              }}
-              onClick={() => setMobileExpanded((current) => !current)}
-            >
-              <span>{mobileExpanded ? "Hide" : "Show"}</span>
-              {mobileExpanded ? (
-                <ChevronUp className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5" />
-              )}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="rounded-lg p-2 transition-colors hover:bg-white/5"
-            style={{ color: "var(--text-secondary)" }}
-            onClick={onRefresh}
-            title="Refresh sessions"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
+          <button type="button" className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors hover:bg-white/5" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }} onClick={onNewSession}><Sparkles className="h-3.5 w-3.5" /><span>New</span></button>
+          {mobileOverlay ? <button type="button" className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors hover:bg-white/5" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }} onClick={onClose}><span>Close</span></button> : null}
+          {isMobile ? <button type="button" className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors hover:bg-white/5" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }} onClick={() => setMobileExpanded((current) => !current)}><span>{mobileExpanded ? "Hide" : "Show"}</span>{mobileExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}</button> : null}
+          <button type="button" className="rounded-lg p-2 transition-colors hover:bg-white/5" style={{ color: "var(--text-secondary)" }} onClick={onRefresh} title="Refresh sessions"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></button>
         </div>
       </div>
-
-      {isMobile ? (
-        <div className="border-b px-5 py-3 text-xs" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
-          {sessionCountLabel}
+      {isMobile ? <div className="border-b px-5 py-3 text-xs" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>{sessionCount} tracked sessions</div> : null}
+      {showBody ? <>
+        <div className="border-b px-5 py-4" style={{ borderColor: "var(--border)" }}>
+          <label className="flex items-center gap-3 rounded-xl border px-3 py-2" style={{ background: "rgba(255, 255, 255, 0.03)", borderColor: "var(--border)" }}>
+            <Search className="h-4 w-4" style={{ color: "var(--text-secondary)" }} />
+            <input type="text" value={searchValue} onChange={(event) => onSearchChange(event.target.value)} placeholder="Search agents or work..." className="w-full bg-transparent text-sm outline-none" style={{ color: "var(--text-primary)" }} />
+          </label>
+          {error ? <div className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-500">{error}</div> : null}
         </div>
-      ) : null}
+        <div data-session-scroll-container className={`min-h-0 flex-1 overflow-y-auto px-3 py-3 ${mobileOverlay ? "" : "max-md:max-h-[18rem]"}`}>
+          <div className="space-y-3">
+            <div>
+              <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-secondary)" }}>Command</div>
+              <SessionListRow active={activeSessionKey === commandChatView.commandSession.key} actionLoading={actionLoading} onAction={onAction} onSelect={onSelectSession} session={{ ...commandChatView.commandSession, displayName: "Command", label: "Chief of Staff" }} />
+              {commandChatView.taskState.length ? (
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  {commandChatView.taskState.map((bucket) => (
+                    <div key={bucket.key} className="rounded-xl border px-2.5 py-2" style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--text-secondary)" }}>{bucket.label}</div>
+                      <div className="mt-1 text-base font-semibold" style={{ color: "var(--text-primary)" }}>{bucket.total}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {commandChatView.rollups.length ? (
+                <CompactInsightSection
+                  title="Command Rollups"
+                  tone="blue"
+                  items={commandChatView.rollups.slice(0, 4).map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    summary: item.summary,
+                    actionLabel: item.suggestedReplies?.[0]?.label ?? null,
+                    onAction: item.suggestedReplies?.[0]
+                      ? () => onUseSuggestedReply(item.routeBackTo, item.suggestedReplies![0].text)
+                      : undefined,
+                  }))}
+                />
+              ) : null}
+              {commandChatView.needsChristian.length ? (
+                <CompactInsightSection
+                  title="Needs Christian"
+                  tone="amber"
+                  items={commandChatView.needsChristian.slice(0, 4).map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    summary: item.reason,
+                    badges: [item.priority, item.status],
+                    actions: item.suggestedReplies?.slice(0, 2).map((reply) => ({
+                      label: reply.label,
+                      onClick: () => onUseSuggestedReply(item.routeBackTo, reply.text),
+                    })),
+                  }))}
+                />
+              ) : null}
+              {communications.length ? (
+                <div className="mt-3">
+                  <CoordinationFeedCard
+                    title="Coordination Layer"
+                    communications={communications}
+                    summary={communicationSummary}
+                    maxItems={4}
+                    compact
+                    surface="plain"
+                  />
+                </div>
+              ) : null}
+            </div>
+            <div>
+              <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-secondary)" }}>Agents</div>
+              <div className="space-y-2">{rosterCards.map((card) => <AgentRosterRow key={card.id} card={card} onSelectSession={onSelectSession} />)}</div>
+            </div>
+            <div>
+              <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-secondary)" }}>Background work</div>
+              <div className="space-y-2">{commandChatView.backgroundGroups.map((group) => <WorkerGroupRow key={group.groupId} group={group} activeSessionKey={activeSessionKey} actionLoading={actionLoading} onAction={onAction} onSelectSession={onSelectSession} />)}{commandChatView.ungroupedSessions.length ? <SessionSection title="Ungrouped traces" sessions={commandChatView.ungroupedSessions} activeSessionKey={activeSessionKey} actionLoading={actionLoading} onAction={onAction} onSelect={onSelectSession} /> : null}</div>
+            </div>
+          </div>
+        </div>
+      </> : null}
+    </aside>
+  );
+}
 
-      {showBody ? (
-        <>
-          <div className="border-b px-5 py-4" style={{ borderColor: "var(--border)" }}>
-            <label
-              className="flex items-center gap-3 rounded-xl border px-3 py-2"
-              style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                borderColor: "var(--border)",
-              }}
+function CompactInsightSection({
+  title,
+  tone,
+  items,
+}: {
+  title: string;
+  tone: "blue" | "amber";
+  items: Array<{
+    id: string;
+    title: string;
+    summary: string;
+    badges?: string[];
+    actionLabel?: string | null;
+    onAction?: (() => void) | undefined;
+    actions?: Array<{ label: string; onClick: () => void }> | undefined;
+  }>;
+}) {
+  const toneStyle =
+    tone === "blue"
+      ? {
+          borderColor: "rgba(96, 165, 250, 0.2)",
+          background: "rgba(59, 130, 246, 0.06)",
+          titleColor: "#93c5fd",
+          actionColor: "#93c5fd",
+        }
+      : {
+          borderColor: "rgba(251, 191, 36, 0.2)",
+          background: "rgba(251, 191, 36, 0.06)",
+          titleColor: "#fbbf24",
+          actionColor: "#fbbf24",
+        };
+
+  return (
+    <div className="mt-2 rounded-2xl border px-3 py-3" style={{ borderColor: toneStyle.borderColor, background: toneStyle.background }}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: toneStyle.titleColor }}>
+          {title}
+        </div>
+        <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>
+          {items.length} shown
+        </div>
+      </div>
+      <div className="space-y-2">
+        {items.map((item) => (
+          <div key={item.id} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="line-clamp-2 text-sm font-medium leading-5" style={{ color: "var(--text-primary)" }}>
+                  {item.title}
+                </div>
+                <div className="mt-1 line-clamp-3 text-xs leading-5" style={{ color: "var(--text-secondary)" }}>
+                  {item.summary}
+                </div>
+              </div>
+              {item.badges?.length ? (
+                <div className="flex flex-col items-end gap-1">
+                  {item.badges.filter(Boolean).slice(0, 2).map((badge) => (
+                    <span key={badge} className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em]" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
+                      {badge}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {item.actions?.length ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {item.actions.map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    className="rounded-full border px-2.5 py-1 text-[11px]"
+                    style={{ borderColor: "var(--border)", color: toneStyle.actionColor }}
+                    onClick={action.onClick}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            ) : item.actionLabel && item.onAction ? (
+              <button
+                type="button"
+                className="mt-2 rounded-full border px-2.5 py-1 text-[11px]"
+                style={{ borderColor: "var(--border)", color: toneStyle.actionColor }}
+                onClick={item.onAction}
+              >
+                {item.actionLabel}
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RailModalOverlay({
+  mode,
+  rosterCards,
+  rollups,
+  needsChristian,
+  onClose,
+  onSelectSession,
+  onUseSuggestedReply,
+  isTablet,
+}: {
+  mode: Exclude<RailModal, null>;
+  rosterCards: AgentRosterCard[];
+  rollups: CommandRollupCard[];
+  needsChristian: ReturnType<typeof buildCommandChatView>["needsChristian"];
+  onClose: () => void;
+  onSelectSession: (key: string) => void;
+  onUseSuggestedReply: (route: { taskId: string; agentId?: string | null; kind?: string | null } | null | undefined, text: string) => void;
+  isTablet: boolean;
+}) {
+  const title = mode === "rollups" ? "Command Rollups" : mode === "needs" ? "Needs Christian" : "Agents";
+  const wide = mode === "agents";
+
+  return (
+    <div className="fixed inset-0 z-[70] bg-[rgba(3,7,10,0.76)] backdrop-blur-sm">
+      <div className={`absolute ${isTablet ? "inset-x-8 top-8 bottom-8" : "inset-x-3 top-3 bottom-3 md:left-[18rem] md:right-8 md:top-8 md:bottom-8"} flex`}>
+        <div
+          className={`flex h-full w-full flex-col overflow-hidden rounded-[var(--radius-shell)] border ${wide ? "" : "max-w-[720px]"}`}
+          style={{ borderColor: "var(--border)", background: "rgba(9, 18, 24, 0.98)" }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "var(--border)" }}>
+            <div>
+              <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{title}</div>
+              <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                {mode === "agents" ? "Compact agent roster with session jump links." : "Focused review without rail scrolling."}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center justify-center rounded-full border p-2 transition-colors hover:bg-white/5"
+              style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+              aria-label="Close modal"
             >
-              <Search className="h-4 w-4" style={{ color: "var(--text-secondary)" }} />
-              <input
-                type="text"
-                value={searchValue}
-                onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Search sessions..."
-                className="w-full bg-transparent text-sm outline-none"
-                style={{ color: "var(--text-primary)" }}
-              />
-            </label>
-            {error ? (
-              <div className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-500">
-                {error}
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            {mode === "rollups" ? (
+              <div className="space-y-2">
+                {rollups.map((item) => (
+                  <div key={item.id} className="rounded-xl border px-3 py-3" style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(59, 130, 246, 0.06)" }}>
+                    <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{item.title}</div>
+                    <div className="mt-1 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{item.summary}</div>
+                    {item.suggestedReplies?.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.suggestedReplies.slice(0, 2).map((reply) => (
+                          <button key={reply.label} type="button" className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "var(--border)", color: "#93c5fd" }} onClick={() => onUseSuggestedReply(item.routeBackTo, reply.text)}>
+                            {reply.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {mode === "needs" ? (
+              <div className="space-y-2">
+                {needsChristian.map((item) => (
+                  <div key={item.id} className="rounded-xl border px-3 py-3" style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(251, 191, 36, 0.06)" }}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{item.id} · {item.title}</div>
+                        <div className="mt-1 text-sm leading-6" style={{ color: "var(--text-secondary)" }}>{item.reason}</div>
+                      </div>
+                      <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em]" style={{ borderColor: "var(--border)", color: "#fbbf24" }}>{item.priority}</span>
+                    </div>
+                    {item.suggestedReplies?.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.suggestedReplies.slice(0, 2).map((reply) => (
+                          <button key={reply.label} type="button" className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "var(--border)", color: "#fbbf24" }} onClick={() => onUseSuggestedReply(item.routeBackTo, reply.text)}>
+                            {reply.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {mode === "agents" ? (
+              <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+                {rosterCards.map((card) => (
+                  <AgentRosterCardView key={card.id} card={card} onOpenSession={onSelectSession} />
+                ))}
               </div>
             ) : null}
           </div>
-
-          <div
-            data-session-scroll-container
-            className={`min-h-0 flex-1 overflow-y-auto px-3 py-3 ${mobileOverlay ? "" : "max-md:max-h-[18rem]"}`}
-          >
-            {loading && sessions.length === 0 ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--text-secondary)" }} />
-              </div>
-            ) : sessions.length === 0 ? (
-              <div className="rounded-2xl border px-4 py-5 text-sm" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
-                No matching sessions yet. Start a new conversation and it will appear here.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <SessionSection
-                  title="Working Sessions"
-                  sessions={workingSessions}
-                  activeSessionKey={activeSessionKey}
-                  actionLoading={actionLoading}
-                  onAction={onAction}
-                  onSelect={onSelectSession}
-                />
-                {workerSessions.length ? (
-                  <SessionSection
-                    title="Worker Sessions"
-                    sessions={workerSessions}
-                    activeSessionKey={activeSessionKey}
-                    actionLoading={actionLoading}
-                    onAction={onAction}
-                    onSelect={onSelectSession}
-                  />
-                ) : null}
-              </div>
-            )}
-          </div>
-        </>
-      ) : null}
-    </aside>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1782,6 +2194,7 @@ function ChatBubble({
   onResumeReading,
   isReading,
   isReadPaused,
+  textScale,
 }: {
   message: ChatMessage;
   onReadAloud: (text: string, messageKey: string) => void;
@@ -1789,8 +2202,10 @@ function ChatBubble({
   onResumeReading: () => void;
   isReading: boolean;
   isReadPaused: boolean;
+  textScale: ChatTextScale;
 }) {
   const isUser = message.role === "user";
+  const isProactive = message.provenance === "proactive";
   const isStreaming = message.state === "delta";
   const messageKey = message.runId || message.id;
   const textContent = (
@@ -1799,30 +2214,57 @@ function ChatBubble({
       .map((part) => part.text)
       .join("\n\n") || message.content
   ).trim();
-  const thinkingContent = message.parts
-    ?.filter((part) => part.type === "thinking")
-    .map((part) => part.text)
-    .join("\n\n")
-    .trim();
-  const toolParts = message.parts?.filter(
-    (part) => part.type === "tool-call" || part.type === "tool-result",
-  ) ?? [];
+  const orderedParts = message.parts?.length
+    ? message.parts
+    : textContent
+      ? [{ type: "text", text: textContent } as const]
+      : [];
+  const proactiveLabel =
+    isProactive && textContent.toLowerCase().startsWith("[action_taken]")
+      ? "Action taken"
+      : isProactive && textContent.toLowerCase().startsWith("[decision_needed]")
+        ? "Needs decision"
+        : "Proactive update";
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
         style={{
-          background: isUser ? "var(--primary, #3b82f6)" : "var(--border)",
+          background: isUser
+            ? "var(--primary, #3b82f6)"
+            : isProactive
+              ? "rgba(251, 191, 36, 0.16)"
+              : "var(--border)",
+          border: isProactive ? "1px solid rgba(251, 191, 36, 0.28)" : undefined,
         }}
       >
         {isUser ? (
           <User className="h-4 w-4" style={{ color: "var(--text-on-primary)" }} />
+        ) : isProactive ? (
+          <Sparkles className="h-4 w-4" style={{ color: "#fbbf24" }} />
         ) : (
           <Bot className="h-4 w-4" style={{ color: "var(--text-secondary)" }} />
         )}
       </div>
       <div className="min-w-0 max-w-full space-y-2 md:max-w-[78%]">
+        {!isUser && isProactive ? (
+          <div className="flex items-center gap-2">
+            <span
+              className="rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
+              style={{
+                borderColor: "rgba(251, 191, 36, 0.24)",
+                background: "rgba(251, 191, 36, 0.08)",
+                color: "#fbbf24",
+              }}
+            >
+              {proactiveLabel}
+            </span>
+            <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              gateway-injected
+            </span>
+          </div>
+        ) : null}
         {!isUser && textContent ? (
           <div className="flex items-center gap-2">
             <button
@@ -1855,72 +2297,49 @@ function ChatBubble({
             ) : null}
           </div>
         ) : null}
-        {!isUser && thinkingContent ? (
-          <ChatDisclosure
-            title="Reasoning"
-            subtitle="Hidden by default"
-          >
-            <MarkdownMessage content={thinkingContent} />
-          </ChatDisclosure>
-        ) : null}
-
-        {!isUser && toolParts.length > 0 ? (
-          <ChatDisclosure
-            title={toolParts.length === 1 ? "Tool activity" : `${toolParts.length} tool steps`}
-            subtitle="Expand to inspect"
-          >
-            <div className="space-y-3">
-              {toolParts.map((part, index) => (
-                <div
-                  key={`${message.id}-tool-${index}`}
-                  className="rounded-xl border px-3 py-3"
-                  style={{
-                    borderColor: "rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.03)",
-                  }}
-                >
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
-                    {part.type === "tool-call" ? `Call · ${part.name}` : `Result · ${part.name}`}
-                  </div>
-                  {"args" in part && part.args ? (
-                    <pre className="mt-2 overflow-x-auto rounded-lg bg-black/25 p-3 text-[12px] leading-relaxed">
-                      {part.args}
-                    </pre>
-                  ) : null}
-                  {"text" in part && part.text ? (
-                    <pre className="mt-2 overflow-x-auto rounded-lg bg-black/25 p-3 text-[12px] leading-relaxed whitespace-pre-wrap">
-                      {part.text}
-                    </pre>
-                  ) : null}
-                  {part.type === "tool-result" && !part.text ? (
-                    <div className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                      Completed without textual output.
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </ChatDisclosure>
-        ) : null}
-
-        {textContent ? (
+        {isUser && textContent ? (
           <div
             className={`rounded-2xl px-4 py-3 ${
               isUser ? "rounded-br-sm" : "rounded-bl-sm"
             }`}
             style={{
-              background: isUser ? "var(--primary, #3b82f6)" : "rgba(255, 255, 255, 0.03)",
+              background: isUser
+                ? "var(--primary, #3b82f6)"
+                : isProactive
+                  ? "rgba(251, 191, 36, 0.08)"
+                  : "rgba(255, 255, 255, 0.03)",
               color: isUser ? "var(--text-on-primary)" : "var(--text-primary)",
-              borderColor: isUser ? undefined : "var(--border)",
-              border: isUser ? undefined : "1px solid var(--border)",
+              borderColor: isUser
+                ? undefined
+                : isProactive
+                  ? "rgba(251, 191, 36, 0.24)"
+                  : "var(--border)",
+              border: isUser ? undefined : "1px solid",
             }}
           >
-            <MarkdownMessage content={textContent} isUser={isUser} />
+            <MarkdownMessage content={textContent} isUser={isUser} textScale={textScale} />
             {isStreaming ? (
               <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current opacity-60" />
             ) : null}
             {message.state === "error" ? (
               <div className="mt-2 text-xs opacity-70">Error generating response</div>
+            ) : null}
+          </div>
+        ) : !isUser ? (
+          <div className="space-y-2">
+            {orderedParts.map((part, index) => (
+              <AssistantPartCard
+                key={`${message.id}-part-${index}`}
+                part={part}
+                isProactive={isProactive}
+                isStreaming={isStreaming && index === orderedParts.length - 1 && part.type === "text"}
+                textScale={textScale}
+              />
+            ))}
+            {message.state === "error" ? (
+              <div className="rounded-xl border px-3 py-2 text-xs" style={{ borderColor: "rgba(248, 113, 113, 0.24)", color: "#fca5a5" }}>
+                Error generating response
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -1929,51 +2348,92 @@ function ChatBubble({
   );
 }
 
-function ChatDisclosure({
-  children,
-  subtitle,
-  title,
+function AssistantPartCard({
+  part,
+  isProactive,
+  isStreaming,
+  textScale,
 }: {
-  children: React.ReactNode;
-  subtitle?: string;
-  title: string;
+  part: ChatMessage["parts"][number];
+  isProactive: boolean;
+  isStreaming: boolean;
+  textScale: ChatTextScale;
 }) {
+  if (part.type === "text") {
+    return (
+      <div
+        className="rounded-2xl rounded-bl-sm border px-4 py-3"
+        style={{
+          background: isProactive ? "rgba(251, 191, 36, 0.08)" : "rgba(255, 255, 255, 0.03)",
+          color: "var(--text-primary)",
+          borderColor: isProactive ? "rgba(251, 191, 36, 0.24)" : "var(--border)",
+        }}
+      >
+        <MarkdownMessage content={part.text} textScale={textScale} />
+        {isStreaming ? (
+          <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-current opacity-60" />
+        ) : null}
+      </div>
+    );
+  }
+
+  if (part.type === "thinking") {
+    return (
+      <div
+        className="rounded-2xl border px-4 py-3"
+        style={{
+          borderColor: "rgba(96, 165, 250, 0.2)",
+          background: "rgba(59, 130, 246, 0.08)",
+        }}
+      >
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "#93c5fd" }}>
+          Reasoning
+        </div>
+        <div className="mt-2">
+          <MarkdownMessage content={part.text} textScale={textScale} />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <details
-      className="rounded-2xl border"
+    <div
+      className="rounded-2xl border px-4 py-3"
       style={{
         borderColor: "rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.02)",
+        background: "rgba(255,255,255,0.03)",
       }}
     >
-      <summary className="cursor-pointer list-none px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-              {title}
-            </div>
-            {subtitle ? (
-              <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                {subtitle}
-              </div>
-            ) : null}
-          </div>
-          <span className="text-[11px] uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
-            Show
-          </span>
-        </div>
-      </summary>
-      <div className="border-t px-4 py-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-        {children}
+      <div className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
+        {part.type === "tool-call" ? `Tool Call · ${part.name}` : `Tool Result · ${part.name}`}
       </div>
-    </details>
+      {"args" in part && part.args ? (
+        <pre className="mt-2 overflow-x-auto rounded-lg bg-black/25 p-3 text-[12px] leading-relaxed whitespace-pre-wrap">
+          {part.args}
+        </pre>
+      ) : null}
+      {"text" in part && part.text ? (
+        <pre className="mt-2 overflow-x-auto rounded-lg bg-black/25 p-3 text-[12px] leading-relaxed whitespace-pre-wrap">
+          {part.text}
+        </pre>
+      ) : null}
+      {part.type === "tool-result" && !part.text ? (
+        <div className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+          Completed without textual output.
+        </div>
+      ) : null}
+    </div>
   );
 }
 
-function MarkdownMessage({ content, isUser = false }: { content: string; isUser?: boolean }) {
+function MarkdownMessage({ content, isUser = false, textScale = "compact" }: { content: string; isUser?: boolean; textScale?: ChatTextScale }) {
+  const normalized = content
+    .replace(/^\[action_taken\]\s*/i, "")
+    .replace(/^\[decision_needed\]\s*/i, "")
+    .trim();
   return (
     <div
-      className={`openclaw-markdown text-sm leading-relaxed ${isUser ? "font-semibold" : ""}`}
+      className={`openclaw-markdown ${textScale === "comfortable" ? "text-[15px] leading-8" : "text-[13px] leading-6"} ${isUser ? "font-semibold" : ""}`}
       style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
     >
       <ReactMarkdown
@@ -2013,9 +2473,38 @@ function MarkdownMessage({ content, isUser = false }: { content: string; isUser?
           ),
         }}
       >
-        {content}
+        {normalized}
       </ReactMarkdown>
     </div>
+  );
+}
+
+function AgentRosterRow({
+  card,
+  onSelectSession,
+}: {
+  card: AgentRosterCard;
+  onSelectSession: (key: string) => void;
+}) {
+  return <AgentRosterCardView card={card} onOpenSession={onSelectSession} />;
+}
+
+function WorkerGroupRow({ group, activeSessionKey, actionLoading, onAction, onSelectSession }: { group: ReturnType<typeof buildCommandChatView>["backgroundGroups"][number]; activeSessionKey: string; actionLoading: string | null; onAction: (session: SessionSummary, action: "delete" | "reset" | "compact") => void; onSelectSession: (key: string) => void; }) {
+  return (
+    <details className="rounded-2xl border" style={{ borderColor: "var(--border)", background: "rgba(255,255,255,0.02)" }}>
+      <summary className="cursor-pointer list-none px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{group.label}</div>
+            <div className="text-xs" style={{ color: "var(--text-secondary)" }}>{group.sessions.length} session{group.sessions.length === 1 ? "" : "s"} · {group.latestSummary}</div>
+          </div>
+          <div className="text-[11px] uppercase tracking-[0.15em]" style={{ color: "var(--text-secondary)" }}>{group.status}</div>
+        </div>
+      </summary>
+      <div className="border-t px-3 py-3" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <SessionSection title="Sessions" sessions={group.sessions} activeSessionKey={activeSessionKey} actionLoading={actionLoading} onAction={onAction} onSelect={onSelectSession} />
+      </div>
+    </details>
   );
 }
 

@@ -5,7 +5,7 @@ Fast validation checklist for the real public dashboard chat on iPhone/PWA.
 
 Target surface:
 - `https://cd.visualgraphx.com/chat`
-- real repo: `/Volumes/Storage/DOCKER/openclaw-dashboard-lab/openclaw-dashboard`
+- canonical repo: `/Volumes/Storage/OpenClaw/dashboard`
 
 ## Blocking checks
 

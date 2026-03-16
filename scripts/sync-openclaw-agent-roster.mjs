@@ -3,8 +3,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const storageRoot = "/Volumes/Storage/OpenClaw";
-const agentsDir = path.join(storageRoot, ".antigravity", "agents");
+const dataDir = process.env.OPENCLAW_DATA_DIR || "/Volumes/Storage/OpenClaw-Data";
+const agentsDir = path.join(dataDir, "agents");
 const registryPath = path.join(agentsDir, "registry.json");
 const runtimeAgentsPath = "/Users/cderamos/.openclaw/runtime-workspace/AGENTS.md";
 const workspaceAgentsPath = "/Users/cderamos/.openclaw/workspace/AGENTS.md";

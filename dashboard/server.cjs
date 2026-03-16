@@ -28,14 +28,11 @@ const CONTROL_HTTP_TARGET =
   process.env.OPENCLAW_CONTROL_TARGET || "http://127.0.0.1:18789";
 const CONTROL_WS_TARGET =
   process.env.OPENCLAW_CONTROL_WS_TARGET || "ws://127.0.0.1:18789";
-const LOBSTERBOARD_TARGET =
-  process.env.LOBSTERBOARD_TARGET || "http://127.0.0.1:8080";
 const AGENT_DASHBOARD_TARGET =
-  process.env.OPENCLAW_AGENT_DASHBOARD_TARGET || "http://127.0.0.1:18790";
+  process.env.OPENCLAW_AGENT_DASHBOARD_TARGET || "http://127.0.0.1:18792";
 
 const MOUNTS = {
   control: "/__mounted/control",
-  lobsterboard: "/__mounted/lobsterboard",
   agentDashboard: "/__mounted/agent-dashboard",
 };
 
@@ -469,13 +466,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (url.startsWith(MOUNTS.lobsterboard)) {
-    proxyHttp(req, res, {
-      target: LOBSTERBOARD_TARGET,
-      prefix: MOUNTS.lobsterboard,
-      rewriteHtml: true,
-      allowIframe: true,
-    });
+  if (url.startsWith("/__mounted/lobsterboard")) {
+    res.statusCode = 410;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.end("LobsterBoard mount retired");
     return;
   }
 
@@ -508,7 +502,6 @@ server.listen(port, host, () => {
   );
   console.log(`dashboard app target: ${APP_HTTP_TARGET}`);
   console.log(`control-ui mount: ${MOUNTS.control} -> ${CONTROL_HTTP_TARGET}`);
-  console.log(`lobsterboard mount: ${MOUNTS.lobsterboard} -> ${LOBSTERBOARD_TARGET}`);
   console.log(
     `agent-dashboard mount: ${MOUNTS.agentDashboard} -> ${AGENT_DASHBOARD_TARGET}`,
   );

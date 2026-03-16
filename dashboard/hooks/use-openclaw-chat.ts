@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useOpenClaw } from "@/contexts/OpenClawContext";
-import type { ChatEvent, ChatSendParams } from "@/lib/types";
+import type { ChatEvent, ChatSendParams, LoopbackEvent } from "@/lib/types";
 
 export type ChatMessageRole = "user" | "assistant";
+export type ChatMessageProvenance = "default" | "proactive";
 
 export type ChatMessagePart =
   | { type: "text"; text: string }
@@ -20,6 +21,10 @@ export interface ChatMessage {
   timestamp: number;
   state?: "delta" | "final" | "aborted" | "error";
   runId?: string;
+  provenance?: ChatMessageProvenance;
+  provider?: string;
+  model?: string;
+  api?: string;
 }
 
 interface UseOpenClawChatOptions {
@@ -107,25 +112,54 @@ export function useOpenClawChat(options: UseOpenClawChatOptions = {}) {
           ];
         });
       } else if (event.state === "final") {
-        setIsStreaming(false);
-        currentRunIdRef.current = null;
         // Final event also carries the complete message
         const normalized = normalizeMessage(event.message);
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.runId === event.runId && m.role === "assistant"
-              ? {
-                  ...m,
-                  content: normalized.text || m.content,
-                  parts: normalized.parts.length > 0 ? normalized.parts : m.parts,
-                  state: "final" as const,
-                }
-              : m
-          )
-        );
+        const isProactiveInject = isInjectedRunId(event.runId);
+        setMessages((prev) => {
+          const existing = prev.find(
+            (m) => m.runId === event.runId && m.role === "assistant"
+          );
+          if (existing) {
+            return prev.map((m) =>
+              m.runId === event.runId && m.role === "assistant"
+                ? {
+                    ...m,
+                    content: normalized.text || m.content,
+                    parts: normalized.parts.length > 0 ? normalized.parts : m.parts,
+                    state: "final" as const,
+                    provenance: isProactiveInject ? "proactive" : m.provenance,
+                    provider: isProactiveInject ? "openclaw" : m.provider,
+                    model: isProactiveInject ? "gateway-injected" : m.model,
+                  }
+                : m
+            );
+          }
+
+          return [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              role: "assistant" as const,
+              content: normalized.text,
+              parts: normalized.parts,
+              timestamp: Date.now(),
+              state: "final" as const,
+              runId: event.runId,
+              provenance: isProactiveInject ? "proactive" : "default",
+              provider: isProactiveInject ? "openclaw" : undefined,
+              model: isProactiveInject ? "gateway-injected" : undefined,
+            },
+          ];
+        });
+        if (currentRunIdRef.current === event.runId) {
+          setIsStreaming(false);
+          currentRunIdRef.current = null;
+        }
       } else if (event.state === "aborted" || event.state === "error") {
-        setIsStreaming(false);
-        currentRunIdRef.current = null;
+        if (currentRunIdRef.current === event.runId) {
+          setIsStreaming(false);
+          currentRunIdRef.current = null;
+        }
         if (event.errorMessage) setError(event.errorMessage);
         setMessages((prev) =>
           prev.map((m) =>
@@ -135,6 +169,56 @@ export function useOpenClawChat(options: UseOpenClawChatOptions = {}) {
           )
         );
       }
+    });
+  }, [isConnected, sessionKey, subscribe]);
+
+  useEffect(() => {
+    if (!isConnected) return;
+
+    return subscribe("loopback", (event: LoopbackEvent) => {
+      if (!event.sessionKey?.endsWith(sessionKey)) return;
+
+      const normalized = normalizeMessage(event.message);
+      if (!normalized.text && normalized.parts.length === 0) return;
+
+      setMessages((prev) => {
+        const nextRunId = event.runId || `loopback:${sessionKey}`;
+        const existing = prev.find(
+          (m) => m.runId === nextRunId && m.role === "assistant"
+        );
+        if (existing) {
+          return prev.map((m) =>
+            m.runId === nextRunId && m.role === "assistant"
+              ? {
+                  ...m,
+                  content: normalized.text,
+                  parts: normalized.parts,
+                  state: "final" as const,
+                  timestamp: Date.now(),
+                  provenance: "proactive" as const,
+                  provider: "openclaw",
+                  model: "gateway-injected",
+                }
+              : m
+          );
+        }
+
+        return [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant" as const,
+            content: normalized.text,
+            parts: normalized.parts,
+            timestamp: Date.now(),
+            state: "final" as const,
+            runId: nextRunId,
+            provenance: "proactive" as const,
+            provider: "openclaw",
+            model: "gateway-injected",
+          },
+        ];
+      });
     });
   }, [isConnected, sessionKey, subscribe]);
 
@@ -167,10 +251,19 @@ export function useOpenClawChat(options: UseOpenClawChatOptions = {}) {
           sessionKey,
           message: text,
           ...(attachments && attachments.length > 0 ? { attachments } : {}),
+          timeoutMs: 120_000,
           idempotencyKey: crypto.randomUUID(),
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to send message");
+        const raw = err instanceof Error ? err.message : String(err);
+        // Classify the error for the UI — prefix with ⚠ so the rail never suppresses send failures
+        if (/timeout/i.test(raw)) {
+          setError("⚠ Agent didn't respond in time — the model provider may be slow or unreachable.");
+        } else if (/not connected|not initialized/i.test(raw)) {
+          setError("⚠ Message not sent — gateway is reconnecting. Try again in a moment.");
+        } else {
+          setError(`⚠ ${raw}`);
+        }
       }
     },
     [rpc, sessionKey]
@@ -184,8 +277,8 @@ export function useOpenClawChat(options: UseOpenClawChatOptions = {}) {
         sessionKey,
         runId: currentRunIdRef.current,
       });
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn("[openclaw-chat]", err);
     }
     setIsStreaming(false);
   }, [rpc, sessionKey]);
@@ -196,7 +289,7 @@ export function useOpenClawChat(options: UseOpenClawChatOptions = {}) {
       return;
     }
 
-    try {
+    const doFetch = async () => {
       const result = await rpc("chat.history", {
         sessionKey,
         limit: 50,
@@ -213,8 +306,21 @@ export function useOpenClawChat(options: UseOpenClawChatOptions = {}) {
         });
       }
       historyLoadedForSessionRef.current = sessionKey;
-    } catch {
-      // History might not be available for new sessions
+    };
+
+    try {
+      await doFetch();
+    } catch (err) {
+      console.warn("[openclaw-chat] loadHistory failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/not connected|not initialized/i.test(msg)) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        try {
+          await doFetch();
+        } catch (retryErr) {
+          console.warn("[openclaw-chat] loadHistory retry failed:", retryErr);
+        }
+      }
     }
   }, [rpc, sessionKey]);
 
@@ -256,7 +362,8 @@ function normalizeHistoryMessages(history: any[]): ChatMessage[] {
 
   for (const entry of history) {
     const rawRole = typeof entry?.role === "string" ? entry.role.toLowerCase() : "assistant";
-    const isUser = rawRole === "user";
+    const isProactive = isGatewayInjectedAuditEntry(entry);
+    const isUser = rawRole === "user" && !isProactive;
 
     if (isUser) {
       flushAssistant();
@@ -269,11 +376,22 @@ function normalizeHistoryMessages(history: any[]): ChatMessage[] {
         timestamp: entry?.timestamp ?? Date.now(),
         state: "final",
         runId: entry?.runId,
+        provider: typeof entry?.provider === "string" ? entry.provider : undefined,
+        model: typeof entry?.model === "string" ? entry.model : undefined,
+        api: typeof entry?.api === "string" ? entry.api : undefined,
       });
       continue;
     }
 
     const normalized = normalizeHistoryAssistantEntry(entry);
+    const canAppendToPending =
+      Boolean(pendingAssistant) &&
+      (rawRole === "toolresult" ||
+        rawRole === "tool_result" ||
+        (typeof entry?.runId === "string" &&
+          entry.runId.length > 0 &&
+          entry.runId === pendingAssistant?.runId));
+
     if (!pendingAssistant) {
       pendingAssistant = {
         id: entry?.id ?? crypto.randomUUID(),
@@ -283,13 +401,42 @@ function normalizeHistoryMessages(history: any[]): ChatMessage[] {
         timestamp: entry?.timestamp ?? Date.now(),
         state: "final",
         runId: entry?.runId,
+        provenance: isProactive ? "proactive" : "default",
+        provider: typeof entry?.provider === "string" ? entry.provider : undefined,
+        model: typeof entry?.model === "string" ? entry.model : undefined,
+        api: typeof entry?.api === "string" ? entry.api : undefined,
       };
       continue;
     }
 
-    pendingAssistant.parts.push(...normalized.parts);
-    pendingAssistant.timestamp = entry?.timestamp ?? pendingAssistant.timestamp;
-    pendingAssistant.runId = entry?.runId ?? pendingAssistant.runId;
+    if (canAppendToPending) {
+      pendingAssistant.parts.push(...normalized.parts);
+      pendingAssistant.timestamp = entry?.timestamp ?? pendingAssistant.timestamp;
+      pendingAssistant.runId = entry?.runId ?? pendingAssistant.runId;
+      if (isProactive) {
+        pendingAssistant.provenance = "proactive";
+      }
+      pendingAssistant.provider =
+        typeof entry?.provider === "string" ? entry.provider : pendingAssistant.provider;
+      pendingAssistant.model = typeof entry?.model === "string" ? entry.model : pendingAssistant.model;
+      pendingAssistant.api = typeof entry?.api === "string" ? entry.api : pendingAssistant.api;
+      continue;
+    }
+
+    flushAssistant();
+    pendingAssistant = {
+      id: entry?.id ?? crypto.randomUUID(),
+      role: "assistant",
+      content: normalized.text,
+      parts: normalized.parts,
+      timestamp: entry?.timestamp ?? Date.now(),
+      state: "final",
+      runId: entry?.runId,
+      provenance: isProactive ? "proactive" : "default",
+      provider: typeof entry?.provider === "string" ? entry.provider : undefined,
+      model: typeof entry?.model === "string" ? entry.model : undefined,
+      api: typeof entry?.api === "string" ? entry.api : undefined,
+    };
   }
 
   flushAssistant();
@@ -313,6 +460,19 @@ function normalizeHistoryAssistantEntry(message: any): { text: string; parts: Ch
   }
 
   return normalizeMessage(message);
+}
+
+function isGatewayInjectedAuditEntry(message: any): boolean {
+  return (
+    typeof message?.provider === "string" &&
+    message.provider === "openclaw" &&
+    typeof message?.model === "string" &&
+    message.model === "gateway-injected"
+  );
+}
+
+function isInjectedRunId(runId?: string): boolean {
+  return typeof runId === "string" && runId.startsWith("inject-");
 }
 
 function normalizeMessage(message: unknown): { text: string; parts: ChatMessagePart[] } {
@@ -484,7 +644,8 @@ function stringifyToolArgs(value: unknown): string | undefined {
 
   try {
     return JSON.stringify(value, null, 2);
-  } catch {
+  } catch (err) {
+    console.warn("[openclaw-chat]", err);
     return String(value);
   }
 }

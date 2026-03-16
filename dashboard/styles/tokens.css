@@ -1,0 +1,21 @@
+:root {
+  --background: #08121a;
+  --background-elevated: #0d1a23;
+  --card: rgba(14, 25, 34, 0.82);
+  --card-strong: #10212c;
+  --border: rgba(124, 151, 171, 0.18);
+  --border-strong: rgba(124, 151, 171, 0.34);
+  --text-primary: #edf4f8;
+  --text-secondary: #8ea1ae;
+  --text-muted: #6b7f8d;
+  --primary: #ff7a1a;
+  --primary-soft: rgba(255, 122, 26, 0.14);
+  --text-on-primary: #231206;
+  --accent: #63d3bd;
+  --accent-soft: rgba(99, 211, 189, 0.16);
+  --shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+  --radius-shell: 28px;
+  --radius-card: 18px;
+  --radius-control: 14px;
+  --app-height: 100dvh;
+}

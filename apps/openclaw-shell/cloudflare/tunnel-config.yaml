@@ -1,0 +1,51 @@
+# ─── Cloudflare Tunnel Configuration ────────────────────────────────────────
+#
+# Exposes the local OpenClaw gateway and web apps via Cloudflare Tunnel so the
+# mobile PWA and remote clients can reach them without a VPN.
+#
+# Prerequisites:
+#   1. Install cloudflared: brew install cloudflared
+#   2. Authenticate:        cloudflared tunnel login
+#   3. Create tunnel:       cloudflared tunnel create openclaw
+#   4. Add DNS records:     cloudflared tunnel route dns openclaw gateway.openclaw.io
+#                           cloudflared tunnel route dns openclaw app.openclaw.io
+#                           cloudflared tunnel route dns openclaw mobile.openclaw.io
+#   5. Run:                 cloudflared tunnel --config cloudflare/tunnel-config.yaml run
+#
+# Replace <TUNNEL_ID> with the UUID printed by `cloudflared tunnel create`.
+# The credentials file is created automatically by `cloudflared tunnel create`.
+
+tunnel: <TUNNEL_ID>
+credentials-file: ~/.cloudflared/<TUNNEL_ID>.json
+
+# ─── Ingress Rules ───────────────────────────────────────────────────────────
+#
+# Order matters — first match wins.
+
+ingress:
+  # WebSocket gateway — must come before app/mobile to avoid prefix collision.
+  # The gateway runs on ws://127.0.0.1:18789 (plain WS; cloudflared upgrades to WSS).
+  - hostname: gateway.openclaw.io
+    service: ws://127.0.0.1:18789
+    originRequest:
+      # Keep the WS connection alive over the tunnel
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+      # Allow the gateway's custom connect headers through
+      httpHostHeader: gateway.openclaw.io
+      noTLSVerify: false
+
+  # Main Next.js / dashboard app
+  - hostname: app.openclaw.io
+    service: http://127.0.0.1:3000
+    originRequest:
+      httpHostHeader: app.openclaw.io
+
+  # Mobile PWA (Vite dev server or static build)
+  - hostname: mobile.openclaw.io
+    service: http://127.0.0.1:5173
+    originRequest:
+      httpHostHeader: mobile.openclaw.io
+
+  # Catch-all — required by cloudflared (must be last)
+  - service: http_status:404

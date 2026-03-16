@@ -1,0 +1,15 @@
+{
+  "name": "@openclaw/fireflies-tools",
+  "version": "1.0.0",
+  "description": "MCP server for Fireflies.ai — meeting transcripts, summaries, and action items",
+  "main": "index.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "author": "Christian De Ramos",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1"
+  }
+}

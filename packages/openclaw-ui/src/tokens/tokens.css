@@ -1,0 +1,74 @@
+/* ============================================================
+   OpenClaw Design System — CSS Custom Properties
+   Source: mockups/index.html
+   ============================================================ */
+
+:root {
+  /* ── Backgrounds ────────────────────────────────────────── */
+  --bg:        #0a0a0e;
+  --bg-mid:    #111115;
+  --bg-card:   #161618;
+
+  /* ── Borders ────────────────────────────────────────────── */
+  --border:    #252528;
+  --border-2:  #1a1a1e;
+
+  /* ── Text ───────────────────────────────────────────────── */
+  --text:      #e0e0e8;
+  --text-2:    #c8c8cc;
+  --text-3:    #b0b0b5;
+  --muted:     #888890;
+  --dim:       #666670;
+  --dimmer:    #555558;
+  --faint:     #444448;
+
+  /* ── Accent ─────────────────────────────────────────────── */
+  --accent:     #e85d3a;
+  --accent-bg:  #3d1a12;
+  --accent-bg2: #2d1512;
+
+  /* ── Status Colors ──────────────────────────────────────── */
+  --green:  #2ecc71;
+  --yellow: #f39c12;
+  --red:    #e74c3c;
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  --title-h:  38px;
+  --tabbar-h: 40px;
+  --navbar-h: 48px;
+  --rail-w:   340px;
+  --shell-h:  calc(100vh - var(--title-h) - var(--tabbar-h));
+}
+
+/* ── Scrollbars ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333338; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+
+/* ── Base reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  margin: 0;
+}
+
+/* ── Agent avatar backgrounds ───────────────────────────────── */
+.avatar-brain     { background: var(--accent-bg); }
+.avatar-shield    { background: #5e1f2d; }
+.avatar-rainbow   { background: #1f4e5e; }
+.avatar-compass   { background: #1f5e3d; }
+.avatar-hourglass { background: #5e4e1f; }
+.avatar-temple    { background: #1f3d5e; }
+.avatar-crystal   { background: #3d1f5e; }
+.avatar-home      { background: #5e3d1f; }
+.avatar-scroll    { background: #2d2d5e; }
+.avatar-fire      { background: #5e2d1f; }
+.avatar-scale     { background: #2d5e2d; }
+.avatar-satellite { background: #1f2d5e; }
+.avatar-socrates  { background: #4e2d1f; }
+.avatar-eye       { background: #2d2d5e; }

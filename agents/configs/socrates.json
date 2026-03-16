@@ -1,0 +1,72 @@
+{
+  "id": "socrates",
+  "displayName": "Socrates",
+  "name": "Socrates",
+  "emoji": "🎓",
+  "lane": "learning",
+  "status": "planned",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Learning coach — curates CTO learning paths, surfaces insights, tracks knowledge gaps, and builds structured learning programs.",
+  "responsibilities": [
+    "Build and maintain structured learning programs",
+    "Surface relevant articles, papers, and resources",
+    "Track knowledge gaps and learning progress",
+    "Synthesize and quiz on learned material"
+  ],
+  "monitorSurfaces": [
+    "Learning docs",
+    "Research queue",
+    "Task ledger"
+  ],
+  "communicationChannels": [
+    "learning briefs",
+    "knowledge gap reports",
+    "quiz prompts"
+  ],
+  "tools": [
+    "web research",
+    "document synthesis",
+    "task ledger"
+  ],
+  "memoryPaths": [
+    "/Volumes/Storage/OpenClaw/agents/profiles/socrates/MEMORY.md",
+    "/Volumes/Storage/OpenClaw/docs/context/LEARNING_SYSTEM.md"
+  ],
+  "taskTags": [
+    "learning",
+    "education",
+    "cto",
+    "knowledge"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "anthropic",
+  "defaultModel": "anthropic/claude-opus-4-6",
+  "fallbackModel": "google/gemini-3.1-pro-preview",
+  "reasoningLevel": "high",
+  "authProfile": "default",
+  "canSpawnSubagents": true,
+  "subagentModel": "google/gemini-3.1-flash-lite-preview",
+  "subagentMaxDepth": 1,
+  "subagentUseCases": [
+    "parallel topic research",
+    "learning material synthesis"
+  ],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-socrates",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/socrates/DIRECTIVES.md",
+  "dashboardCardId": "socrates",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "namedAfter": "Socrates — Greek philosopher, teacher of Plato, pioneer of the dialectic method of inquiry",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

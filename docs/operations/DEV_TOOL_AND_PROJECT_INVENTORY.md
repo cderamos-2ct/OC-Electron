@@ -37,9 +37,9 @@
 Observed as the real OpenClaw project/home base.
 
 Markers found:
-- `requirements.txt`
-- `openclaw-orchestrator/package.json`
-- `docs/antigravity-agent/requirements.txt`
+- `apps/runtime/requirements.txt`
+- `packages/openclaw-orchestrator/package.json`
+- `legacy/imported/antigravity-agent/requirements.txt`
 
 ### `/Volumes/Storage/antigravity`
 Exists, but the quick local scan did not surface standard repo markers at shallow depth.

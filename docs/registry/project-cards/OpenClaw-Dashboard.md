@@ -3,13 +3,14 @@
 ## Identity
 - **Project:** OpenClaw dashboard / command center
 - **Canonical root:** `/Volumes/Storage/OpenClaw`
+- **Canonical dashboard tree:** `/Volumes/Storage/OpenClaw/dashboard`
 - **Runtime workspace:** `/Users/cderamos/.openclaw/workspace`
 
 ## Current architecture read
-- FastAPI/Python app centered on `server.py`
-- lightweight frontend in `static/`
+- FastAPI/Python app centered on `apps/runtime/server.py`
+- lightweight frontend in `dashboard/`
 - scripts-based operator integrations in `scripts/`
-- repo-local orchestration overlay in `openclaw-orchestrator/`
+- repo-local orchestration overlay in `packages/openclaw-orchestrator/`
 
 ## Recent implementation move
 - screenshot/image attach path for chat improved in the frontend/backend
@@ -28,3 +29,6 @@ The heartbeat/proactive updates also visually blended too much with normal funct
 - verify screenshots are attachable from iPhone dashboard
 - confirm whether image-only context is enough or whether deeper vision support is needed in the assistant path
 - continue iPhone-specific layout/interaction cleanup
+
+## Centralization Note
+The older dashboard-lab repo under `/Volumes/Storage/DOCKER/openclaw-dashboard-lab/openclaw-dashboard` is retired from active workflow. Use `/Volumes/Storage/OpenClaw/dashboard` as the only source of truth for implementation, status checks, and future app bring-up.

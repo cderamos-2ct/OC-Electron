@@ -4,11 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
-const storageRoot = "/Volumes/Storage/OpenClaw";
-const antigravityDir = path.join(storageRoot, ".antigravity");
-const agentsDir = path.join(antigravityDir, "agents");
-const runtimeDir = path.join(antigravityDir, "runtime");
-const tasksIndexPath = path.join(antigravityDir, "tasks", "index.json");
+const dataDir = process.env.OPENCLAW_DATA_DIR || "/Volumes/Storage/OpenClaw-Data";
+const agentsDir = path.join(dataDir, "agents");
+const runtimeDir = path.join(dataDir, "runtime");
+const tasksIndexPath = path.join(dataDir, "tasks", "index.json");
 const runtimeSessionsPath = path.join(runtimeDir, "sessions.json");
 const rosterPath = path.join(runtimeDir, "roster.json");
 

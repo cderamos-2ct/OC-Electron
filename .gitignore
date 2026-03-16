@@ -50,27 +50,21 @@ scripts/client_secret_*.json
 *.pickle
 token*.pickle
 
-# Harness generated views and local-only artifacts
-.antigravity/autonomy-heartbeat.json
-.antigravity/autonomy-run.log
-.antigravity/TASK_STATUS.md
-.antigravity/task-quality-gates.jsonl
-.antigravity/quality-gates/
-.antigravity/tasks/index.json
-.antigravity/tasks/tasks.json
-.antigravity/run-state.json
-.antigravity/runtime/roster.json
-.antigravity/runtime/sessions.json
-.antigravity/runtime/update-targets.json
-.antigravity/evidence/
-.antigravity/agents/profiles/**/INBOX.jsonl
-.antigravity/agents/profiles/**/OUTBOX.jsonl
-.antigravity/agents/profiles/**/artifacts/
-
-# Keep canonical task definitions and durable orchestration docs tracked
-!.antigravity/tasks/items/
+# Data directory is now external (/Volumes/Storage/OpenClaw-Data/)
+# No .antigravity/ rules needed — data lives outside the repo
 
 # Imported / legacy project snapshots that should not pollute the core repo
 docs/AI-wingman/
 docs/antigravity-agent/
 docs/archive/
+legacy/imported/
+legacy/links/
+
+# Finance mutable workspace data
+domains/finance/finance.db*
+domains/finance/Documents/
+domains/finance/Inbox/
+domains/finance/Logs/
+domains/finance/Processed/
+domains/finance/Review/
+domains/finance/Exports/

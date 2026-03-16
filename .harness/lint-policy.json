@@ -4,10 +4,12 @@
       "**/node_modules/**",
       "**/dist/**",
       "**/build/**",
+      "**/.next/**",
       "**/.git/**",
       "**/coverage/**",
       "**/docs/**",
-      "**/frontend_legacy/**"
+      "**/frontend_legacy/**",
+      "**/static/**"
     ]
   },
   "typescript": {
@@ -24,6 +26,6 @@
   },
   "visual": {
     "mode": "smoke",
-    "command": ""
+    "command": "bash scripts/verify-dashboard-shell-smoke.sh"
   }
 }

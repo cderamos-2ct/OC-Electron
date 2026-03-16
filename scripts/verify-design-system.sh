@@ -12,7 +12,10 @@ for path in \
   "frontend/src/components/ui" \
   "frontend/src/styles/tokens.css" \
   "frontend/src/styles/design-system.css" \
-  "frontend/src/styles/global-design-system.css"; do
+  "frontend/src/styles/global-design-system.css" \
+  "dashboard/styles/tokens.css" \
+  "dashboard/components/ui" \
+  "dashboard/app/globals.css"; do
   if [ -e "$REPO/$path" ]; then
     found=1
     break
@@ -24,8 +27,8 @@ if [ "$found" -eq 0 ]; then
   exit 1
 fi
 
-if command -v rg >/dev/null 2>&1 && [ -d "$REPO/frontend/src" ]; then
-  inline_hits="$(rg -n --glob '*.{vue,tsx,jsx,html}' '[[:space:]]style=' "$REPO/frontend/src" || true)"
+if command -v rg >/dev/null 2>&1; then
+  inline_hits="$(rg -n --glob '*.{vue,tsx,jsx,html}' '[[:space:]]style=' "$REPO/frontend/src" "$REPO/dashboard" 2>/dev/null || true)"
   if [ -n "$inline_hits" ]; then
     echo "error: inline style attributes found; use DS classes/tokens instead" >&2
     echo "$inline_hits" | head -30 >&2

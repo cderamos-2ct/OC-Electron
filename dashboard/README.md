@@ -74,7 +74,6 @@ The shell server also supports mounted sibling dashboards and a same-origin cont
 ```bash
 OPENCLAW_CONTROL_TARGET=http://127.0.0.1:18789
 OPENCLAW_CONTROL_WS_TARGET=ws://127.0.0.1:18789
-LOBSTERBOARD_TARGET=http://127.0.0.1:8080
 OPENCLAW_AGENT_DASHBOARD_TARGET=http://127.0.0.1:18792
 ```
 
@@ -85,7 +84,6 @@ OPENCLAW_AGENT_DASHBOARD_TARGET=http://127.0.0.1:18792
 When started via `npm run dev` or `npm run start`, the shell server mounts:
 
 - `http://127.0.0.1:3000/__mounted/control/` -> built-in OpenClaw control UI
-- `http://127.0.0.1:3000/__mounted/lobsterboard/` -> LobsterBoard server
 - `http://127.0.0.1:3000/__mounted/agent-dashboard/` -> OpenClaw agent dashboard server
 
 The prototype’s own React pages now default to the mounted control-ui gateway path so the browser no longer needs to talk directly to the tailnet URL.

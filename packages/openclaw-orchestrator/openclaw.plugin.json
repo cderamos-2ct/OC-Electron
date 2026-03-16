@@ -1,0 +1,10 @@
+{
+  "id": "openclaw-orchestrator",
+  "name": "OpenClaw Orchestrator",
+  "description": "Repo-local orchestration tools, hooks, and autonomy bridge for the OpenClaw workspace.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

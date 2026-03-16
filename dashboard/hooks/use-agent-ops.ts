@@ -7,6 +7,7 @@ import type {
   OpsTask,
   UpdateOpsTaskInput,
 } from "@/lib/ops-types";
+import type { ServerVisibilitySummary } from "@/lib/types";
 
 const OPS_BASE = "/api/ops";
 
@@ -49,6 +50,7 @@ export function useAgentOps() {
   const token = process.env.NEXT_PUBLIC_OPENCLAW_GATEWAY_TOKEN;
   const [tasks, setTasks] = useState<OpsTask[]>([]);
   const [summary, setSummary] = useState<OpsAgentSummary | null>(null);
+  const [visibility, setVisibility] = useState<ServerVisibilitySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,12 +66,13 @@ export function useAgentOps() {
       try {
         const [nextTasks, nextSummary] = await Promise.all([
           opsRequest<OpsTask[]>("/tasks", { token }),
-          opsRequest<OpsAgentSummary>("/agents", { token }),
+          opsRequest<{ ops: OpsAgentSummary; visibility?: ServerVisibilitySummary | null }>("/agents", { token }),
         ]);
 
         startTransition(() => {
           setTasks(nextTasks);
-          setSummary(nextSummary);
+          setSummary(nextSummary.ops);
+          setVisibility(nextSummary.visibility ?? null);
           setError(null);
         });
       } catch (err) {
@@ -163,6 +166,7 @@ export function useAgentOps() {
   return {
     tasks,
     summary,
+    visibility,
     loading,
     refreshing,
     error,

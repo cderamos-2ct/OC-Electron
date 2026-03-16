@@ -6,7 +6,7 @@ the `dev-harness-core` model onto OpenClaw without forking OpenClaw core.
 ## What Exists
 
 - Repo-local overlay in `.antigravity/`
-- Standalone plugin package in `openclaw-orchestrator/`
+- Standalone plugin package in `packages/openclaw-orchestrator/`
 - Hook pack for bootstrap and lifecycle state writes
 - Optional tools for task state, routing, and consensus checks
 
@@ -23,7 +23,7 @@ consensus policy engine. This scaffold supplies that layer.
 
 ## Expected Install Flow
 
-From the `openclaw-orchestrator/` directory:
+From the `packages/openclaw-orchestrator/` directory:
 
 ```bash
 openclaw plugins install .

@@ -1,0 +1,68 @@
+{
+  "id": "boswell",
+  "displayName": "Boswell",
+  "name": "Boswell",
+  "emoji": "📖",
+  "lane": "narrative",
+  "status": "planned",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Shadow logger and narrative tracker — maintains a running log of decisions, activity, and context across all agents and surfaces it as a coherent record.",
+  "responsibilities": [
+    "Log all significant agent actions and decisions",
+    "Maintain a coherent narrative of daily activity",
+    "Surface historical context on demand",
+    "Build searchable activity archive for the dashboard"
+  ],
+  "monitorSurfaces": [
+    "Dashboard activity feed",
+    "Task ledger",
+    "Agent output streams"
+  ],
+  "communicationChannels": [
+    "activity log",
+    "narrative summaries",
+    "historical context queries"
+  ],
+  "tools": [
+    "task ledger",
+    "dashboard activity api",
+    "log ingestion"
+  ],
+  "memoryPaths": [
+    "/Volumes/Storage/OpenClaw/agents/profiles/boswell/MEMORY.md"
+  ],
+  "taskTags": [
+    "logging",
+    "narrative",
+    "history",
+    "activity"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "anthropic",
+  "defaultModel": "anthropic/claude-sonnet-4.6",
+  "fallbackModel": "openai/gpt-5-mini",
+  "reasoningLevel": "low",
+  "authProfile": "default",
+  "canSpawnSubagents": false,
+  "subagentModel": null,
+  "subagentMaxDepth": 0,
+  "subagentUseCases": [],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-boswell",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/boswell/DIRECTIVES.md",
+  "dashboardCardId": "boswell",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "namedAfter": "James Boswell — Scottish biographer who documented Samuel Johnson's life with extraordinary detail and fidelity",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

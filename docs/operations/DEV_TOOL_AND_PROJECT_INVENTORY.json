@@ -55,7 +55,7 @@
       {
         "path": "/Volumes/Storage/OpenClaw",
         "role": "real-openclaw-home",
-        "markers": ["requirements.txt", "openclaw-orchestrator/package.json", "docs/antigravity-agent/requirements.txt"]
+        "markers": ["apps/runtime/requirements.txt", "packages/openclaw-orchestrator/package.json", "legacy/imported/antigravity-agent/requirements.txt"]
       },
       {
         "path": "/Volumes/Storage/antigravity",

@@ -1,45 +1,47 @@
-# AntiGravity Docs
+# OpenClaw Docs
 
-Reference materials, archived versions, and research artifacts.
+Reference materials, durable project docs, and research artifacts.
 
 ## Folder Structure
 
-```
+```text
 docs/
 ├── README.md                    ← You are here
-│
-├── archive/                     ← Rescued v2/v3 builds (previously in ~/Trash)
-│   ├── server_v3.py             ← v3 FastAPI backend (884 lines) — reference for missing features
-│   ├── index_v3.html            ← v3 PWA frontend (910 lines) — reference for missing UI
-│   ├── server_v2.py             ← v2 backend iteration
-│   ├── index_v2.html            ← v2 frontend iteration
-│   └── RECOVERY_CONTEXT.md     ← Handoff notes from the v3 build session
-│
+├── DOCS_INDEX.md                ← Canonical docs index
+├── engineering/                 ← Repo policy, structure, and SSOT docs
+├── operations/                  ← Operator runbooks and environment inventories
+├── registry/                    ← Project registry and project cards
 ├── research/                    ← Investigation artifacts
-│   └── antigravity-teams-research.jsx  ← Microsoft Teams LevelDB integration research (39KB)
-│
-├── antigravity-agent/           ← Old standalone agent (pre-command-center era)
-│   ├── bot.py                   ← Original bot logic
-│   ├── heartbeat.py             ← Legacy heartbeat monitor
-│   ├── dashboard_server.py      ← v1 dashboard server
-│   ├── dashboard_index.html     ← v1 dashboard UI
-│   ├── data/memory.db           ← Old memory SQLite DB
-│   ├── memory/relationships.md  ← Structured relationship data (imported to main DB)
-│   └── scripts/                 ← Setup/install/uninstall scripts
-│
-├── AI-wingman/                  ← Original project (Telegram-based AI wingman)
-│   └── gmail-automation/        ← Gmail automation toolkit (original)
-│
-└── antigravity → ../            ← Symlink to current project root (for cross-reference)
+├── dashboard/                   ← Dashboard specs and implementation notes
+├── integrations/                ← External system integration plans
+├── learning/                    ← Learning-system docs and backlogs
+├── phases/                      ← Phase plans and roadmap docs
+├── plans/                       ← Active planning docs
+├── specs/                       ← Product and integration specs
+├── context/                     ← Stable relationship/use-case context
+├── ui-ux/                       ← UX workflow notes
+├── understanding/               ← Domain understanding docs
+└── allhands_prep/               ← All-hands prep materials
 ```
 
-## Current Production Files
+Historical/imported material now lives under `/Volumes/Storage/OpenClaw/legacy/`
+instead of `docs/`, including:
 
-The **live production code** lives at `/Volumes/Storage/antigravity/`:
-- `server.py` — Main FastAPI backend (port 8420)
-- `static/index.html` — React PWA frontend
-- `data/antigravity.db` — Primary SQLite database
-- `requirements.txt` — Python dependencies
+- `legacy/imported/archive/`
+- `legacy/imported/antigravity-agent/`
+- `legacy/imported/AI-wingman/`
+- `legacy/links/`
+
+## Current Production Paths
+
+The live OpenClaw code lives at `/Volumes/Storage/OpenClaw/`:
+- `apps/runtime/server.py` — Main FastAPI backend (port 8420)
+- `apps/runtime/heartbeat.py` — Heartbeat monitor
+- `apps/runtime/runtime_directives.py` — Runtime directive surface
+- `apps/runtime/requirements.txt` — Python dependencies
+- `dashboard/` — Dashboard frontend/PWA shell
+- `packages/openclaw-orchestrator/` — Repo-local orchestration plugin package
+- `domains/finance/` — Finance domain workspace
 
 ## V3 Features Merged Into Production
 

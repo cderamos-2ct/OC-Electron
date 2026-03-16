@@ -1,0 +1,42 @@
+{
+  "name": "@openclaw/ai-router",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-provider AI router for OpenClaw — Anthropic, OpenAI, Google with streaming normalization and fallback",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./providers": {
+      "import": "./dist/providers/index.js",
+      "types": "./dist/providers/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/generative-ai": "^0.24.0",
+    "openai": "^4.100.0"
+  },
+  "devDependencies": {
+    "@openclaw/core": "workspace:*",
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^3.2.1",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.1"
+  },
+  "peerDependencies": {
+    "@openclaw/core": "workspace:*"
+  }
+}

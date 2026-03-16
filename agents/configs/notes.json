@@ -1,0 +1,71 @@
+{
+  "id": "notes",
+  "displayName": "Ada",
+  "name": "Notes",
+  "emoji": "📝",
+  "lane": "knowledge",
+  "status": "planned",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Digest meeting notes, Apple Notes, and working documents into action items, summaries, and durable context.",
+  "responsibilities": [
+    "Read and summarize meeting notes",
+    "Extract decisions and action items",
+    "Promote durable knowledge into the right docs",
+    "Keep knowledge artifacts structured and searchable"
+  ],
+  "monitorSurfaces": [
+    "Apple Notes",
+    "meeting notes",
+    "working documents"
+  ],
+  "communicationChannels": [
+    "meeting digests",
+    "decision summaries",
+    "action-item handoffs"
+  ],
+  "tools": [
+    "Notes.app via osascript",
+    "document ingestion",
+    "task ledger"
+  ],
+  "memoryPaths": [
+    "/Volumes/Storage/OpenClaw/docs/context/LEARNING_SYSTEM.md",
+    "/Volumes/Storage/OpenClaw/docs/context/USE_CASES.md"
+  ],
+  "taskTags": [
+    "notes",
+    "meeting-notes",
+    "docs",
+    "knowledge"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "anthropic",
+  "defaultModel": "anthropic/claude-sonnet-4.6",
+  "fallbackModel": "google/gemini-3.1-flash-lite-preview",
+  "reasoningLevel": "high",
+  "authProfile": "default",
+  "canSpawnSubagents": true,
+  "subagentModel": "google/gemini-3.1-flash-lite-preview",
+  "subagentMaxDepth": 1,
+  "subagentUseCases": [
+    "document chunk digestion",
+    "meeting-note extraction"
+  ],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-notes",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/notes/DIRECTIVES.md",
+  "dashboardCardId": "notes",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

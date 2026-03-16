@@ -1,0 +1,21 @@
+{
+  "name": "@openclaw/gmail-tools",
+  "version": "1.0.0",
+  "description": "Minimal MCP server adding Gmail modify_labels, send_draft, delete_draft, get_draft tools",
+  "main": "index.mjs",
+  "type": "module",
+  "bin": {
+    "openclaw-gmail-tools": "./index.mjs"
+  },
+  "scripts": {
+    "start": "node index.mjs",
+    "auth": "node index.mjs auth"
+  },
+  "keywords": ["mcp", "gmail", "openclaw"],
+  "author": "Christian De Ramos",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "googleapis": "^171.4.0"
+  }
+}

@@ -9,11 +9,39 @@
     />
     <title>Aegilume Shell</title>
     <style>
+      :root {
+        /* Aegilume Stellar Agora palette */
+        --bg: #0f172a;
+        --bg-mid: #131d33;
+        --bg-card: #131d33;
+        --border: rgba(241,245,249,0.14);
+        --text: #f1f5f9;
+        --text-2: #cbd5e1;
+        --muted: #94a3b8;
+        --accent: #a3862a;
+        --accent-bg: rgba(163,134,42,0.2);
+        --green: #2ecc71;
+        --yellow: #e0c875;
+        --red: #e74c3c;
+
+        /* Aliases for legacy component compatibility */
+        --bg-primary: #0f172a;
+        --bg-secondary: #131d33;
+        --bg-tertiary: #1a2744;
+        --border-default: rgba(241,245,249,0.14);
+        --border-subtle: rgba(241,245,249,0.08);
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --accent-blue: #a3862a;
+        --accent-orange: #e0c875;
+        --accent-bg: rgba(163,134,42,0.2);
+      }
       html, body {
         margin: 0;
         padding: 0;
-        background: #0a0a0a;
-        color: #e5e5e5;
+        background: var(--bg);
+        color: var(--text);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         height: 100%;
         overflow: hidden;

@@ -1,200 +1,232 @@
 import React, { useState } from 'react';
-import type {
-  VaultSecretMeta,
-  VaultPolicy,
-  VaultAuditEntry,
-  PendingVaultApproval,
-  VaultStatus,
-} from '../../../shared/types.js';
-import { VaultStatusBar } from './VaultStatusBar';
-import { SecretCard } from './SecretCard';
-import { PendingApprovalCard } from './PendingApprovalCard';
-import { AuditLogTable } from './AuditLogTable';
-import { GatekeeperPrompt } from './GatekeeperPrompt';
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_STATUS: VaultStatus = {
-  state: 'unlocked',
-  serverUrl: 'https://vault.aegilume.internal',
-  secretCount: 24,
-  activeLeases: 3,
-  pendingApprovals: 2,
-  lastSyncAt: new Date(Date.now() - 120_000).toISOString(),
+// ─── CSS Variable tokens ───────────────────────────────────────────────────────
+const C = {
+  bg:        '#0f172a',
+  bgMid:     '#131d33',
+  bgCard:    '#131d33',
+  border:    'rgba(241,245,249,0.14)',
+  border2:   'rgba(241,245,249,0.08)',
+  text:      '#f1f5f9',
+  text2:     '#cbd5e1',
+  muted:     '#94a3b8',
+  accent:    '#a3862a',
+  accentBg:  'rgba(163,134,42,0.2)',
+  green:     '#2ecc71',
+  yellow:    '#e0c875',
+  red:       '#e74c3c',
 };
 
-const MOCK_SECRETS: VaultSecretMeta[] = [
-  {
-    id: 'sec-1',
-    name: 'OPENAI_API_KEY',
-    folder: '/ai-providers',
-    lastRotatedAt: new Date(Date.now() - 7 * 86400_000).toISOString(),
-    createdAt: new Date(Date.now() - 90 * 86400_000).toISOString(),
-    updatedAt: new Date(Date.now() - 7 * 86400_000).toISOString(),
-    hasActiveLease: true,
-  },
-  {
-    id: 'sec-2',
-    name: 'ANTHROPIC_API_KEY',
-    folder: '/ai-providers',
-    lastRotatedAt: new Date(Date.now() - 3 * 86400_000).toISOString(),
-    createdAt: new Date(Date.now() - 60 * 86400_000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 86400_000).toISOString(),
-    hasActiveLease: true,
-  },
-  {
-    id: 'sec-3',
-    name: 'GOOGLE_CLIENT_SECRET',
-    folder: '/google',
-    lastRotatedAt: new Date(Date.now() - 95 * 86400_000).toISOString(),
-    createdAt: new Date(Date.now() - 180 * 86400_000).toISOString(),
-    updatedAt: new Date(Date.now() - 95 * 86400_000).toISOString(),
-    hasActiveLease: false,
-  },
-  {
-    id: 'sec-4',
-    name: 'GITHUB_TOKEN',
-    folder: '/integrations',
-    lastRotatedAt: null,
-    createdAt: new Date(Date.now() - 30 * 86400_000).toISOString(),
-    updatedAt: new Date(Date.now() - 30 * 86400_000).toISOString(),
-    hasActiveLease: false,
-  },
-  {
-    id: 'sec-5',
-    name: 'SLACK_BOT_TOKEN',
-    folder: '/integrations',
-    lastRotatedAt: new Date(Date.now() - 14 * 86400_000).toISOString(),
-    createdAt: new Date(Date.now() - 45 * 86400_000).toISOString(),
-    updatedAt: new Date(Date.now() - 14 * 86400_000).toISOString(),
-    hasActiveLease: true,
-  },
-  {
-    id: 'sec-6',
-    name: 'DATABASE_URL',
-    folder: '/infrastructure',
-    lastRotatedAt: new Date(Date.now() - 120 * 86400_000).toISOString(),
-    createdAt: new Date(Date.now() - 200 * 86400_000).toISOString(),
-    updatedAt: new Date(Date.now() - 120 * 86400_000).toISOString(),
-    hasActiveLease: false,
-  },
+// ─── Types ────────────────────────────────────────────────────────────────────
+type FilterId = 'all' | 'api' | 'pass' | 'token' | 'cert' | 'ssh';
+type Category = 'api' | 'token' | 'pass' | 'ssh' | 'cert';
+type LeaseState = 'active' | 'dormant';
+type LogStatus = 'approved' | 'auto-approved' | 'pending' | 'revoked' | 'denied';
+
+interface SecretItem {
+  name: string;
+  category: Category;
+  valueLabel: string;
+  valueMasked: string;
+  valueRevealed: string;
+  lease: LeaseState;
+  lastAccess: string;
+}
+
+interface LogRow {
+  time: string;
+  agent: string;
+  secret: string;
+  action: string;
+  status: LogStatus;
+  statusText: string;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const SECRETS: SecretItem[] = [
+  { name: 'Gmail API OAuth',       category: 'api',   valueLabel: 'key:',   valueMasked: '••••••••••••••••', valueRevealed: 'AIzaSyD-xxxxxxxxxxxxxxxxxxxxxxx',                    lease: 'active',  lastAccess: '🌹 Karoline, 2 min ago' },
+  { name: 'GitHub PAT (aegilume)', category: 'token', valueLabel: 'token:', valueMasked: '••••••••••••••••', valueRevealed: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',              lease: 'active',  lastAccess: '🔥 Vulcan, 14 min ago' },
+  { name: 'Supabase Service Key',  category: 'api',   valueLabel: 'key:',   valueMasked: '••••••••••••••••', valueRevealed: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx',       lease: 'dormant', lastAccess: 'CD, 1 hr ago' },
+  { name: 'iMessage Bridge Auth',  category: 'token', valueLabel: 'token:', valueMasked: '••••••••••••••••', valueRevealed: 'imsg_tok_xxxxxxxxxxxxxxxxxxxxxxx',                   lease: 'active',  lastAccess: '🌈 Iris, 8 min ago' },
+  { name: 'Twilio VOIP SID',       category: 'api',   valueLabel: 'sid:',   valueMasked: '••••••••••••••••', valueRevealed: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',                 lease: 'dormant', lastAccess: '📡 Hermes, 3 hr ago' },
+  { name: 'OpenAI API Key',        category: 'api',   valueLabel: 'key:',   valueMasked: '••••••••••••••••', valueRevealed: 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',         lease: 'active',  lastAccess: '🔮 Socrates, 22 min ago' },
+  { name: 'Slack Bot Token',       category: 'token', valueLabel: 'token:', valueMasked: '••••••••••••••••', valueRevealed: 'xoxb-xxxxxxxx-xxxxxxxx-xxxxxxxxxxxxxxxx',           lease: 'dormant', lastAccess: '🌹 Karoline, 45 min ago' },
+  { name: 'Linear API Key',        category: 'api',   valueLabel: 'key:',   valueMasked: '••••••••••••••••', valueRevealed: 'lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',           lease: 'dormant', lastAccess: 'Never accessed' },
+  { name: 'SSH Deploy Key (prod)', category: 'ssh',   valueLabel: 'key:',   valueMasked: '••••••••••••••••', valueRevealed: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5xxx...',            lease: 'dormant', lastAccess: '🔥 Vulcan, 2 days ago' },
+  { name: 'Anthropic API Key',     category: 'api',   valueLabel: 'key:',   valueMasked: '••••••••••••••••', valueRevealed: 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',      lease: 'active',  lastAccess: 'CD, 5 min ago' },
 ];
 
-const MOCK_POLICIES: VaultPolicy[] = [
-  {
-    id: 'pol-1',
-    agentId: 'finance-agent',
-    secretPattern: '/ai-providers/*',
-    action: 'auto-approve',
-    maxLeaseTTL: 3600,
-    createdAt: new Date(Date.now() - 10 * 86400_000).toISOString(),
-  },
-  {
-    id: 'pol-2',
-    agentId: 'comms-agent',
-    secretPattern: '/integrations/SLACK_*',
-    action: 'auto-approve',
-    maxLeaseTTL: 1800,
-    createdAt: new Date(Date.now() - 5 * 86400_000).toISOString(),
-  },
-  {
-    id: 'pol-3',
-    agentId: '*',
-    secretPattern: '/infrastructure/*',
-    action: 'require-approval',
-    maxLeaseTTL: 900,
-    createdAt: new Date(Date.now() - 20 * 86400_000).toISOString(),
-  },
+const LOG_ROWS: LogRow[] = [
+  { time: '9:18 AM', agent: '🌹 Karoline', secret: 'Gmail API OAuth',   action: 'Lease renewed', status: 'approved',      statusText: 'Approved' },
+  { time: '9:16 AM', agent: '🔮 Socrates', secret: 'OpenAI API Key',    action: 'New lease',     status: 'auto-approved', statusText: 'Auto-approved' },
+  { time: '9:14 AM', agent: '🔥 Vulcan',   secret: 'GitHub PAT',        action: 'Lease renewed', status: 'approved',      statusText: 'Approved' },
+  { time: '9:10 AM', agent: '🌈 Iris',     secret: 'iMessage Bridge',   action: 'New lease',     status: 'auto-approved', statusText: 'Auto-approved' },
+  { time: '9:02 AM', agent: '📡 Hermes',   secret: 'Stripe Secret Key', action: 'Requested',     status: 'pending',       statusText: 'Pending' },
+  { time: '8:55 AM', agent: '🌹 Karoline', secret: 'Slack Bot Token',   action: 'Lease expired', status: 'revoked',       statusText: 'Revoked' },
+  { time: '8:41 AM', agent: '🧪 Hypatia',  secret: 'Prod DB Creds',     action: 'Access denied', status: 'denied',        statusText: 'Denied' },
 ];
 
-const MOCK_AUDIT: VaultAuditEntry[] = [
-  {
-    timestamp: new Date(Date.now() - 60_000).toISOString(),
-    agentId: 'finance-agent',
-    secretName: 'OPENAI_API_KEY',
-    action: 'access',
-    result: 'success',
-    policyId: 'pol-1',
-    purpose: 'LLM inference for budget analysis',
-  },
-  {
-    timestamp: new Date(Date.now() - 300_000).toISOString(),
-    agentId: 'ops-agent',
-    secretName: 'DATABASE_URL',
-    action: 'access',
-    result: 'denied',
-    error: 'Policy requires manual approval',
-  },
-  {
-    timestamp: new Date(Date.now() - 900_000).toISOString(),
-    agentId: 'comms-agent',
-    secretName: 'SLACK_BOT_TOKEN',
-    action: 'access',
-    result: 'success',
-    policyId: 'pol-2',
-    purpose: 'Send daily summary notification',
-  },
-  {
-    timestamp: new Date(Date.now() - 3600_000).toISOString(),
-    agentId: 'build-agent',
-    secretName: 'GITHUB_TOKEN',
-    action: 'access',
-    result: 'success',
-    purpose: 'Trigger CI pipeline',
-  },
-  {
-    timestamp: new Date(Date.now() - 7200_000).toISOString(),
-    agentId: 'admin',
-    secretName: 'GOOGLE_CLIENT_SECRET',
-    action: 'rotate',
-    result: 'success',
-  },
+// ─── Category pill config ─────────────────────────────────────────────────────
+const CAT_PILL: Record<Category, { bg: string; color: string; label: string }> = {
+  api:   { bg: '#1f2d5e', color: '#6bb8ff', label: 'API Key' },
+  token: { bg: '#3d1f5e', color: '#b88aff', label: 'Token' },
+  pass:  { bg: 'rgba(46,204,113,0.15)', color: '#2ecc71', label: 'Password' },
+  ssh:   { bg: '#5e3d1f', color: '#ffb86b', label: 'SSH Key' },
+  cert:  { bg: 'rgba(192,132,252,0.12)', color: '#c084fc', label: 'Certificate' },
+};
+
+const LOG_STATUS_COLOR: Record<LogStatus, string> = {
+  'approved':      C.green,
+  'auto-approved': C.green,
+  'pending':       C.yellow,
+  'revoked':       C.muted,
+  'denied':        C.red,
+};
+
+const FILTER_PILLS: { id: FilterId; label: string }[] = [
+  { id: 'all',   label: 'All' },
+  { id: 'api',   label: 'API Keys' },
+  { id: 'pass',  label: 'Passwords' },
+  { id: 'token', label: 'Tokens' },
+  { id: 'cert',  label: 'Certificates' },
+  { id: 'ssh',   label: 'SSH Keys' },
 ];
 
-const MOCK_PENDING: PendingVaultApproval[] = [
-  {
-    id: 'apv-1',
-    agentId: 'ops-agent',
-    secretName: 'DATABASE_URL',
-    purpose: 'Run schema migration for new feature branch',
-    requestedAt: new Date(Date.now() - 120_000).toISOString(),
-  },
-  {
-    id: 'apv-2',
-    agentId: 'research-agent',
-    secretName: 'GOOGLE_CLIENT_SECRET',
-    purpose: 'Authenticate Google Drive API for doc analysis',
-    requestedAt: new Date(Date.now() - 45_000).toISOString(),
-  },
-];
+// ─── SecretCard (inlined) ──────────────────────────────────────────────────────
+function SecretCard({ item }: { item: SecretItem }) {
+  const [revealed, setRevealed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const cat = CAT_PILL[item.category];
+  const isActive = item.lease === 'active';
 
-// ─── Tab types ────────────────────────────────────────────────────────────────
+  const handleCopy = () => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
-type VaultTab = 'secrets' | 'policies' | 'audit' | 'pending';
+  return (
+    <div
+      style={{
+        background: C.bgCard,
+        border: `1px solid ${C.border}`,
+        borderRadius: '10px',
+        padding: '14px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+      }}
+    >
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: C.text, minWidth: 0 }}>
+          <span style={{ fontSize: '15px', flexShrink: 0 }}>🔑</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+        </div>
+        <span
+          style={{
+            fontSize: '10px',
+            fontWeight: 700,
+            padding: '2px 8px',
+            borderRadius: '20px',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.5px',
+            background: cat.bg,
+            color: cat.color,
+            flexShrink: 0,
+            whiteSpace: 'nowrap' as const,
+          }}
+        >
+          {cat.label}
+        </span>
+      </div>
 
-const TABS: { id: VaultTab; label: string; count?: number }[] = [
-  { id: 'secrets', label: 'Secrets' },
-  { id: 'policies', label: 'Policies' },
-  { id: 'audit', label: 'Audit Log' },
-  { id: 'pending', label: 'Pending Approvals' },
-];
+      {/* Value row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '12px',
+          fontFamily: "'SF Mono', 'Menlo', 'Consolas', monospace",
+          color: C.muted,
+          background: C.bg,
+          borderRadius: '6px',
+          padding: '6px 10px',
+          minHeight: '28px',
+        }}
+      >
+        <span style={{ color: 'rgba(241,245,249,0.35)', fontSize: '11px' }}>{item.valueLabel}</span>
+        {revealed ? (
+          <span style={{ color: '#6bb8ff', wordBreak: 'break-all' as const, fontSize: '11px', flex: 1 }}>{item.valueRevealed}</span>
+        ) : (
+          <span style={{ letterSpacing: '2px', flex: 1 }}>{item.valueMasked}</span>
+        )}
+      </div>
 
-// ─── Main VaultView ───────────────────────────────────────────────────────────
+      {/* Last access row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: C.muted }}>
+        <span
+          style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: isActive ? C.green : C.muted,
+            display: 'inline-block',
+            flexShrink: 0,
+          }}
+        />
+        <span>Last: {item.lastAccess}</span>
+      </div>
 
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <button
+          onClick={handleCopy}
+          style={{
+            flex: 1,
+            padding: '5px 10px',
+            fontSize: '11px',
+            fontWeight: 600,
+            border: `1px solid ${C.border}`,
+            borderRadius: '6px',
+            background: 'transparent',
+            color: copied ? C.green : C.text2,
+            cursor: 'pointer',
+            transition: 'color 0.15s',
+          }}
+        >
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+        <button
+          onClick={() => setRevealed(r => !r)}
+          style={{
+            flex: 1,
+            padding: '5px 10px',
+            fontSize: '11px',
+            fontWeight: 600,
+            border: `1px solid ${C.border}`,
+            borderRadius: '6px',
+            background: 'transparent',
+            color: revealed ? C.yellow : C.text2,
+            cursor: 'pointer',
+            transition: 'color 0.15s',
+          }}
+        >
+          {revealed ? 'Hide' : 'Reveal'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main VaultView ────────────────────────────────────────────────────────────
 export function VaultView() {
-  const [activeTab, setActiveTab] = useState<VaultTab>('secrets');
-  const [pendingApprovals, setPendingApprovals] = useState<PendingVaultApproval[]>(MOCK_PENDING);
-  const [gatekeeperApproval, setGatekeeperApproval] = useState<PendingVaultApproval | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterId>('all');
+  const [showApproval, setShowApproval] = useState(true);
 
-  const handleApprove = (id: string) => {
-    setPendingApprovals((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  const handleDeny = (id: string) => {
-    setPendingApprovals((prev) => prev.filter((a) => a.id !== id));
-  };
-
-  const pendingCount = pendingApprovals.length;
+  const filteredSecrets = activeFilter === 'all'
+    ? SECRETS
+    : SECRETS.filter(s => s.category === activeFilter);
 
   return (
     <div
@@ -202,217 +234,427 @@ export function VaultView() {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        background: 'var(--bg)',
+        background: C.bg,
+        color: C.text,
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         overflow: 'hidden',
       }}
     >
-      {/* Status bar */}
-      <VaultStatusBar
-        status={{ ...MOCK_STATUS, pendingApprovals: pendingCount }}
-      />
-
-      {/* Content */}
+      {/* ── TOP BAR ── */}
       <div
         style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '32px 40px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '14px 20px',
+          borderBottom: `1px solid ${C.border}`,
+          background: C.bgMid,
+          flexShrink: 0,
+          flexWrap: 'wrap' as const,
         }}
       >
-        {/* Header */}
-        <div style={{ marginBottom: '24px' }}>
-          <h1
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              margin: 0,
-              marginBottom: '4px',
-            }}
-          >
-            🔐 Vault
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
-            Managed by Themis — secrets gatekeeper
-          </p>
+        {/* Title */}
+        <div style={{ fontSize: '16px', fontWeight: 700, color: C.text, display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          <span>🔐</span>
+          <span>Vault</span>
         </div>
 
-        {/* Filter pill tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            const badge = tab.id === 'pending' ? pendingCount : undefined;
+        {/* Search */}
+        <input
+          type="text"
+          placeholder="Search secrets..."
+          style={{
+            flex: '1 1 160px',
+            minWidth: '120px',
+            maxWidth: '240px',
+            padding: '6px 12px',
+            fontSize: '12px',
+            background: C.bg,
+            border: `1px solid ${C.border}`,
+            borderRadius: '6px',
+            color: C.text,
+            outline: 'none',
+          }}
+        />
+
+        {/* Filter pills */}
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
+          {FILTER_PILLS.map(pill => {
+            const isActive = activeFilter === pill.id;
             return (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                key={pill.id}
+                onClick={() => setActiveFilter(pill.id)}
                 style={{
-                  padding: '6px 16px',
+                  padding: '4px 12px',
+                  fontSize: '11px',
+                  fontWeight: isActive ? 700 : 500,
                   borderRadius: '20px',
-                  border: isActive
-                    ? '1px solid var(--accent, #6366f1)'
-                    : '1px solid var(--border-default)',
-                  background: isActive ? 'var(--accent, #6366f1)20' : 'transparent',
-                  color: isActive ? 'var(--accent, #6366f1)' : 'var(--text-secondary)',
-                  fontSize: '13px',
-                  fontWeight: isActive ? 600 : 400,
+                  border: isActive ? `1px solid ${C.accent}` : `1px solid ${C.border}`,
+                  background: isActive ? C.accentBg : 'transparent',
+                  color: isActive ? C.yellow : C.muted,
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 0.1s',
+                  transition: 'all 0.15s',
+                  whiteSpace: 'nowrap' as const,
                 }}
               >
-                {tab.label}
-                {badge !== undefined && badge > 0 && (
-                  <span
-                    style={{
-                      background: '#f59e0b',
-                      color: '#000',
-                      borderRadius: '10px',
-                      padding: '1px 6px',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {badge}
-                  </span>
-                )}
+                {pill.label}
               </button>
             );
           })}
         </div>
 
-        {/* Tab content */}
-        {activeTab === 'secrets' && (
+        {/* Add Secret button */}
+        <button
+          style={{
+            padding: '6px 14px',
+            fontSize: '12px',
+            fontWeight: 700,
+            borderRadius: '6px',
+            border: 'none',
+            background: C.accent,
+            color: '#fff',
+            cursor: 'pointer',
+            flexShrink: 0,
+            whiteSpace: 'nowrap' as const,
+          }}
+        >
+          + Add Secret
+        </button>
+
+        {/* Connection status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: C.muted, marginLeft: 'auto', flexShrink: 0 }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: C.green, display: 'inline-block' }} />
+          <span>Vaultwarden · Connected · vault.aegilume.local</span>
+        </div>
+      </div>
+
+      {/* ── SCROLLABLE BODY ── */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto' as const,
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          paddingBottom: '80px',
+        }}
+      >
+        {/* ── PENDING APPROVAL CARD ── */}
+        {showApproval && (
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              background: C.accentBg,
+              border: `1px solid ${C.accent}`,
+              borderRadius: '12px',
+              padding: '16px 20px',
+              display: 'flex',
+              flexDirection: 'column',
               gap: '12px',
             }}
           >
-            {MOCK_SECRETS.map((secret) => (
-              <SecretCard key={secret.id} secret={secret} />
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'policies' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {MOCK_POLICIES.map((policy) => (
-              <div
-                key={policy.id}
+            {/* Label row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: C.yellow }}>
+                <span>⏳</span>
+                <span>Pending Approval</span>
+              </div>
+              <button
+                onClick={() => setShowApproval(false)}
                 style={{
-                  background: 'var(--bg-card, var(--bg-tertiary))',
-                  border: '1px solid var(--border-default)',
-                  borderRadius: '10px',
-                  padding: '16px 18px',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 120px 100px',
-                  alignItems: 'center',
-                  gap: '16px',
-                  fontSize: '13px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: C.muted,
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  lineHeight: 1,
+                  padding: '0 4px',
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{policy.agentId}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    {new Date(policy.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div>
-                  <code
-                    style={{
-                      fontSize: '11px',
-                      background: 'var(--bg-secondary)',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {policy.secretPattern}
-                  </code>
-                </div>
-                <div>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      ...(policy.action === 'auto-approve'
-                        ? { color: '#22c55e', background: '#22c55e18', border: '1px solid #22c55e40' }
-                        : { color: '#f59e0b', background: '#f59e0b18', border: '1px solid #f59e0b40' }),
-                    }}
-                  >
-                    {policy.action === 'auto-approve' ? 'Auto-approve' : 'Require approval'}
-                  </span>
-                </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-                  TTL: {policy.maxLeaseTTL}s
-                </div>
-              </div>
-            ))}
+                ×
+              </button>
+            </div>
+
+            {/* Agent + secret */}
+            <div style={{ fontSize: '14px', color: C.text }}>
+              <span style={{ fontWeight: 600 }}>📡 Hermes</span>
+              <span style={{ color: C.muted }}> requesting </span>
+              <span style={{ fontWeight: 600, color: C.yellow }}>"Stripe Secret Key"</span>
+            </div>
+
+            {/* Reason */}
+            <div style={{ fontSize: '12px', color: C.text2, fontStyle: 'italic' as const, borderLeft: `2px solid ${C.accent}`, paddingLeft: '10px' }}>
+              "Need to verify pending invoice payment for Q1 reconciliation"
+            </div>
+
+            {/* Meta */}
+            <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: C.muted, flexWrap: 'wrap' as const }}>
+              <span>🔒 Read-only</span>
+              <span>⏱ 30-minute lease</span>
+              <span>Finance lane</span>
+            </div>
+
+            {/* Themis note */}
+            <div
+              style={{
+                background: 'rgba(163,134,42,0.12)',
+                border: `1px solid rgba(163,134,42,0.3)`,
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '12px',
+                color: C.text2,
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'flex-start',
+              }}
+            >
+              <span style={{ flexShrink: 0 }}>⚖️</span>
+              <span>
+                <span style={{ fontWeight: 700, color: C.yellow }}>Themis: </span>
+                Approve — Hermes has finance-lane clearance for read operations.
+              </span>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+              <button
+                style={{
+                  padding: '7px 18px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: C.green,
+                  color: '#fff',
+                  cursor: 'pointer',
+                }}
+              >
+                Approve
+              </button>
+              <button
+                style={{
+                  padding: '7px 18px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: C.red,
+                  color: '#fff',
+                  cursor: 'pointer',
+                }}
+              >
+                Deny
+              </button>
+              <button
+                style={{
+                  padding: '7px 18px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  border: `1px solid ${C.border}`,
+                  background: 'transparent',
+                  color: C.text2,
+                  cursor: 'pointer',
+                }}
+              >
+                Approve with conditions
+              </button>
+            </div>
           </div>
         )}
 
-        {activeTab === 'audit' && (
+        {/* ── SECRET GRID ── */}
+        <div>
           <div
             style={{
-              background: 'var(--bg-card, var(--bg-tertiary))',
-              border: '1px solid var(--border-default)',
-              borderRadius: '10px',
-              overflow: 'hidden',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '14px',
             }}
           >
-            <AuditLogTable entries={MOCK_AUDIT} />
+            {filteredSecrets.map(item => (
+              <SecretCard key={item.name} item={item} />
+            ))}
           </div>
-        )}
+        </div>
 
-        {activeTab === 'pending' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {pendingApprovals.length === 0 ? (
-              <div
-                style={{
-                  padding: '48px',
-                  textAlign: 'center',
-                  color: 'var(--text-muted)',
-                  fontSize: '13px',
-                  background: 'var(--bg-card, var(--bg-tertiary))',
-                  border: '1px solid var(--border-default)',
-                  borderRadius: '10px',
-                }}
-              >
-                No pending approvals
-              </div>
-            ) : (
-              pendingApprovals.map((approval) => (
-                <PendingApprovalCard
-                  key={approval.id}
-                  approval={approval}
-                  onApprove={(id) => {
-                    setGatekeeperApproval(approval);
-                    // Also show gatekeeper prompt for high-risk
-                    handleApprove(id);
-                  }}
-                  onDeny={handleDeny}
-                />
-              ))
-            )}
+        {/* ── ACCESS LOG TABLE ── */}
+        <div
+          style={{
+            background: C.bgCard,
+            border: `1px solid ${C.border}`,
+            borderRadius: '12px',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Table header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '14px 18px',
+              borderBottom: `1px solid ${C.border2}`,
+            }}
+          >
+            <span style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>Access Log</span>
+            <span style={{ fontSize: '11px', color: C.accent, cursor: 'pointer', fontWeight: 600 }}>View all →</span>
           </div>
-        )}
+
+          {/* Table */}
+          <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+            <thead>
+              <tr style={{ background: C.bg }}>
+                {['Time', 'Agent', 'Secret', 'Action', 'Status'].map(col => (
+                  <th
+                    key={col}
+                    style={{
+                      padding: '8px 18px',
+                      textAlign: 'left' as const,
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      color: C.muted,
+                      textTransform: 'uppercase' as const,
+                      letterSpacing: '0.6px',
+                      whiteSpace: 'nowrap' as const,
+                    }}
+                  >
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {LOG_ROWS.map((row, i) => (
+                <tr
+                  key={i}
+                  style={{
+                    borderTop: `1px solid ${C.border2}`,
+                    background: i % 2 === 0 ? 'transparent' : 'rgba(241,245,249,0.015)',
+                  }}
+                >
+                  <td style={{ padding: '10px 18px', fontSize: '11px', color: C.muted, whiteSpace: 'nowrap' as const, fontFamily: "'SF Mono', monospace" }}>
+                    {row.time}
+                  </td>
+                  <td style={{ padding: '10px 18px', fontSize: '12px', color: C.text2, whiteSpace: 'nowrap' as const }}>
+                    {row.agent}
+                  </td>
+                  <td style={{ padding: '10px 18px', fontSize: '12px', color: C.text, whiteSpace: 'nowrap' as const }}>
+                    {row.secret}
+                  </td>
+                  <td style={{ padding: '10px 18px', fontSize: '12px', color: C.muted, whiteSpace: 'nowrap' as const }}>
+                    {row.action}
+                  </td>
+                  <td style={{ padding: '10px 18px', whiteSpace: 'nowrap' as const }}>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: LOG_STATUS_COLOR[row.status],
+                      }}
+                    >
+                      {row.statusText}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Gatekeeper modal */}
-      {gatekeeperApproval && (
-        <GatekeeperPrompt
-          approval={gatekeeperApproval}
-          onApprove={() => setGatekeeperApproval(null)}
-          onDeny={() => setGatekeeperApproval(null)}
-          onClose={() => setGatekeeperApproval(null)}
-        />
-      )}
+      {/* ── AGENT TOOLBAR (fixed bottom) ── */}
+      <div
+        style={{
+          position: 'absolute' as const,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          padding: '10px 20px',
+          background: C.bgMid,
+          borderTop: `1px solid ${C.border}`,
+          flexShrink: 0,
+          zIndex: 10,
+        }}
+      >
+        {/* Avatar + name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: C.accentBg,
+              border: `1px solid ${C.accent}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+            }}
+          >
+            ⚖️
+          </div>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: C.text }}>Themis</div>
+            <div style={{ fontSize: '10px', color: C.muted }}>Vault Gatekeeper</div>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div style={{ fontSize: '11px', color: C.muted, flex: 1 }}>
+          4 active leases · 1 pending · 0 violations
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+          <button
+            style={{
+              padding: '5px 12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: `1px solid ${C.border}`,
+              borderRadius: '6px',
+              background: 'transparent',
+              color: C.text2,
+              cursor: 'pointer',
+            }}
+          >
+            Rotation Schedule
+          </button>
+          <button
+            style={{
+              padding: '5px 12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: `1px solid ${C.border}`,
+              borderRadius: '6px',
+              background: 'transparent',
+              color: C.text2,
+              cursor: 'pointer',
+            }}
+          >
+            Access Policies
+          </button>
+          <button
+            style={{
+              padding: '5px 12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: `1px solid rgba(231,76,60,0.4)`,
+              borderRadius: '6px',
+              background: 'transparent',
+              color: C.red,
+              cursor: 'pointer',
+            }}
+          >
+            Emergency Revoke All
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

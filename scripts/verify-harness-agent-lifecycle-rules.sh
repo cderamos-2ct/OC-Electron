@@ -15,17 +15,19 @@ has_pattern() {
   fi
 }
 
+DATA_DIR="${OPENCLAW_DATA_DIR:-/Volumes/Storage/OpenClaw-Data}"
+
 for file in \
-  ".antigravity/RULES.md" \
-  ".antigravity/PARALLELISM_RULES.md" \
-  ".antigravity/EXECUTION_LOOP.md" \
-  ".antigravity/VALIDATION_MATRIX.md" \
-  ".antigravity/details/rules/agent-lifecycle-and-model-routing-policy.md"; do
+  "$DATA_DIR/RULES.md" \
+  "$DATA_DIR/PARALLELISM_RULES.md" \
+  "$DATA_DIR/EXECUTION_LOOP.md" \
+  "$DATA_DIR/VALIDATION_MATRIX.md" \
+  "$DATA_DIR/details/rules/agent-lifecycle-and-model-routing-policy.md"; do
   [ -f "$file" ] || { echo "error: missing required file: $file" >&2; exit 1; }
 done
 
-has_pattern "Agent Lifecycle \\+ Cap Discipline \\(Hard\\)" ".antigravity/RULES.md" || { echo "error: RULES missing lifecycle section" >&2; exit 1; }
-has_pattern "Agent Lifecycle Barrier \\(Required\\)" ".antigravity/PARALLELISM_RULES.md" || { echo "error: PARALLELISM_RULES missing lifecycle barrier section" >&2; exit 1; }
-has_pattern "Execute agent lifecycle barrier" ".antigravity/EXECUTION_LOOP.md" || { echo "error: EXECUTION_LOOP missing lifecycle step" >&2; exit 1; }
-has_pattern "Agent lifecycle \\+ model-routing gate" ".antigravity/VALIDATION_MATRIX.md" || { echo "error: VALIDATION_MATRIX missing lifecycle/model-routing gate" >&2; exit 1; }
+has_pattern "Agent Lifecycle \\+ Cap Discipline \\(Hard\\)" "$DATA_DIR/RULES.md" || { echo "error: RULES missing lifecycle section" >&2; exit 1; }
+has_pattern "Agent Lifecycle Barrier \\(Required\\)" "$DATA_DIR/PARALLELISM_RULES.md" || { echo "error: PARALLELISM_RULES missing lifecycle barrier section" >&2; exit 1; }
+has_pattern "Execute agent lifecycle barrier" "$DATA_DIR/EXECUTION_LOOP.md" || { echo "error: EXECUTION_LOOP missing lifecycle step" >&2; exit 1; }
+has_pattern "Agent lifecycle \\+ model-routing gate" "$DATA_DIR/VALIDATION_MATRIX.md" || { echo "error: VALIDATION_MATRIX missing lifecycle/model-routing gate" >&2; exit 1; }
 echo "verification=pass"

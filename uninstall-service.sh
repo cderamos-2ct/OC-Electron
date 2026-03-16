@@ -1,5 +1,5 @@
 #!/bin/bash
-# AntiGravity — Uninstall launchd services
+# OpenClaw runtime — Uninstall legacy launchd services
 for label in com.antigravity.server com.antigravity.tunnel com.antigravity.heartbeat; do
     plist="$HOME/Library/LaunchAgents/$label.plist"
     if [ -f "$plist" ]; then

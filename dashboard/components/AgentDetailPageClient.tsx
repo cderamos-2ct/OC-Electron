@@ -128,6 +128,13 @@ export function AgentDetailPageClient({ agentId }: { agentId: string }) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href={`/agents/workspace?agent=${encodeURIComponent(agent.id)}`}
+            className="rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+            style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
+          >
+            Open Workspace
+          </Link>
           <button
             onClick={() => void handleRefinePacket()}
             disabled={refining}

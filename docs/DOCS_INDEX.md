@@ -86,6 +86,13 @@ If a planning/operating doc matters, it should be findable from here.
 ## UI / UX
 - `ui-ux/UI_UX_MODEL_REVIEW_WORKFLOW.md`
 
+## Engineering
+- `engineering/FILESYSTEM_STRUCTURE_POLICY.md`
+- `engineering/GIT_POLICIES.md`
+- `engineering/SSOT_POLICY.md`
+- `engineering/REPO_CLEANUP_PATH.md`
+- `engineering/DOCS_CANONICALIZATION_PLAN.md`
+
 ---
 
 ## Understanding

@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "paths": {
+      "@openclaw/core": ["../../packages/openclaw-core/src/index.ts"],
+      "@openclaw/core/*": ["../../packages/openclaw-core/src/*.ts"],
+      "@shared/*": ["src/shared/*"],
+      "@mobile/*": ["src/mobile/*"]
+    }
+  },
+  "include": ["src/mobile/**/*", "src/shared/**/*"],
+  "exclude": [
+    "src/main/**/*",
+    "src/renderer/**/*",
+    "src/preload/**/*",
+    "src/mobile/service-worker.ts"
+  ]
+}

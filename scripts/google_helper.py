@@ -42,7 +42,7 @@ CREDS_PATH = CREDS_DIR / "credentials.json"
 
 # Active account (set by --account flag or default)
 ACTIVE_ACCOUNT = "work"
-ATTACHMENTS_DIR = Path("/Volumes/Storage/OpenClaw/.antigravity/agents/profiles/comms/artifacts/email")
+ATTACHMENTS_DIR = Path(os.getenv("OPENCLAW_DATA_DIR", "/Volumes/Storage/OpenClaw-Data")) / "agents/profiles/comms/artifacts/email"
 
 def _token_path(account=None):
     """Get token path for an account alias."""

@@ -1,12 +1,12 @@
 #!/bin/bash
-# AntiGravity — Install as macOS launchd service (auto-starts on login)
+# OpenClaw runtime — Install as macOS launchd service (auto-starts on login)
 #
 # NOTE: Logs go to ~/Library/Logs/antigravity/ — launchd cannot write logs
 # through symlinks to external volumes. Project files stay on the external
 # volume, accessed via ~/antigravity symlink.
 set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
-LINK="$HOME/antigravity"
+LINK="$HOME/openclaw"
 PLIST_NAME="com.antigravity.server"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_NAME.plist"
 HEARTBEAT_PLIST="com.antigravity.heartbeat"
@@ -18,11 +18,11 @@ PYTHON=$(which python3.14 2>/dev/null || which python3)
 LOG_DIR="$HOME/Library/Logs/antigravity"
 mkdir -p "$LOG_DIR"
 
-# Create ~/antigravity symlink so launchd uses a home-dir path
+# Create ~/openclaw symlink so launchd uses a home-dir path
 ln -sfn "$DIR" "$LINK"
 echo "  -> Symlink: $LINK -> $DIR"
 
-echo "Installing AntiGravity launchd services..."
+echo "Installing OpenClaw launchd services..."
 
 # ── Main server service ────────────────────────────────────────────────────────
 cat > "$PLIST_PATH" << EOF
@@ -36,7 +36,7 @@ cat > "$PLIST_PATH" << EOF
     <key>ProgramArguments</key>
     <array>
         <string>$PYTHON</string>
-        <string>$LINK/server.py</string>
+        <string>$LINK/apps/runtime/server.py</string>
     </array>
     <key>WorkingDirectory</key>
     <string>$LINK</string>
@@ -98,7 +98,7 @@ cat > "$HEARTBEAT_PATH" << EOF
     <key>ProgramArguments</key>
     <array>
         <string>$PYTHON</string>
-        <string>$LINK/heartbeat.py</string>
+        <string>$LINK/apps/runtime/heartbeat.py</string>
     </array>
     <key>WorkingDirectory</key>
     <string>$LINK</string>
@@ -131,7 +131,7 @@ launchctl bootstrap gui/$(id -u) "$HEARTBEAT_PATH"
 echo "  Heartbeat service installed: $HEARTBEAT_PLIST (every 30 min)"
 
 echo ""
-echo "AntiGravity services installed and running!"
+echo "OpenClaw runtime services installed and running!"
 echo "   Server:    http://localhost:8420"
 echo "   Tunnel:    https://ag.visualgraphx.com"
 echo "   Heartbeat: every 30 minutes"

@@ -1,7 +1,13 @@
 "use client";
 
 import { startTransition, useCallback, useEffect, useState } from "react";
-import type { AgentDetail, AgentManagerAudit, AgentManagerRecommendation, AgentSummary } from "@/lib/types";
+import type {
+  AgentDetail,
+  AgentManagerAudit,
+  AgentManagerRecommendation,
+  AgentSummary,
+  ServerVisibilitySummary,
+} from "@/lib/types";
 
 async function readError(response: Response) {
   try {
@@ -35,6 +41,7 @@ export function useOpenClawAgents() {
   const [defaultId, setDefaultId] = useState<string>("cd");
   const [recommendations, setRecommendations] = useState<AgentManagerRecommendation[]>([]);
   const [managerAudit, setManagerAudit] = useState<AgentManagerAudit | null>(null);
+  const [visibility, setVisibility] = useState<ServerVisibilitySummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,9 +49,14 @@ export function useOpenClawAgents() {
     setLoading(true);
     setError(null);
     try {
-      const result = await requestJson<{ defaultId: string; agents: AgentSummary[] }>("/api/agents");
+      const result = await requestJson<{
+        defaultId: string;
+        agents: AgentSummary[];
+        visibility?: ServerVisibilitySummary | null;
+      }>("/api/agents");
       setAgents(result.agents ?? []);
       setDefaultId(result.defaultId || "cd");
+      setVisibility(result.visibility ?? null);
       const manager = await requestJson<{ recommendations: AgentManagerRecommendation[]; audit?: AgentManagerAudit | null }>("/api/agents/manager");
       setRecommendations(manager.recommendations ?? []);
       setManagerAudit(manager.audit ?? null);
@@ -149,6 +161,7 @@ export function useOpenClawAgents() {
     defaultId,
     recommendations,
     managerAudit,
+    visibility,
     loading,
     error,
     refresh,

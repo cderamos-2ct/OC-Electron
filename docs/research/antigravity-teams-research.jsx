@@ -605,21 +605,22 @@ function TimelineMockup() {
 
 function FileTree() {
   const lines = [
-    { indent: 0, text: "antigravity-agent/", color: COLORS.accent },
-    { indent: 1, text: "bot.py", color: COLORS.text, note: "Telegram bot + Claude CLI" },
-    { indent: 1, text: "heartbeat.py", color: COLORS.text, note: "5-min proactive monitoring" },
-    { indent: 1, text: "HEARTBEAT.md", color: COLORS.textMuted, note: "Heartbeat behavior rules" },
-    { indent: 1, text: "dashboard/", color: COLORS.green, note: "NEW — web dashboard" },
-    { indent: 2, text: "server.py", color: COLORS.green, note: "FastAPI + WebSocket server" },
-    { indent: 2, text: "teams_reader.py", color: COLORS.green, note: "LevelDB parser + cache" },
-    { indent: 2, text: "message_store.py", color: COLORS.green, note: "SQLite FTS5 message DB" },
-    { indent: 2, text: "static/", color: COLORS.green, note: "React dashboard UI" },
+    { indent: 0, text: "OpenClaw/", color: COLORS.accent },
+    { indent: 1, text: "apps/", color: COLORS.green },
+    { indent: 2, text: "runtime/", color: COLORS.green, note: "Python runtime app" },
+    { indent: 3, text: "heartbeat.py", color: COLORS.text, note: "5-min proactive monitoring" },
+    { indent: 3, text: "server.py", color: COLORS.green, note: "FastAPI + WebSocket server" },
+    { indent: 3, text: "runtime_directives.py", color: COLORS.textMuted, note: "Runtime directive registry" },
+    { indent: 1, text: "dashboard/", color: COLORS.green, note: "Web dashboard" },
+    { indent: 2, text: "app/", color: COLORS.green, note: "Next.js app shell" },
+    { indent: 2, text: "components/", color: COLORS.green, note: "Dashboard UI components" },
+    { indent: 1, text: "packages/", color: COLORS.text },
+    { indent: 2, text: "openclaw-orchestrator/", color: COLORS.text, note: "Repo-local orchestration plugin" },
     { indent: 1, text: "scripts/", color: COLORS.text },
     { indent: 2, text: "get_teams_messages.sh", color: COLORS.text, note: "Current — Notification Center" },
     { indent: 2, text: "teams_leveldb_reader.py", color: COLORS.green, note: "NEW — full LevelDB reader" },
     { indent: 2, text: "get_calendar_events.sh", color: COLORS.textMuted },
     { indent: 2, text: "gmail_unread.sh", color: COLORS.textMuted },
-    { indent: 1, text: "config.json", color: COLORS.textMuted, note: "Contact mapping, priorities" },
   ];
 
   return (

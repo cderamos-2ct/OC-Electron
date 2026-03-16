@@ -1,0 +1,72 @@
+{
+  "id": "calendar",
+  "displayName": "Kronos",
+  "name": "Calendar",
+  "emoji": "📅",
+  "lane": "scheduling",
+  "status": "planned",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Manage calendar awareness, meeting prep, scheduling, reminders, and conflict detection.",
+  "responsibilities": [
+    "Watch upcoming meetings and deadlines",
+    "Prepare meeting briefs",
+    "Surface calendar conflicts",
+    "Coordinate reminders and schedule actions"
+  ],
+  "monitorSurfaces": [
+    "Apple Calendar",
+    "Google Calendar",
+    "Apple Reminders"
+  ],
+  "communicationChannels": [
+    "meeting briefs",
+    "schedule updates",
+    "reminder alerts"
+  ],
+  "tools": [
+    "get_calendar_events.sh",
+    "google_helper.py calendar_today",
+    "get_reminders.sh",
+    "create_calendar_event.sh"
+  ],
+  "memoryPaths": [
+    "/Users/cderamos/.openclaw/workspace/MEMORY.md",
+    "/Volumes/Storage/OpenClaw/docs/context/USE_CASES.md"
+  ],
+  "taskTags": [
+    "calendar",
+    "meeting",
+    "schedule",
+    "reminders"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "openai",
+  "defaultModel": "openai/gpt-5-mini",
+  "fallbackModel": "anthropic/claude-sonnet-4.6",
+  "reasoningLevel": "medium",
+  "authProfile": "default",
+  "canSpawnSubagents": true,
+  "subagentModel": "openai/gpt-5-mini",
+  "subagentMaxDepth": 1,
+  "subagentUseCases": [
+    "parallel meeting prep",
+    "calendar conflict analysis"
+  ],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-calendar",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/calendar/DIRECTIVES.md",
+  "dashboardCardId": "calendar",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

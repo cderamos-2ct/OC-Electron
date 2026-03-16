@@ -1,3 +1,5 @@
+import type { AgentRosterCard, CommandRollupCard, NeedsChristianItem, TaskStateBucket } from "@/lib/types";
+
 export type OpsTaskStatus = "new" | "in-progress" | "blocked" | "done" | "failed";
 export type OpsTaskPriority = "high" | "medium" | "low";
 
@@ -63,6 +65,16 @@ export type OpsAgentSummary = {
   groups: {
     total: number;
     active: number;
+  };
+  rosterCards: AgentRosterCard[];
+  taskState: TaskStateBucket[];
+  rollups: CommandRollupCard[];
+  needsChristian: {
+    total: number;
+    blocked: number;
+    unassigned: number;
+    highPriorityStale: number;
+    items: NeedsChristianItem[];
   };
   timestamp: number;
 };

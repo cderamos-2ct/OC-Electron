@@ -1,0 +1,49 @@
+{
+  "name": "openclaw-shell",
+  "version": "0.1.0",
+  "description": "OpenClaw Shell — Electron-based multi-app browser with AI agent orchestration",
+  "private": true,
+  "main": "out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:mobile": "vite --config vite.config.mobile.ts --port 3002",
+    "build:mobile": "vite build --config vite.config.mobile.ts",
+    "typecheck:mobile": "tsc --project tsconfig.mobile.json --noEmit"
+  },
+  "dependencies": {
+    "@electron/remote": "^2.1.2",
+    "@noble/ed25519": "^3.0.0",
+    "@octokit/rest": "^21.0.2",
+    "@googleworkspace/cli": "^0.1.0",
+    "@openclaw/core": "workspace:*",
+    "@openclaw/gateway-client": "workspace:*",
+    "openclaw-db": "workspace:*",
+    "pg": "^8.13.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "ws": "^8.18.2",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/ws": "^8.18.0",
+    "@vitejs/plugin-react": "^4.5.2",
+    "autoprefixer": "^10.4.21",
+    "electron": "^35.1.5",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^3.1.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.1"
+  }
+}

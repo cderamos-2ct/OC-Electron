@@ -1,0 +1,65 @@
+{
+  "id": "verifier",
+  "displayName": "Themis",
+  "name": "Verifier",
+  "emoji": "✅",
+  "lane": "verification",
+  "status": "planned",
+  "runtimeAgentId": null,
+  "default": false,
+  "description": "Validate that claimed work is actually complete, coherent, and safe to hand back.",
+  "responsibilities": [
+    "Check acceptance criteria",
+    "Catch regressions and incomplete claims",
+    "Confirm evidence before closure",
+    "Enforce completion quality gates"
+  ],
+  "monitorSurfaces": [
+    "task ledger",
+    "verification outputs",
+    "quality gates"
+  ],
+  "communicationChannels": [
+    "verification summaries",
+    "release-readiness notes",
+    "failure findings"
+  ],
+  "tools": [
+    "tests",
+    "type checks",
+    "manual verification",
+    "quality-gate review"
+  ],
+  "memoryPaths": [],
+  "taskTags": [
+    "verification",
+    "review",
+    "quality"
+  ],
+  "escalatesTo": "cd",
+  "modelProvider": "google",
+  "defaultModel": "google/gemini-3.1-pro-preview",
+  "fallbackModel": "anthropic/claude-opus-4.6",
+  "reasoningLevel": "high",
+  "authProfile": "default",
+  "canSpawnSubagents": false,
+  "subagentModel": null,
+  "subagentMaxDepth": 0,
+  "subagentUseCases": [],
+  "persistent": true,
+  "desiredStatus": "available",
+  "sessionLabel": "lane-verifier",
+  "startupPolicy": "on_demand",
+  "supervisor": "cd",
+  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/verifier/DIRECTIVES.md",
+  "dashboardCardId": "verifier",
+  "registryVersion": 2,
+  "hiringClass": "permanent-staff",
+  "runtime": {
+    "observedState": "unknown",
+    "sessionKey": null,
+    "lastSeenAt": null,
+    "currentTaskId": null,
+    "lastError": null
+  }
+}

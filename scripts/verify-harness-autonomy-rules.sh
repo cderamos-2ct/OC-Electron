@@ -15,14 +15,16 @@ has_pattern() {
   fi
 }
 
+DATA_DIR="${OPENCLAW_DATA_DIR:-/Volumes/Storage/OpenClaw-Data}"
+
 for file in \
-  ".antigravity/RULES.md" \
-  ".antigravity/AUTONOMY_CONTRACT.md" \
-  ".antigravity/VALIDATION_MATRIX.md"; do
+  "$DATA_DIR/RULES.md" \
+  "$DATA_DIR/AUTONOMY_CONTRACT.md" \
+  "$DATA_DIR/VALIDATION_MATRIX.md"; do
   [ -f "$file" ] || { echo "error: missing required file: $file" >&2; exit 1; }
 done
 
-has_pattern "Full Autonomy Contract \\(Hard\\)" ".antigravity/RULES.md" || { echo "error: RULES missing full autonomy section" >&2; exit 1; }
-has_pattern "Approved Stop Conditions" ".antigravity/AUTONOMY_CONTRACT.md" || { echo "error: AUTONOMY_CONTRACT missing stop conditions" >&2; exit 1; }
-has_pattern "Full autonomy contract gate" ".antigravity/VALIDATION_MATRIX.md" || { echo "error: VALIDATION_MATRIX missing autonomy gate" >&2; exit 1; }
+has_pattern "Full Autonomy Contract \\(Hard\\)" "$DATA_DIR/RULES.md" || { echo "error: RULES missing full autonomy section" >&2; exit 1; }
+has_pattern "Approved Stop Conditions" "$DATA_DIR/AUTONOMY_CONTRACT.md" || { echo "error: AUTONOMY_CONTRACT missing stop conditions" >&2; exit 1; }
+has_pattern "Full autonomy contract gate" "$DATA_DIR/VALIDATION_MATRIX.md" || { echo "error: VALIDATION_MATRIX missing autonomy gate" >&2; exit 1; }
 echo "verification=pass"
