@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "OpenClaw Dashboard",
-    short_name: "OpenClaw",
-    description: "Responsive mission-control shell for the OpenClaw AI gateway.",
+    name: "Aegilume Dashboard",
+    short_name: "Aegilume",
+    description: "Responsive mission-control shell for the Aegilume AI gateway.",
     start_url: "/",
     scope: "/",
     display: "standalone",

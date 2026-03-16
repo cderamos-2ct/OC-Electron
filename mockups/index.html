@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0e">
+<meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OpenClaw">
+<meta name="apple-mobile-web-app-title" content="Aegilume">
 <link rel="manifest" href="manifest.json">
-<title>OpenClaw Shell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Aegilume Shell</title>
 <style>
 /* ============================================================
    RESET + BASE
@@ -16,23 +18,23 @@
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg:       #0a0a0e;
-  --bg-mid:   #111115;
-  --bg-card:  #161618;
-  --border:   #252528;
-  --border-2: #1a1a1e;
-  --text:     #e0e0e8;
-  --text-2:   #c8c8cc;
-  --text-3:   #b0b0b5;
-  --muted:    #888890;
-  --dim:      #666670;
-  --dimmer:   #555558;
-  --faint:    #444448;
-  --accent:   #e85d3a;
-  --accent-bg:#3d1a12;
-  --accent-bg2:#2d1512;
+  --bg:       #0f172a;
+  --bg-mid:   #131d33;
+  --bg-card:  #131d33;
+  --border:   rgba(241,245,249,0.14);
+  --border-2: rgba(241,245,249,0.08);
+  --text:     #f1f5f9;
+  --text-2:   #cbd5e1;
+  --text-3:   #cbd5e1;
+  --muted:    #94a3b8;
+  --dim:      #94a3b8;
+  --dimmer:   #94a3b8;
+  --faint:    rgba(241,245,249,0.2);
+  --accent:   #a3862a;
+  --accent-bg:rgba(163,134,42,0.2);
+  --accent-bg2:rgba(163,134,42,0.12);
   --green:    #2ecc71;
-  --yellow:   #f39c12;
+  --yellow:   #e0c875;
   --red:      #e74c3c;
 
   /* Layout */
@@ -48,6 +50,7 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+  /* Cinzel loaded for headings via Google Fonts */
   overflow: hidden;
 }
 
@@ -5272,9 +5275,9 @@ html, body {
     <div class="traffic-light green"></div>
   </div>
   <div class="title-bar-text">
-    <span class="title-bar-logo"><span>OC</span></span>
+    <span class="title-bar-logo" style="font-family:'Cinzel',serif;letter-spacing:1px;"><span>AE</span></span>
     <span style="color:var(--border); font-size:10px;">|</span>
-    <span>OpenClaw Shell</span>
+    <span style="font-family:'Cinzel',serif;letter-spacing:0.5px;">Aegilume</span>
   </div>
 </div>
 
@@ -5328,7 +5331,7 @@ html, body {
 <div class="mobile-drawer-overlay" id="mobileDrawerOverlay"></div>
 <div class="mobile-drawer" id="mobileDrawer">
   <div class="mobile-drawer-header">
-    <div class="mobile-drawer-logo"><span>OC</span> OpenClaw</div>
+    <div class="mobile-drawer-logo" style="font-family:'Cinzel',serif;letter-spacing:0.5px;"><span>AE</span> Aegilume</div>
     <button class="mobile-drawer-close" id="mobileDrawerClose">✕</button>
   </div>
   <div class="mobile-drawer-section">
@@ -6900,7 +6903,7 @@ html, body {
                 <div class="gmail-email-open-meta">
                   <div class="gmail-sender-avatar-lg" style="background:#1e1e2e; font-size:13px; font-weight:700;">#</div>
                   <div>
-                    <div class="gmail-email-open-from">engineering · OpenClaw Workspace</div>
+                    <div class="gmail-email-open-from">engineering · Aegilume Workspace</div>
                     <div class="gmail-email-open-to">Slack channel &middot; Today, 8:30 AM</div>
                   </div>
                 </div>
@@ -6938,7 +6941,7 @@ html, body {
                 <div class="gmail-email-open-meta">
                   <div class="gmail-sender-avatar-lg" style="background:#3d2d5e;">SC</div>
                   <div>
-                    <div class="gmail-email-open-from">Sarah Chen · OpenClaw Workspace</div>
+                    <div class="gmail-email-open-from">Sarah Chen · Aegilume Workspace</div>
                     <div class="gmail-email-open-to">Slack DM &middot; Today, 8:15 AM</div>
                   </div>
                 </div>
@@ -8462,13 +8465,13 @@ html, body {
                   </div>
                 </div>
 
-                <!-- Product 2: OpenClaw — TRENDING -->
+                <!-- Product 2: Aegilume — TRENDING -->
                 <div class="ph-product-row">
                   <div class="ph-trending-badge">🔥 Trending</div>
                   <div class="ph-rank" style="color:var(--accent);">2</div>
-                  <div class="ph-product-icon" style="background:linear-gradient(135deg,#3d1a12,#7a2e16);border:1px solid var(--accent);">🦀</div>
+                  <div class="ph-product-icon" style="background:linear-gradient(135deg,#0f172a,#1e3a5f);border:1px solid var(--accent);">✦</div>
                   <div class="ph-product-info">
-                    <div class="ph-product-name" style="color:var(--text);">OpenClaw <span style="font-size:10px;color:var(--dim);font-weight:400;">by Christian De Ramos</span></div>
+                    <div class="ph-product-name" style="color:var(--text);font-family:'Cinzel',serif;">Aegilume <span style="font-size:10px;color:var(--dim);font-weight:400;font-family:inherit;">by Christian De Ramos</span></div>
                     <div class="ph-product-tagline">AI agents that actually run your business</div>
                     <div class="ph-product-tags">
                       <span class="ph-tag">AI Agents</span>
@@ -8536,9 +8539,9 @@ html, body {
           <div class="browser-rail-body">
 
             <div class="browser-context-bubble">
-              <p>You're browsing <strong>Product Hunt</strong>. I notice <strong>OpenClaw</strong> is trending at <strong>#2 today</strong> with 847 upvotes — up from #6 this morning.</p>
+              <p>You're browsing <strong>Product Hunt</strong>. I notice <strong>Aegilume</strong> is trending at <strong>#2 today</strong> with 847 upvotes — up from #6 this morning.</p>
               <div class="browser-context-highlight">
-                🔥 OpenClaw is in the top 3 for 6 hours straight
+                🔥 Aegilume is in the top 3 for 6 hours straight
               </div>
             </div>
 
@@ -8568,7 +8571,7 @@ html, body {
                 <span style="color:var(--text-2);font-weight:600;">28</span>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
-                <span style="color:var(--muted);">OpenClaw rank</span>
+                <span style="color:var(--muted);">Aegilume rank</span>
                 <span style="color:var(--accent);font-weight:700;">#2 🔥</span>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
@@ -9106,7 +9109,7 @@ html, body {
     <!-- Header -->
     <div class="modal-header">
       <div>
-        <div class="modal-title" id="addAppModalTitle">Add App to OpenClaw</div>
+        <div class="modal-title" id="addAppModalTitle">Add App to Aegilume</div>
       </div>
       <div class="modal-step-indicator" id="addAppStepIndicator">
         <div class="modal-step-dot active" id="stepDot1"></div>
@@ -9269,7 +9272,7 @@ html, body {
         <div class="modal-success">
           <div class="modal-success-check">&#10003;</div>
           <div class="modal-success-title">Product Hunt added!</div>
-          <div class="modal-success-sub">Your new app is ready in OpenClaw</div>
+          <div class="modal-success-sub">Your new app is ready in Aegilume</div>
           <div class="modal-success-tab-preview">
             <span>🐱</span>
             <span>Product Hunt</span>
@@ -10710,7 +10713,7 @@ html, body {
 
     if (addAppCurrentStep === 1) {
       if (step1) step1.classList.add('active');
-      if (title) title.textContent = 'Add App to OpenClaw';
+      if (title) title.textContent = 'Add App to Aegilume';
       if (addAppNextBtn) { addAppNextBtn.style.display = ''; addAppNextBtn.textContent = 'Next: Configure'; }
       if (addAppBackBtn) addAppBackBtn.style.display = 'none';
       if (footer) footer.style.display = '';

@@ -1,4 +1,4 @@
-// nav.js — OpenClaw Shell SPA
+// nav.js — Aegilume Shell SPA
 // Minimal shim: the unified index.html handles all navigation internally.
 // This file is retained for compatibility if any individual mockup files
 // are opened directly. It no longer injects a floating nav bar.

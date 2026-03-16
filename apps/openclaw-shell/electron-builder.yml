@@ -1,0 +1,39 @@
+appId: com.aegilume.shell
+productName: Aegilume
+directories:
+  buildResources: assets
+  output: release
+files:
+  - out/**/*
+  - "!node_modules/**/*"
+extraResources:
+  - from: ../../packages/openclaw-core/dist
+    to: packages/openclaw-core
+    filter:
+      - "**/*"
+  - from: ../../packages/openclaw-db/dist
+    to: packages/openclaw-db
+    filter:
+      - "**/*"
+mac:
+  icon: assets/icons/icon.icns
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - arm64
+    - target: zip
+      arch:
+        - arm64
+  darkModeSupport: true
+  identity: null
+
+dmg:
+  title: Aegilume
+  artifactName: "Aegilume-${version}-${arch}.${ext}"
+
+# Auto-updater placeholder — configure publish provider before enabling
+# publish:
+#   provider: github
+#   owner: openclaw
+#   repo: openclaw-shell

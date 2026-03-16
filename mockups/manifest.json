@@ -1,20 +1,20 @@
 {
-  "name": "OpenClaw Shell",
-  "short_name": "OpenClaw",
-  "description": "OpenClaw — AI Agent Command Center",
+  "name": "Aegilume Shell",
+  "short_name": "Aegilume",
+  "description": "Aegilume — AI Agent Command Center",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#0a0a0e",
-  "theme_color": "#0a0a0e",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "orientation": "any",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230a0a0e' rx='32'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='system-ui,sans-serif' font-size='88' font-weight='700' fill='%23e85d3a'>OC</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230f172a' rx='32'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-size='88' font-weight='700' fill='%23a3862a'>AE</text></svg>",
       "sizes": "192x192",
       "type": "image/svg+xml"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230a0a0e' rx='80'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='system-ui,sans-serif' font-size='220' font-weight='700' fill='%23e85d3a'>OC</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230f172a' rx='80'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-size='220' font-weight='700' fill='%23a3862a'>AE</text></svg>",
       "sizes": "512x512",
       "type": "image/svg+xml"
     }

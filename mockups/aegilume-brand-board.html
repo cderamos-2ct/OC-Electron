@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Aegilume Brand Identity System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cosmic-navy: #0f172a;
+      --constellation-white: #f1f5f9;
+      --laurel-gold: #a3862a;
+      --aegean-depth: #2f4f72;
+      --bg-color: #0a0a0f;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--constellation-white);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      padding: 40px;
+    }
+
+    .presentation-board {
+      width: 100%;
+      max-width: 1400px;
+      aspect-ratio: 16/9;
+      background-color: var(--bg-color);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 40px;
+      padding: 60px;
+      border: 1px solid rgba(241, 245, 249, 0.05);
+      border-radius: 24px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid rgba(241, 245, 249, 0.03);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.3);
+      padding: 40px;
+      position: relative;
+    }
+
+    .section-label {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(241, 245, 249, 0.4);
+    }
+
+    /* TOP LEFT: Logomark */
+    .logomark-container {
+      width: 200px;
+      height: 200px;
+    }
+
+    /* TOP RIGHT: Horizontal Lockup */
+    .lockup-container {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+    .lockup-logo {
+      width: 80px;
+      height: 80px;
+    }
+    .lockup-text {
+      font-family: 'Cinzel', serif;
+      font-size: 3.5rem;
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      color: var(--constellation-white);
+      margin: 0;
+      padding-top: 8px; /* Visual alignment for Cinzel */
+    }
+
+    /* MIDDLE: Color Palette */
+    .middle-row {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      justify-content: space-around;
+      gap: 30px;
+      padding: 40px 80px;
+    }
+    .swatch-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .swatch {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1);
+      position: relative;
+    }
+    .swatch-cosmic { background-color: var(--cosmic-navy); }
+    .swatch-white { background-color: var(--constellation-white); }
+    .swatch-gold { background-color: var(--laurel-gold); }
+    .swatch-aegean { background-color: var(--aegean-depth); }
+    
+    .swatch-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .swatch-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .swatch-hex {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: rgba(241, 245, 249, 0.5);
+      letter-spacing: 0.05em;
+    }
+
+    /* BOTTOM LEFT: App Icon */
+    .app-icon-container {
+      width: 180px;
+      height: 180px;
+    }
+
+    /* BOTTOM RIGHT: Monochrome */
+    .monochrome-container {
+      width: 160px;
+      height: 160px;
+    }
+
+    /* SVG Utilities */
+    .svg-content {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="presentation-board">
+    
+    <!-- TOP LEFT: Logomark -->
+    <div class="section">
+      <div class="section-label">Logomark</div>
+      <div class="logomark-container">
+        <svg class="svg-content" viewBox="-350 -350 700 700">
+          <defs>
+            <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="15" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="whiteGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <g stroke="#f1f5f9" stroke-width="2" stroke-opacity="0.3" fill="none">
+            <circle cx="0" cy="0" r="280" stroke-dasharray="8 12" stroke-opacity="0.15" />
+            <circle cx="0" cy="0" r="140" stroke-dasharray="4 8" stroke-opacity="0.2" />
+            <path d="M 0,-280 Q 0,0 280,0 Q 0,0 0,280 Q 0,0 -280,0 Q 0,0 0,-280" stroke="#a3862a" stroke-width="3" stroke-opacity="0.5" filter="url(#goldGlow)" />
+            <path d="M -198,-198 Q 0,-150 198,-198 Q 150,0 198,198 Q 0,150 -198,198 Q -150,0 -198,-198" stroke="#f1f5f9" stroke-opacity="0.4" />
+            <line x1="0" y1="0" x2="0" y2="-280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+            <line x1="0" y1="0" x2="0" y2="280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+            <line x1="0" y1="0" x2="280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+            <line x1="0" y1="0" x2="-280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+            <polygon points="
+              0,-280  107,-258  198,-198  258,-107
+              280,0   258,107   198,198   107,258
+              0,280   -107,258  -198,198  -258,107
+              -280,0  -258,-107 -198,-198 -107,-258
+            " stroke-width="1.5" stroke-opacity="0.25" />
+            <path d="M 0,-280 C 100,-150 150,-100 280,0 C 150,100 100,150 0,280 C -100,150 -150,100 -280,0 C -150,-100 -100,-150 0,-280 Z" stroke="#f1f5f9" stroke-width="1.5" stroke-opacity="0.6" />
+          </g>
+          <g fill="#f1f5f9" filter="url(#whiteGlow)">
+            <circle cx="258.6" cy="-107.1" r="5" />
+            <circle cx="198.0" cy="-198.0" r="7" />
+            <circle cx="107.1" cy="-258.6" r="5" />
+            <circle cx="-107.1" cy="-258.6" r="5" />
+            <circle cx="-198.0" cy="-198.0" r="7" />
+            <circle cx="-258.6" cy="-107.1" r="5" />
+            <circle cx="-258.6" cy="107.1" r="5" />
+            <circle cx="-198.0" cy="198.0" r="7" />
+            <circle cx="-107.1" cy="258.6" r="5" />
+            <circle cx="107.1" cy="258.6" r="5" />
+            <circle cx="198.0" cy="198.0" r="7" />
+            <circle cx="258.6" cy="107.1" r="5" />
+          </g>
+          <g fill="#a3862a" filter="url(#goldGlow)">
+            <circle cx="0" cy="0" r="14" />
+            <circle cx="0" cy="-280" r="12" />
+            <circle cx="0" cy="280" r="12" />
+            <circle cx="280" cy="0" r="12" />
+            <circle cx="-280" cy="0" r="12" />
+          </g>
+          <g fill="#ffffff">
+            <circle cx="0" cy="0" r="5" />
+            <circle cx="0" cy="-280" r="4" />
+            <circle cx="0" cy="280" r="4" />
+            <circle cx="280" cy="0" r="4" />
+            <circle cx="-280" cy="0" r="4" />
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- TOP RIGHT: Horizontal Lockup -->
+    <div class="section">
+      <div class="section-label">Horizontal Lockup</div>
+      <div class="lockup-container">
+        <div class="lockup-logo">
+          <!-- Scaled down logomark -->
+          <svg class="svg-content" viewBox="-350 -350 700 700">
+            <g stroke="#f1f5f9" stroke-width="2" stroke-opacity="0.3" fill="none">
+              <circle cx="0" cy="0" r="280" stroke-dasharray="8 12" stroke-opacity="0.15" />
+              <circle cx="0" cy="0" r="140" stroke-dasharray="4 8" stroke-opacity="0.2" />
+              <path d="M 0,-280 Q 0,0 280,0 Q 0,0 0,280 Q 0,0 -280,0 Q 0,0 0,-280" stroke="#a3862a" stroke-width="3" stroke-opacity="0.5" filter="url(#goldGlow)" />
+              <path d="M -198,-198 Q 0,-150 198,-198 Q 150,0 198,198 Q 0,150 -198,198 Q -150,0 -198,-198" stroke="#f1f5f9" stroke-opacity="0.4" />
+              <line x1="0" y1="0" x2="0" y2="-280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <line x1="0" y1="0" x2="0" y2="280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <line x1="0" y1="0" x2="280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <line x1="0" y1="0" x2="-280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <polygon points="
+                0,-280  107,-258  198,-198  258,-107
+                280,0   258,107   198,198   107,258
+                0,280   -107,258  -198,198  -258,107
+                -280,0  -258,-107 -198,-198 -107,-258
+              " stroke-width="1.5" stroke-opacity="0.25" />
+              <path d="M 0,-280 C 100,-150 150,-100 280,0 C 150,100 100,150 0,280 C -100,150 -150,100 -280,0 C -150,-100 -100,-150 0,-280 Z" stroke="#f1f5f9" stroke-width="1.5" stroke-opacity="0.6" />
+            </g>
+            <g fill="#f1f5f9" filter="url(#whiteGlow)">
+              <circle cx="258.6" cy="-107.1" r="5" />
+              <circle cx="198.0" cy="-198.0" r="7" />
+              <circle cx="107.1" cy="-258.6" r="5" />
+              <circle cx="-107.1" cy="-258.6" r="5" />
+              <circle cx="-198.0" cy="-198.0" r="7" />
+              <circle cx="-258.6" cy="-107.1" r="5" />
+              <circle cx="-258.6" cy="107.1" r="5" />
+              <circle cx="-198.0" cy="198.0" r="7" />
+              <circle cx="-107.1" cy="258.6" r="5" />
+              <circle cx="107.1" cy="258.6" r="5" />
+              <circle cx="198.0" cy="198.0" r="7" />
+              <circle cx="258.6" cy="107.1" r="5" />
+            </g>
+            <g fill="#a3862a" filter="url(#goldGlow)">
+              <circle cx="0" cy="0" r="14" />
+              <circle cx="0" cy="-280" r="12" />
+              <circle cx="0" cy="280" r="12" />
+              <circle cx="280" cy="0" r="12" />
+              <circle cx="-280" cy="0" r="12" />
+            </g>
+            <g fill="#ffffff">
+              <circle cx="0" cy="0" r="5" />
+              <circle cx="0" cy="-280" r="4" />
+              <circle cx="0" cy="280" r="4" />
+              <circle cx="280" cy="0" r="4" />
+              <circle cx="-280" cy="0" r="4" />
+            </g>
+          </svg>
+        </div>
+        <h1 class="lockup-text">AEGILUME</h1>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Color Palette -->
+    <div class="section middle-row">
+      <div class="section-label">Color Palette</div>
+      
+      <div class="swatch-group">
+        <div class="swatch swatch-cosmic"></div>
+        <div class="swatch-info">
+          <span class="swatch-name">Cosmic Navy</span>
+          <span class="swatch-hex">#0f172a</span>
+        </div>
+      </div>
+
+      <div class="swatch-group">
+        <div class="swatch swatch-white"></div>
+        <div class="swatch-info">
+          <span class="swatch-name">Constellation White</span>
+          <span class="swatch-hex">#f1f5f9</span>
+        </div>
+      </div>
+
+      <div class="swatch-group">
+        <div class="swatch swatch-gold"></div>
+        <div class="swatch-info">
+          <span class="swatch-name">Laurel Gold</span>
+          <span class="swatch-hex">#a3862a</span>
+        </div>
+      </div>
+
+      <div class="swatch-group">
+        <div class="swatch swatch-aegean"></div>
+        <div class="swatch-info">
+          <span class="swatch-name">Aegean Depth</span>
+          <span class="swatch-hex">#2f4f72</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM LEFT: App Icon -->
+    <div class="section">
+      <div class="section-label">App Icon</div>
+      <div class="app-icon-container">
+        <svg class="svg-content" viewBox="0 0 1200 1200">
+          <defs>
+            <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+              <stop offset="0%" stop-color="#0f172a" />
+              <stop offset="100%" stop-color="#0a0e1a" />
+            </radialGradient>
+            <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="25" stdDeviation="30" flood-color="#000000" flood-opacity="0.7"/>
+            </filter>
+          </defs>
+
+          <!-- Squircle Container -->
+          <g transform="translate(88, 88)" filter="url(#dropShadow)">
+            <rect width="1024" height="1024" rx="230" ry="230" fill="url(#bgGrad)" />
+            <rect width="1024" height="1024" rx="230" ry="230" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.15" />
+            <rect width="1024" height="1024" rx="230" ry="230" fill="none" stroke="#000000" stroke-width="4" stroke-opacity="0.4" transform="translate(0, 2)" />
+          </g>
+          
+          <!-- Constellation Group -->
+          <g transform="translate(600, 600)"> 
+            <g stroke="#f1f5f9" stroke-width="2" stroke-opacity="0.3" fill="none">
+              <circle cx="0" cy="0" r="280" stroke-dasharray="8 12" stroke-opacity="0.15" />
+              <circle cx="0" cy="0" r="140" stroke-dasharray="4 8" stroke-opacity="0.2" />
+              <path d="M 0,-280 Q 0,0 280,0 Q 0,0 0,280 Q 0,0 -280,0 Q 0,0 0,-280" stroke="#a3862a" stroke-width="3" stroke-opacity="0.5" filter="url(#goldGlow)" />
+              <path d="M -198,-198 Q 0,-150 198,-198 Q 150,0 198,198 Q 0,150 -198,198 Q -150,0 -198,-198" stroke="#f1f5f9" stroke-opacity="0.4" />
+              <line x1="0" y1="0" x2="0" y2="-280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <line x1="0" y1="0" x2="0" y2="280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <line x1="0" y1="0" x2="280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <line x1="0" y1="0" x2="-280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+              <polygon points="
+                0,-280  107,-258  198,-198  258,-107
+                280,0   258,107   198,198   107,258
+                0,280   -107,258  -198,198  -258,107
+                -280,0  -258,-107 -198,-198 -107,-258
+              " stroke-width="1.5" stroke-opacity="0.25" />
+              <path d="M 0,-280 C 100,-150 150,-100 280,0 C 150,100 100,150 0,280 C -100,150 -150,100 -280,0 C -150,-100 -100,-150 0,-280 Z" stroke="#f1f5f9" stroke-width="1.5" stroke-opacity="0.6" />
+            </g>
+
+            <!-- The 12 White Nodes -->
+            <g fill="#f1f5f9" filter="url(#whiteGlow)">
+              <circle cx="258.6" cy="-107.1" r="5" />
+              <circle cx="198.0" cy="-198.0" r="7" />
+              <circle cx="107.1" cy="-258.6" r="5" />
+              <circle cx="-107.1" cy="-258.6" r="5" />
+              <circle cx="-198.0" cy="-198.0" r="7" />
+              <circle cx="-258.6" cy="-107.1" r="5" />
+              <circle cx="-258.6" cy="107.1" r="5" />
+              <circle cx="-198.0" cy="198.0" r="7" />
+              <circle cx="-107.1" cy="258.6" r="5" />
+              <circle cx="107.1" cy="258.6" r="5" />
+              <circle cx="198.0" cy="198.0" r="7" />
+              <circle cx="258.6" cy="107.1" r="5" />
+            </g>
+
+            <!-- The 5 Gold Nodes -->
+            <g fill="#a3862a" filter="url(#goldGlow)">
+              <circle cx="0" cy="0" r="14" />
+              <circle cx="0" cy="-280" r="12" />
+              <circle cx="0" cy="280" r="12" />
+              <circle cx="280" cy="0" r="12" />
+              <circle cx="-280" cy="0" r="12" />
+            </g>
+            
+            <g fill="#ffffff">
+              <circle cx="0" cy="0" r="5" />
+              <circle cx="0" cy="-280" r="4" />
+              <circle cx="0" cy="280" r="4" />
+              <circle cx="280" cy="0" r="4" />
+              <circle cx="-280" cy="0" r="4" />
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- BOTTOM RIGHT: Monochrome -->
+    <div class="section">
+      <div class="section-label">Monochrome Version</div>
+      <div class="monochrome-container">
+        <svg class="svg-content" viewBox="-350 -350 700 700">
+          <!-- Simplified monochrome, everything white, no glow -->
+          <g stroke="#ffffff" stroke-width="3" stroke-opacity="0.8" fill="none">
+            <circle cx="0" cy="0" r="280" stroke-dasharray="10 15" stroke-opacity="0.4" />
+            <circle cx="0" cy="0" r="140" stroke-dasharray="5 10" stroke-opacity="0.5" />
+            <path d="M 0,-280 Q 0,0 280,0 Q 0,0 0,280 Q 0,0 -280,0 Q 0,0 0,-280" stroke-width="4" stroke-opacity="1" />
+            <path d="M -198,-198 Q 0,-150 198,-198 Q 150,0 198,198 Q 0,150 -198,198 Q -150,0 -198,-198" stroke-opacity="0.7" />
+            <line x1="0" y1="0" x2="0" y2="-280" stroke-width="3" stroke-opacity="0.9"/>
+            <line x1="0" y1="0" x2="0" y2="280" stroke-width="3" stroke-opacity="0.9"/>
+            <line x1="0" y1="0" x2="280" y2="0" stroke-width="3" stroke-opacity="0.9"/>
+            <line x1="0" y1="0" x2="-280" y2="0" stroke-width="3" stroke-opacity="0.9"/>
+            <polygon points="
+              0,-280  107,-258  198,-198  258,-107
+              280,0   258,107   198,198   107,258
+              0,280   -107,258  -198,198  -258,107
+              -280,0  -258,-107 -198,-198 -107,-258
+            " stroke-width="2" stroke-opacity="0.5" />
+            <path d="M 0,-280 C 100,-150 150,-100 280,0 C 150,100 100,150 0,280 C -100,150 -150,100 -280,0 C -150,-100 -100,-150 0,-280 Z" stroke-width="2" stroke-opacity="0.8" />
+          </g>
+          <g fill="#ffffff">
+            <circle cx="258.6" cy="-107.1" r="5" />
+            <circle cx="198.0" cy="-198.0" r="7" />
+            <circle cx="107.1" cy="-258.6" r="5" />
+            <circle cx="-107.1" cy="-258.6" r="5" />
+            <circle cx="-198.0" cy="-198.0" r="7" />
+            <circle cx="-258.6" cy="-107.1" r="5" />
+            <circle cx="-258.6" cy="107.1" r="5" />
+            <circle cx="-198.0" cy="198.0" r="7" />
+            <circle cx="-107.1" cy="258.6" r="5" />
+            <circle cx="107.1" cy="258.6" r="5" />
+            <circle cx="198.0" cy="198.0" r="7" />
+            <circle cx="258.6" cy="107.1" r="5" />
+            
+            <!-- Cardinal nodes -->
+            <circle cx="0" cy="0" r="14" />
+            <circle cx="0" cy="-280" r="12" />
+            <circle cx="0" cy="280" r="12" />
+            <circle cx="280" cy="0" r="12" />
+            <circle cx="-280" cy="0" r="12" />
+          </g>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

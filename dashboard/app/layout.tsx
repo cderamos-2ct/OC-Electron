@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { FloatingMicButton } from "@/components/FloatingMicButton";
 import { ControlUiSettingsBridge } from "@/components/ControlUiSettingsBridge";
 import { PwaRegistration } from "@/components/PwaRegistration";
+import { NotificationLayer } from "@/components/NotificationLayer";
 
 const bodyFont = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -20,12 +21,12 @@ const displayFont = Fraunces({
 });
 
 export const metadata: Metadata = {
-  applicationName: "OpenClaw Dashboard",
+  applicationName: "Aegilume Dashboard",
   title: {
-    default: "OpenClaw Dashboard",
-    template: "%s | OpenClaw Dashboard",
+    default: "Aegilume Dashboard",
+    template: "%s | Aegilume Dashboard",
   },
-  description: "Mission-control dashboard shell for the OpenClaw AI gateway.",
+  description: "Mission-control dashboard shell for the Aegilume AI gateway.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [{ url: "/icon", type: "image/png" }],
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "OpenClaw",
+    title: "Aegilume",
   },
   formatDetection: {
     telephone: false,
@@ -61,6 +62,7 @@ export default function RootLayout({
         <OpenClawProvider>
           <ControlUiSettingsBridge />
           <PwaRegistration />
+          <NotificationLayer />
           <AppShell>{children}</AppShell>
           <FloatingMicButton />
         </OpenClawProvider>

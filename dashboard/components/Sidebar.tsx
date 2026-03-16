@@ -23,6 +23,7 @@ import {
   Settings,
   Wifi,
   WifiOff,
+  FolderOpen,
   Workflow,
   X,
   Zap,
@@ -30,26 +31,16 @@ import {
 } from "lucide-react";
 
 export const NAV_ITEMS = [
-  { href: "/", label: "Overview", shortLabel: "Home", icon: LayoutDashboard },
-  { href: "/control-ui", label: "Legacy UI", shortLabel: "Legacy", icon: PanelBottom },
-  { href: "/ops", label: "Ops", shortLabel: "Ops", icon: Workflow },
-  { href: "/chat", label: "Chat", shortLabel: "Chat", icon: MessageSquare },
-  { href: "/heartbeat", label: "Heartbeat", shortLabel: "Pulse", icon: HeartPulse },
+  { href: "/", label: "Home", shortLabel: "Home", icon: LayoutDashboard },
   { href: "/agents", label: "Agents", shortLabel: "Agents", icon: Bot },
-  { href: "/models", label: "Models", shortLabel: "Models", icon: Cpu },
-  { href: "/voice", label: "Voice & STT", shortLabel: "Voice", icon: Mic },
-  { href: "/nodes", label: "Nodes", shortLabel: "Nodes", icon: Server },
-  { href: "/skills", label: "Skills", shortLabel: "Skills", icon: Zap },
+  { href: "/runtime", label: "Runtime", shortLabel: "Runtime", icon: Server },
   { href: "/channels", label: "Channels", shortLabel: "Channels", icon: Radio },
-  { href: "/cron", label: "Cron", shortLabel: "Cron", icon: Clock },
-  { href: "/config", label: "Config", shortLabel: "Config", icon: Settings },
-  { href: "/logs", label: "Logs", shortLabel: "Logs", icon: ScrollText },
+  { href: "/skills", label: "Skills", shortLabel: "Skills", icon: Zap },
+  { href: "/files", label: "Files", shortLabel: "Files", icon: FolderOpen },
 ] as const;
 
 const NAV_GROUPS = [
-  { label: "Core", items: NAV_ITEMS.slice(0, 5) },
-  { label: "Operate", items: [NAV_ITEMS[5], NAV_ITEMS[6], NAV_ITEMS[7], NAV_ITEMS[9]] },
-  { label: "System", items: [NAV_ITEMS[8], NAV_ITEMS[10], NAV_ITEMS[11], NAV_ITEMS[12], NAV_ITEMS[13]] },
+  { label: "Navigation", items: NAV_ITEMS },
 ] as const;
 
 type SidebarProps = {
@@ -230,7 +221,7 @@ function SidebarBrand({ compact = false }: { compact?: boolean }) {
     <div className={`shell-brand ${compact ? "shell-brand-compact" : ""}`}>
       <div className="shell-brand-mark">OC</div>
       <div className={compact ? "hidden" : ""}>
-        <div className="shell-brand-title">OpenClaw</div>
+        <div className="shell-brand-title">Aegilume</div>
         <div className="shell-brand-subtitle">Dashboard shell</div>
       </div>
     </div>

@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1707, initial-scale=1">
-<title>Agent Roster — OpenClaw Shell</title>
+<title>Agent Roster — Aegilume Shell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
-    background: #0a0a0e;
-    color: #e0e0e8;
+    background: #0f172a;
+    color: #f1f5f9;
     width: 1707px;
     height: 1204px;
     overflow: hidden;
@@ -20,8 +22,8 @@
     display: flex;
     align-items: center;
     height: 40px;
-    background: #111115;
-    border-bottom: 1px solid #252528;
+    background: #131d33;
+    border-bottom: 1px solid rgba(241,245,249,0.14);
     padding: 0 12px;
     gap: 0;
   }
@@ -31,14 +33,14 @@
     gap: 6px;
     padding: 8px 16px;
     font-size: 13px;
-    color: #888890;
+    color: #94a3b8;
     cursor: pointer;
-    border-right: 1px solid #252528;
+    border-right: 1px solid rgba(241,245,249,0.14);
     position: relative;
   }
   .tab.active {
-    color: #e0e0e8;
-    background: #1a1a1e;
+    color: #f1f5f9;
+    background: rgba(241,245,249,0.06);
   }
   .tab .icon { font-size: 14px; }
   .tab .badge {
@@ -51,7 +53,7 @@
   }
   .tab-add {
     padding: 8px 14px;
-    color: #555558;
+    color: #94a3b8;
     font-size: 16px;
     cursor: pointer;
   }
@@ -68,8 +70,8 @@
   }
   .right-rail {
     width: 340px;
-    background: #111115;
-    border-left: 1px solid #252528;
+    background: #131d33;
+    border-left: 1px solid rgba(241,245,249,0.14);
     display: flex;
     flex-direction: column;
   }
@@ -84,11 +86,13 @@
   .page-header h1 {
     font-size: 28px;
     font-weight: 600;
-    color: #fff;
+    color: #f1f5f9;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.5px;
   }
   .page-header .subtitle {
     font-size: 14px;
-    color: #666670;
+    color: #94a3b8;
     margin-top: 2px;
   }
   .header-stats {
@@ -103,12 +107,12 @@
     font-weight: 700;
   }
   .header-stat .num.green { color: #2ecc71; }
-  .header-stat .num.yellow { color: #f39c12; }
+  .header-stat .num.yellow { color: #e0c875; }
   .header-stat .num.red { color: #e74c3c; }
-  .header-stat .num.gray { color: #555558; }
+  .header-stat .num.gray { color: #94a3b8; }
   .header-stat .label {
     font-size: 11px;
-    color: #666670;
+    color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -122,10 +126,11 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #666670;
+    color: #94a3b8;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid #1a1a1e;
+    border-bottom: 1px solid rgba(241,245,249,0.1);
+    font-family: 'Cinzel', serif;
   }
 
   /* ===== AGENT CARDS ===== */
@@ -136,8 +141,8 @@
     margin-bottom: 24px;
   }
   .agent-card {
-    background: #161618;
-    border: 1px solid #252528;
+    background: #131d33;
+    border: 1px solid rgba(241,245,249,0.14);
     border-radius: 10px;
     padding: 16px;
     display: flex;
@@ -146,12 +151,12 @@
     transition: border-color 0.15s;
   }
   .agent-card:hover {
-    border-color: #e85d3a;
+    border-color: #a3862a;
   }
   .agent-card.commander {
     grid-column: 1 / -1;
-    background: #161618;
-    border-color: #3d2a22;
+    background: #131d33;
+    border-color: rgba(163,134,42,0.35);
   }
   .agent-avatar {
     width: 44px;
@@ -163,7 +168,7 @@
     font-size: 22px;
     flex-shrink: 0;
   }
-  .agent-avatar.brain { background: #3d1a12; }
+  .agent-avatar.brain { background: rgba(163,134,42,0.2); }
   .agent-avatar.shield { background: #5e1f2d; }
   .agent-avatar.rainbow { background: #1f4e5e; }
   .agent-avatar.compass { background: #1f5e3d; }
@@ -187,11 +192,11 @@
   .agent-name {
     font-size: 14px;
     font-weight: 600;
-    color: #fff;
+    color: #f1f5f9;
   }
   .agent-role {
     font-size: 11px;
-    color: #666670;
+    color: #94a3b8;
   }
   .status-dot {
     width: 8px;
@@ -200,13 +205,13 @@
     flex-shrink: 0;
   }
   .status-dot.active { background: #2ecc71; }
-  .status-dot.idle { background: #f39c12; }
+  .status-dot.idle { background: #e0c875; }
   .status-dot.blocked { background: #e74c3c; }
-  .status-dot.offline { background: #444448; }
+  .status-dot.offline { background: #94a3b8; }
 
   .agent-task {
     font-size: 12px;
-    color: #888890;
+    color: #94a3b8;
     margin-top: 6px;
     white-space: nowrap;
     overflow: hidden;
@@ -219,24 +224,24 @@
   }
   .agent-meta-item {
     font-size: 11px;
-    color: #666670;
+    color: #94a3b8;
     display: flex;
     align-items: center;
     gap: 4px;
   }
   .agent-meta-item .count {
-    color: #b0b0b5;
+    color: #cbd5e1;
     font-weight: 600;
   }
   .agent-meta-item.attention .count {
-    color: #f39c12;
+    color: #e0c875;
   }
 
   /* ===== SUBAGENT INDENT ===== */
   .subagent-group {
     margin-left: 28px;
     padding-left: 16px;
-    border-left: 2px solid #252528;
+    border-left: 2px solid rgba(241,245,249,0.14);
   }
   .subagent-group .agent-grid {
     grid-template-columns: 1fr 1fr;
@@ -245,7 +250,7 @@
   /* ===== RIGHT RAIL ===== */
   .rail-header {
     padding: 16px 20px;
-    border-bottom: 1px solid #252528;
+    border-bottom: 1px solid rgba(241,245,249,0.14);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -263,15 +268,15 @@
     align-items: center;
     justify-content: center;
     font-size: 16px;
-    background: #3d1a12;
+    background: rgba(163,134,42,0.2);
   }
   .rail-agent-switcher .name {
     font-size: 15px;
     font-weight: 600;
-    color: #fff;
+    color: #f1f5f9;
   }
   .rail-agent-switcher .dropdown {
-    color: #666670;
+    color: #94a3b8;
     font-size: 12px;
     cursor: pointer;
   }
@@ -286,7 +291,7 @@
     display: flex;
     padding: 8px 12px;
     gap: 4px;
-    border-bottom: 1px solid #252528;
+    border-bottom: 1px solid rgba(241,245,249,0.14);
     overflow-x: auto;
   }
   .rail-agent-tab {
@@ -303,11 +308,11 @@
     border: 1px solid transparent;
   }
   .rail-agent-tab.active {
-    background: #3d1a12;
-    border-color: #e85d3a;
+    background: rgba(163,134,42,0.2);
+    border-color: #a3862a;
   }
   .rail-agent-tab:hover {
-    background: #1a1a1e;
+    background: rgba(241,245,249,0.06);
   }
   .rail-agent-tab .tab-badge {
     position: absolute;
@@ -342,27 +347,27 @@
     max-width: 95%;
   }
   .chat-msg.agent {
-    background: #1a1a1e;
-    color: #c8c8cc;
+    background: rgba(241,245,249,0.06);
+    color: #cbd5e1;
     align-self: flex-start;
   }
   .chat-msg.highlight {
-    background: #3d1a12;
-    border: 1px solid #e85d3a;
-    color: #e0e0e4;
+    background: rgba(163,134,42,0.15);
+    border: 1px solid rgba(163,134,42,0.5);
+    color: #f1f5f9;
   }
   .chat-msg .msg-label {
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #f39c12;
+    color: #e0c875;
     margin-bottom: 6px;
   }
   .chat-msg .msg-label.green { color: #2ecc71; }
   .chat-msg .msg-time {
     font-size: 10px;
-    color: #555558;
+    color: #94a3b8;
     margin-top: 6px;
     text-align: right;
   }
@@ -380,34 +385,34 @@
     border: none;
   }
   .chat-btn.primary {
-    background: #e85d3a;
+    background: #a3862a;
     color: #fff;
   }
   .chat-btn.secondary {
-    background: #252528;
-    color: #b0b0b5;
+    background: rgba(241,245,249,0.1);
+    color: #cbd5e1;
   }
   .chat-btn.outline {
     background: transparent;
-    border: 1px solid #3a3a3e;
-    color: #888890;
+    border: 1px solid rgba(241,245,249,0.2);
+    color: #94a3b8;
   }
 
   .rail-input {
     padding: 12px 16px;
-    border-top: 1px solid #252528;
+    border-top: 1px solid rgba(241,245,249,0.14);
   }
   .rail-input input {
     width: 100%;
-    background: #161618;
-    border: 1px solid #252528;
+    background: rgba(241,245,249,0.05);
+    border: 1px solid rgba(241,245,249,0.14);
     border-radius: 8px;
     padding: 10px 14px;
-    color: #e0e0e8;
+    color: #f1f5f9;
     font-size: 13px;
     outline: none;
   }
-  .rail-input input::placeholder { color: #555558; }
+  .rail-input input::placeholder { color: #94a3b8; }
 
   /* ===== TRAFFIC LIGHT ===== */
   .traffic-lights {
@@ -430,20 +435,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #0a0a0e;
+    background: #0f172a;
     position: relative;
     -webkit-app-region: drag;
   }
   .title-bar .title {
     font-size: 12px;
-    color: #555558;
+    color: #94a3b8;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.5px;
   }
   /* Custom scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #333338; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #444448; }
-  * { scrollbar-width: thin; scrollbar-color: #333338 transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(241,245,249,0.15); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(241,245,249,0.25); }
+  * { scrollbar-width: thin; scrollbar-color: rgba(241,245,249,0.15) transparent; }
 </style>
 <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
 </head>
@@ -455,7 +462,7 @@
       <div class="traffic-light yellow"></div>
       <div class="traffic-light green"></div>
     </div>
-    <span class="title">OpenClaw Shell</span>
+    <span class="title">Aegilume</span>
   </div>
 
   <!-- Tab Bar -->

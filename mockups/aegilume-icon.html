@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Aegilume App Icon</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .icon-container {
+      width: 100%;
+      max-width: 800px;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon-container">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="100%" height="100%">
+      <rect width="1200" height="1200" fill="#1a1a1a" />
+      
+      <defs>
+        <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+          <stop offset="0%" stop-color="#0f172a" />
+          <stop offset="100%" stop-color="#0a0e1a" />
+        </radialGradient>
+        
+        <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="15" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+
+        <filter id="whiteGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+
+        <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="25" stdDeviation="30" flood-color="#000000" flood-opacity="0.7"/>
+        </filter>
+      </defs>
+
+      <!-- Squircle Container -->
+      <g transform="translate(88, 88)" filter="url(#dropShadow)">
+        <rect width="1024" height="1024" rx="230" ry="230" fill="url(#bgGrad)" />
+        <rect width="1024" height="1024" rx="230" ry="230" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.15" />
+        <rect width="1024" height="1024" rx="230" ry="230" fill="none" stroke="#000000" stroke-width="4" stroke-opacity="0.4" transform="translate(0, 2)" />
+      </g>
+      
+      <!-- Constellation Group -->
+      <g transform="translate(600, 600)"> 
+        
+        <g stroke="#f1f5f9" stroke-width="2" stroke-opacity="0.3" fill="none">
+          <circle cx="0" cy="0" r="280" stroke-dasharray="8 12" stroke-opacity="0.15" />
+          <circle cx="0" cy="0" r="140" stroke-dasharray="4 8" stroke-opacity="0.2" />
+          
+          <path d="M 0,-280 Q 0,0 280,0 Q 0,0 0,280 Q 0,0 -280,0 Q 0,0 0,-280" stroke="#a3862a" stroke-width="3" stroke-opacity="0.5" filter="url(#goldGlow)" />
+          
+          <path d="M -198,-198 Q 0,-150 198,-198 Q 150,0 198,198 Q 0,150 -198,198 Q -150,0 -198,-198" stroke="#f1f5f9" stroke-opacity="0.4" />
+          
+          <line x1="0" y1="0" x2="0" y2="-280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+          <line x1="0" y1="0" x2="0" y2="280" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+          <line x1="0" y1="0" x2="280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+          <line x1="0" y1="0" x2="-280" y2="0" stroke="#a3862a" stroke-width="2" stroke-opacity="0.7"/>
+          
+          <polygon points="
+            0,-280  107,-258  198,-198  258,-107
+            280,0   258,107   198,198   107,258
+            0,280   -107,258  -198,198  -258,107
+            -280,0  -258,-107 -198,-198 -107,-258
+          " stroke-width="1.5" stroke-opacity="0.25" />
+
+          <path d="M 0,-280 C 100,-150 150,-100 280,0 C 150,100 100,150 0,280 C -100,150 -150,100 -280,0 C -150,-100 -100,-150 0,-280 Z" stroke="#f1f5f9" stroke-width="1.5" stroke-opacity="0.6" />
+        </g>
+
+        <!-- The 12 White Nodes -->
+        <g fill="#f1f5f9" filter="url(#whiteGlow)">
+          <circle cx="258.6" cy="-107.1" r="5" />
+          <circle cx="198.0" cy="-198.0" r="7" />
+          <circle cx="107.1" cy="-258.6" r="5" />
+          <circle cx="-107.1" cy="-258.6" r="5" />
+          <circle cx="-198.0" cy="-198.0" r="7" />
+          <circle cx="-258.6" cy="-107.1" r="5" />
+          <circle cx="-258.6" cy="107.1" r="5" />
+          <circle cx="-198.0" cy="198.0" r="7" />
+          <circle cx="-107.1" cy="258.6" r="5" />
+          <circle cx="107.1" cy="258.6" r="5" />
+          <circle cx="198.0" cy="198.0" r="7" />
+          <circle cx="258.6" cy="107.1" r="5" />
+        </g>
+
+        <!-- The 5 Gold Nodes -->
+        <g fill="#a3862a" filter="url(#goldGlow)">
+          <circle cx="0" cy="0" r="14" />
+          <circle cx="0" cy="-280" r="12" />
+          <circle cx="0" cy="280" r="12" />
+          <circle cx="280" cy="0" r="12" />
+          <circle cx="-280" cy="0" r="12" />
+        </g>
+        
+        <g fill="#ffffff">
+          <circle cx="0" cy="0" r="5" />
+          <circle cx="0" cy="-280" r="4" />
+          <circle cx="0" cy="280" r="4" />
+          <circle cx="280" cy="0" r="4" />
+          <circle cx="-280" cy="0" r="4" />
+        </g>
+
+      </g>
+    </svg>
+  </div>
+</body>
+</html>
