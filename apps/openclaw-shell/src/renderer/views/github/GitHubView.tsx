@@ -215,7 +215,7 @@ const NAV_ICONS = [
   { icon: '📈', title: 'Insights' },
 ];
 
-const AGENT_ID = 'primary';
+const AGENT_ID = 'build';
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 export function GitHubView() {

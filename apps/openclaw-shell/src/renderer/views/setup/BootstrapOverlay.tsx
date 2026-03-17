@@ -61,9 +61,9 @@ function buildBootTasks(enabledServices: string[]): BootTask[] {
   // Gmail — if gmail service is enabled
   if (enabledServices.includes('gmail')) {
     tasks.push({
-      agentId: 'karoline',
+      agentId: 'comms',
       label: 'Pulling inbox...',
-      invoke: () => api.invoke('api.gmail.list', 'karoline', 'in:inbox', 25),
+      invoke: () => api.invoke('api.gmail.list', 'comms', 'in:inbox', 25),
     });
   }
 
@@ -73,18 +73,18 @@ function buildBootTasks(enabledServices: string[]): BootTask[] {
     const weekEnd = new Date(now);
     weekEnd.setDate(weekEnd.getDate() + 7);
     tasks.push({
-      agentId: 'kronos',
+      agentId: 'calendar',
       label: 'Loading calendar...',
-      invoke: () => api.invoke('api.calendar.list', 'kronos', now.toISOString(), weekEnd.toISOString()),
+      invoke: () => api.invoke('api.calendar.list', 'calendar', now.toISOString(), weekEnd.toISOString()),
     });
   }
 
   // GitHub — if github is enabled
   if (enabledServices.includes('github')) {
     tasks.push({
-      agentId: 'vulcan',
+      agentId: 'build',
       label: 'Fetching notifications...',
-      invoke: () => api.invoke('api.github.notifications', 'vulcan', false),
+      invoke: () => api.invoke('api.github.notifications', 'build', false),
     });
   }
 

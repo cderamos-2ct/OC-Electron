@@ -1,5 +1,5 @@
 import { ipcMain, shell, BrowserWindow } from 'electron';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, appendFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { ShellConfig, ServiceConfig, TaskPatch, QuickDecision } from '../shared/types.js';
@@ -40,6 +40,24 @@ function writeShellConfig(config: ShellConfig): void {
 }
 
 export function registerIpcHandlers(gateway: GatewayClient, serviceManager: ServiceManager, taskEngine: TaskEngine, workerManager?: WorkerManager, cdBridge?: CDBridge): void {
+  // Security: Audit log for sensitive operations
+  const AUDITED_CHANNELS = ['api.gmail.send-draft', 'api.gmail.delete', 'api.gmail.batch-modify', 'api.github.merge', 'api.github.review', 'approval:decide'];
+
+  function auditLog(channel: string, args: unknown[]): void {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      channel,
+      args: JSON.stringify(args).slice(0, 500),
+    };
+    console.log('[Audit]', JSON.stringify(entry));
+    const logPath = join(SHELL_CONFIG_DIR, 'ipc-audit.jsonl');
+    try {
+      appendFileSync(logPath, JSON.stringify(entry) + '\n', 'utf-8');
+    } catch { /* non-fatal */ }
+  }
+
+  void AUDITED_CHANNELS; // referenced for documentation; individual calls below
+
   const bindingRegistry = AgentServiceBindingRegistry.fromConfig();
 
   // ── Gateway ──────────────────────────────────────────────────────────────
@@ -143,6 +161,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   });
 
   ipcMain.handle('approval:decide', async (_event, actionId: string, decision: 'approved' | 'denied', alwaysAllow?: boolean) => {
+    auditLog('approval:decide', [actionId, decision]);
     if (!cdBridge) return { error: 'CD Bridge not available' };
     try {
       return await cdBridge.decide(actionId, decision, alwaysAllow);
@@ -241,6 +260,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   });
 
   ipcMain.handle('api.gmail.send-draft', async (_event, agentId: string, draftId: string) => {
+    auditLog('api.gmail.send-draft', [agentId, draftId]);
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -252,6 +272,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   });
 
   ipcMain.handle('api.gmail.delete', async (_event, agentId: string, messageId: string) => {
+    auditLog('api.gmail.delete', [agentId, messageId]);
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -263,6 +284,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   });
 
   ipcMain.handle('api.gmail.batch-modify', async (_event, agentId: string, messageIds: string[], addLabels: string[], removeLabels: string[]) => {
+    auditLog('api.gmail.batch-modify', [agentId, messageIds]);
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -326,6 +348,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   });
 
   ipcMain.handle('api.github.review', async (_event, agentId: string, owner: string, repo: string, number: number, body: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT') => {
+    auditLog('api.github.review', [agentId, owner, repo, number, event]);
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -337,6 +360,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   });
 
   ipcMain.handle('api.github.merge', async (_event, agentId: string, owner: string, repo: string, number: number, mergeMethod?: 'merge' | 'squash' | 'rebase') => {
+    auditLog('api.github.merge', [agentId, owner, repo, number]);
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {

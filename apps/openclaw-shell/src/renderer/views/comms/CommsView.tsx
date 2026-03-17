@@ -508,7 +508,7 @@ export function CommsView() {
   const [activeTab, setActiveTab] = useState<CommsTab>('email');
 
   // The Gmail API worker uses 'karoline' agent by convention
-  const GMAIL_AGENT_ID = 'karoline';
+  const GMAIL_AGENT_ID = 'comms';
 
   const subtabs: Array<{ key: CommsTab; label: string; icon: string }> = [
     { key: 'email', label: 'Email', icon: '✉️' },

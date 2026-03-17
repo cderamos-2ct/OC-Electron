@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAgents } from '../../hooks/use-agents';
-import { AgentStatusGrid } from './AgentStatusGrid';
+import { invoke } from '../../lib/ipc-client';
+import { AgentStatusGrid, AgentStat } from './AgentStatusGrid';
 import { BriefCard, AgentBrief } from './BriefCard';
-import { TodaySummary } from './TodaySummary';
+import { TodaySummary, TodayItem } from './TodaySummary';
+import type { GmailMessage, CalendarEvent, GitHubNotification, TaskDocument } from '../../../shared/types';
 
 // ---- Greeting helpers -------------------------------------------------------
 
@@ -46,9 +48,99 @@ interface HomeViewProps {
   agentBriefs?: AgentBrief[];
 }
 
+interface LiveCounts {
+  unreadEmails: number | null;
+  calendarEvents: number | null;
+  githubNotifications: number | null;
+  pendingTasks: number | null;
+}
+
 export function HomeView({ userName = 'there', agentBriefs = [] }: HomeViewProps) {
   const { agents } = useAgents();
   const isLoading = agents.length === 0;
+
+  const [counts, setCounts] = useState<LiveCounts>({
+    unreadEmails: null,
+    calendarEvents: null,
+    githubNotifications: null,
+    pendingTasks: null,
+  });
+
+  useEffect(() => {
+    const today = new Date();
+    const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+    const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+
+    const fetchCounts = async () => {
+      const [emailResult, calendarResult, githubResult, taskResult] = await Promise.allSettled([
+        invoke('api.gmail.list', 'comms', 'in:inbox is:unread', 100),
+        invoke('api.calendar.list', 'calendar', timeMin, timeMax),
+        invoke('api.github.notifications', 'build', false),
+        invoke('task:list'),
+      ]);
+
+      setCounts({
+        unreadEmails:
+          emailResult.status === 'fulfilled'
+            ? (emailResult.value as GmailMessage[]).length
+            : null,
+        calendarEvents:
+          calendarResult.status === 'fulfilled'
+            ? (calendarResult.value as CalendarEvent[]).length
+            : null,
+        githubNotifications:
+          githubResult.status === 'fulfilled'
+            ? (githubResult.value as GitHubNotification[]).length
+            : null,
+        pendingTasks:
+          taskResult.status === 'fulfilled'
+            ? (taskResult.value as TaskDocument[]).length
+            : null,
+      });
+    };
+
+    fetchCounts();
+  }, []);
+
+  const summaryItems: TodayItem[] = [
+    ...(counts.unreadEmails != null && counts.unreadEmails > 0
+      ? [{ text: `${counts.unreadEmails} unread email${counts.unreadEmails === 1 ? '' : 's'} waiting for triage` }]
+      : []),
+    ...(counts.calendarEvents != null && counts.calendarEvents > 0
+      ? [{ text: `${counts.calendarEvents} meeting${counts.calendarEvents === 1 ? '' : 's'} today` }]
+      : []),
+    ...(counts.githubNotifications != null && counts.githubNotifications > 0
+      ? [{ text: `${counts.githubNotifications} GitHub notification${counts.githubNotifications === 1 ? '' : 's'}` }]
+      : []),
+    ...(counts.pendingTasks != null && counts.pendingTasks > 0
+      ? [{ text: `${counts.pendingTasks} task${counts.pendingTasks === 1 ? '' : 's'} pending review` }]
+      : []),
+  ];
+
+  const agentStats: AgentStat[] = [
+    {
+      emoji: '\u{1F6E1}\uFE0F',
+      count: counts.unreadEmails != null ? counts.unreadEmails : '—',
+      label: 'Emails triaged',
+      agent: 'Karoline',
+    },
+    {
+      emoji: '\u{1F525}',
+      count: counts.githubNotifications != null && counts.githubNotifications > 0
+        ? counts.githubNotifications
+        : '—',
+      label: 'PRs merged',
+      agent: 'Vulcan',
+    },
+    {
+      emoji: '\u23F3',
+      count: counts.calendarEvents != null ? counts.calendarEvents : '—',
+      label: 'Invites handled',
+      agent: 'Kronos',
+    },
+    { emoji: '\u{1F52E}', count: '—', label: 'Recaps processed', agent: 'Ada' },
+    { emoji: '\u{1F4E1}', count: '—', label: 'Risks flagged', agent: 'Hermes' },
+  ];
 
   return (
     <div
@@ -86,7 +178,7 @@ export function HomeView({ userName = 'there', agentBriefs = [] }: HomeViewProps
       </div>
 
       {/* Today summary bullets */}
-      <TodaySummary items={[]} />
+      <TodaySummary items={summaryItems} />
 
       {/* Overnight Agent Activity */}
       <div style={{ marginBottom: '32px' }}>
@@ -104,7 +196,7 @@ export function HomeView({ userName = 'there', agentBriefs = [] }: HomeViewProps
         </p>
 
         {/* Stat cards grid */}
-        <AgentStatusGrid />
+        <AgentStatusGrid stats={agentStats} />
 
         {/* Agent briefs */}
         {isLoading ? (

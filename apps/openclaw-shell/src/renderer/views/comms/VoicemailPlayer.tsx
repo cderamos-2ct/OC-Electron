@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Voicemail } from './mock-data';
+import { Voicemail } from './types';
 
 const WAVEFORM_HEIGHTS = [
   12, 18, 24, 16, 28, 20, 14, 32, 22, 18, 26, 30, 16, 24, 20,

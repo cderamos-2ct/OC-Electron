@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, session } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -113,6 +113,47 @@ if (!gotLock) {
 
   app.whenReady().then(async () => {
     mainWindow = createWindow();
+
+    // Security: Set Content Security Policy
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [
+            [
+              "default-src 'self'",
+              "script-src 'self'",
+              "style-src 'self' 'unsafe-inline'",  // needed for inline styles
+              "img-src 'self' data: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' ws://127.0.0.1:18789 http://127.0.0.1:8222",  // gateway + vault
+              "frame-src 'self' https:",  // webview content
+            ].join('; ')
+          ],
+        },
+      });
+    });
+
+    // Security: Restrict permission requests
+    session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+      const allowed = ['clipboard-read', 'clipboard-sanitized-write', 'notifications'];
+      callback(allowed.includes(permission));
+    });
+
+    // Security: Restrict permission check
+    session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+      const allowed = ['clipboard-read', 'clipboard-sanitized-write', 'notifications'];
+      return allowed.includes(permission);
+    });
+
+    // Security: Prevent navigation to external URLs
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.origin !== 'http://localhost:5173' && !url.startsWith('file://')) {
+        event.preventDefault();
+        console.warn('[Security] Blocked navigation to:', url);
+      }
+    });
 
     // Phase 5: Apply saved window state (position, size, maximized)
     applyWindowState(mainWindow);

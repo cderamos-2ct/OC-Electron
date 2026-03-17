@@ -194,7 +194,7 @@ function SkeletonBlock({ top, height, left, right }: { top: number; height: numb
 
 // ─── CalendarView ───────────────────────────────────────────────────────────────
 
-const AGENT_ID = 'primary';
+const AGENT_ID = 'calendar';
 
 export function CalendarView() {
   const today = new Date();

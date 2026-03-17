@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IMessage } from './mock-data';
+import { IMessage } from './types';
 
 const CHANNEL_COLORS: Record<string, string> = {
   imessage: '#2a5a3c',

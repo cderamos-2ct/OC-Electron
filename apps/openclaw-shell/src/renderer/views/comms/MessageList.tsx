@@ -1,5 +1,5 @@
 import React from 'react';
-import { Message, AgentBadge, ChannelType } from './mock-data';
+import { Message, AgentBadge, ChannelType } from './types';
 
 const CHANNEL_ICONS: Record<ChannelType, string> = {
   email: '✉️',

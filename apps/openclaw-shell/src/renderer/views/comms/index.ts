@@ -8,4 +8,4 @@ export { VoicemailPlayer } from './VoicemailPlayer';
 export { AgentOverlayToolbar } from './AgentOverlayToolbar';
 export { ConfirmSendModal } from './ConfirmSendModal';
 export type { ChannelFilter } from './SubtabBar';
-export * from './mock-data';
+export * from './types';

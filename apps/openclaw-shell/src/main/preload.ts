@@ -77,6 +77,16 @@ const INVOKE_CHANNELS: RendererToMainChannel[] = [
   'browser:list-tabs',
   'setup:check',
   'setup:complete',
+  'vault:status',
+  'vault:list-secrets',
+  'vault:list-policies',
+  'vault:update-policy',
+  'vault:delete-policy',
+  'vault:get-audit-log',
+  'vault:revoke-lease',
+  'vault:revoke-all',
+  'vault:pending-approvals',
+  'vault:decide-approval',
 ];
 
 // Allowed channels for on (main -> renderer)

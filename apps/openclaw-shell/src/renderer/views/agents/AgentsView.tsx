@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAgents } from '../../hooks/use-agents';
+import { invoke } from '../../lib/ipc-client';
 
 // ---- Static display catalogue -----------------------------------------------
 // Defines names, emojis, roles, departments, and fallback task text.
@@ -78,6 +79,186 @@ const SECTIONS: Array<{ label: string; agents: AgentDisplay[] }> = [
 
 const ALL_DISPLAY_AGENTS = SECTIONS.flatMap((s) => s.agents);
 
+// Map agentId -> department label for display in modal
+const AGENT_DEPARTMENT: Record<string, string> = {};
+SECTIONS.forEach((s) => s.agents.forEach((a) => { AGENT_DEPARTMENT[a.id] = s.label; }));
+
+// Brief capability descriptions shown in the Hire modal
+const AGENT_CAPABILITIES: Record<string, string> = {
+  aegilume: 'Strategic orchestration and task routing across all departments.',
+  aria: 'Email triage, drafting, and communications command.',
+  iris: 'Multi-channel aggregation — Gmail, iMessage, and more.',
+  hermes: 'People intelligence and relationship risk tracking.',
+  helios: 'Calendar management and meeting prep briefs.',
+  felix: 'Invoice tracking, budget reviews, and financial oversight.',
+  clio: 'Notes, knowledge capture, and Fireflies meeting recaps.',
+  atlas: 'Deep research and competitive intelligence.',
+  socrates: 'Personalised learning coaching and skill development.',
+  vesta: 'Personal and family calendar monitoring.',
+  boswell: 'Continuous shadow logging of your activity stream.',
+  juno: 'Operational config hardening and system health.',
+  kairos: 'Urgent deadline tracking and time-critical operations.',
+  graphx: 'Build pipeline management and PR oversight.',
+  themis: 'Code verification, review, and quality assurance.',
+  echo: 'Pipeline monitoring and alerting.',
+};
+
+// ---- HireAgentModal ---------------------------------------------------------
+
+interface HireAgentModalProps {
+  offlineAgents: AgentDisplay[];
+  hiringIds: Set<string>;
+  onHire: (agentId: string) => void;
+  onClose: () => void;
+}
+
+function HireAgentModal({ offlineAgents, hiringIds, onHire, onClose }: HireAgentModalProps) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: '14px',
+          width: '520px',
+          maxHeight: '70vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Modal header */}
+        <div style={{
+          padding: '20px 24px 16px',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>
+              Hire an Agent
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
+              Enable additional agents to expand your team&apos;s capabilities
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--muted)',
+              cursor: 'pointer',
+              fontSize: '18px',
+              padding: '0 4px',
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            {'\u2715'}
+          </button>
+        </div>
+
+        {/* Agent list */}
+        <div style={{ overflowY: 'auto', padding: '12px 24px 20px' }}>
+          {offlineAgents.length === 0 ? (
+            <div style={{ padding: '32px 0', textAlign: 'center', fontSize: '13px', color: 'var(--muted)' }}>
+              All agents are already active or initializing.
+            </div>
+          ) : (
+            offlineAgents.map((agent) => {
+              const isHiring = hiringIds.has(agent.id);
+              return (
+                <div
+                  key={agent.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    padding: '12px 0',
+                    borderBottom: '1px solid rgba(241,245,249,0.07)',
+                  }}
+                >
+                  {/* Avatar */}
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    backgroundColor: agent.avatarBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px',
+                    flexShrink: 0,
+                  }}>
+                    {agent.emoji}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{agent.name}</span>
+                      <span style={{
+                        fontSize: '10px',
+                        color: 'var(--muted)',
+                        background: 'rgba(241,245,249,0.08)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                      }}>
+                        {AGENT_DEPARTMENT[agent.id]}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '3px' }}>{agent.role}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-2)' }}>
+                      {AGENT_CAPABILITIES[agent.id] ?? 'Specialized agent capability.'}
+                    </div>
+                  </div>
+
+                  {/* Hire button */}
+                  <button
+                    onClick={() => onHire(agent.id)}
+                    disabled={isHiring}
+                    style={{
+                      flexShrink: 0,
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: isHiring ? 'rgba(163,134,42,0.25)' : 'var(--accent)',
+                      color: isHiring ? 'var(--muted)' : '#000',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: isHiring ? 'default' : 'pointer',
+                      transition: 'opacity 0.15s',
+                    }}
+                  >
+                    {isHiring ? 'Initializing\u2026' : 'Hire'}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Status derived from live hook data
 type DerivedStatus = 'active' | 'idle' | 'offline';
 
@@ -98,6 +279,8 @@ const STATUS_LABELS: Record<DerivedStatus, string> = {
 export function AgentsView() {
   const { agents: liveAgents } = useAgents();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showHireModal, setShowHireModal] = useState(false);
+  const [hiringIds, setHiringIds] = useState<Set<string>>(new Set());
 
   // Derive per-agent status from hook: online=active, seen recently=idle, else offline
   function getStatus(agentId: string): DerivedStatus {
@@ -107,6 +290,21 @@ export function AgentsView() {
     if (live.lastSeen) return 'idle';
     return 'offline';
   }
+
+  async function handleHire(agentId: string) {
+    setHiringIds((prev) => new Set(prev).add(agentId));
+    try {
+      await invoke('gateway:rpc', 'agents.enable', { agentId });
+    } catch (err) {
+      console.warn('[AgentsView] Failed to hire agent:', agentId, err);
+      setHiringIds((prev) => { const next = new Set(prev); next.delete(agentId); return next; });
+    }
+  }
+
+  // Agents that are offline and not currently being hired — candidates for the modal
+  const offlineAgents = ALL_DISPLAY_AGENTS.filter(
+    (a) => getStatus(a.id) === 'offline' && !hiringIds.has(a.id),
+  );
 
   const loading = liveAgents.length === 0;
 
@@ -126,6 +324,16 @@ export function AgentsView() {
 
   return (
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg)', overflow: 'hidden' }}>
+      {/* Hire Agent modal */}
+      {showHireModal && (
+        <HireAgentModal
+          offlineAgents={offlineAgents}
+          hiringIds={hiringIds}
+          onHire={handleHire}
+          onClose={() => setShowHireModal(false)}
+        />
+      )}
+
       {/* Main content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px', minWidth: 0 }}>
         {/* Header */}
@@ -136,13 +344,29 @@ export function AgentsView() {
               {ALL_DISPLAY_AGENTS.length} agents &middot; {activeCnt} active &middot; Last sync 30s ago
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             {stats.map((s) => (
               <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '24px', fontWeight: 700, color: s.color }}>{s.count}</div>
                 <div style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</div>
               </div>
             ))}
+            <button
+              onClick={() => setShowHireModal(true)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--accent)',
+                background: 'transparent',
+                color: 'var(--accent)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              + Hire Agent
+            </button>
           </div>
         </div>
 

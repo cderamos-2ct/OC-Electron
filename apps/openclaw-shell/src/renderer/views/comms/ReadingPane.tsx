@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Message, ChannelType } from './mock-data';
+import { Message, ChannelType } from './types';
 import { AgentOverlayToolbar } from './AgentOverlayToolbar';
 import { ConfirmSendModal } from './ConfirmSendModal';
 
