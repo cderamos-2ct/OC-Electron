@@ -3,72 +3,22 @@ import { useShellStore } from '../../stores/shell-store';
 import { RAIL_MIN_WIDTH, RAIL_MAX_WIDTH } from '../../../shared/constants';
 import { useChat } from '../../hooks/use-chat';
 import { useGateway } from '../../hooks/use-gateway';
+import { useTasks } from '../../hooks/use-tasks';
 import { ChatThread } from './ChatThread';
 import { ChatComposer } from './ChatComposer';
 import { ApprovalCard } from './ApprovalCard';
 
-// ---- Agent avatar tabs (matching mockup) ------------------------------------
+// ---- Agent avatar tabs ------------------------------------------------------
 
 const AGENT_TABS = [
-  { emoji: '\u{1F9E0}', label: 'CD', active: true },
-  { emoji: '\u{1F6E1}\uFE0F', label: 'Karoline', badge: 3 },
-  { emoji: '\u{1F308}', label: 'Iris' },
-  { emoji: '\u{1F4E1}', label: 'Hermes' },
-  { emoji: '\u23F3', label: 'Kronos' },
-  { emoji: '\u{1F3DB}\uFE0F', label: 'Marcus' },
-  { emoji: '\u{1F52E}', label: 'Ada' },
-  { emoji: '\u{1F3E0}', label: 'Vesta' },
-];
-
-// ---- Chat messages (matching mockup) ----------------------------------------
-
-interface MockMessage {
-  label: string;
-  text: React.ReactNode;
-  time: string;
-  actions?: Array<{ label: string; variant: 'primary' | 'secondary' }>;
-}
-
-const MOCK_MESSAGES: MockMessage[] = [
-  {
-    label: 'CD',
-    text: (
-      <>
-        Good morning! I&rsquo;ve prepared your daily brief. 47 emails triaged overnight &mdash; 4
-        items need your attention. The investor email from Marcus Chen looks time-sensitive.
-      </>
-    ),
-    time: '8:42 AM',
-  },
-  {
-    label: 'CD',
-    text: (
-      <>
-        Hermes flagged Lynn Nelson &mdash; risk score went from moderate to high overnight. Kyle sold
-        him another project without clearing the backlog. Want me to have Karoline draft the pipeline
-        review?
-      </>
-    ),
-    time: '8:44 AM',
-    actions: [
-      { label: 'Yes, draft it', variant: 'primary' },
-      { label: "I'll handle", variant: 'secondary' },
-    ],
-  },
-  {
-    label: 'CD',
-    text: (
-      <>
-        Your 10am Investor sync has a prep brief ready. Kronos detected a 4:30 conflict &mdash;
-        PrintDeed and VG standup overlap. Which should I move?
-      </>
-    ),
-    time: '8:45 AM',
-    actions: [
-      { label: 'Move PrintDeed', variant: 'primary' },
-      { label: 'Move VG', variant: 'secondary' },
-    ],
-  },
+  { emoji: '\u{1F9E0}', label: 'CD', role: 'Chief of Staff' },
+  { emoji: '\u{1F6E1}\uFE0F', label: 'Karoline', role: 'Comms Commander' },
+  { emoji: '\u{1F308}', label: 'Iris', role: 'Creative Director' },
+  { emoji: '\u{1F4E1}', label: 'Hermes', role: 'People Intelligence' },
+  { emoji: '\u23F3', label: 'Kronos', role: 'Calendar' },
+  { emoji: '\u{1F3DB}\uFE0F', label: 'Marcus', role: 'Finance' },
+  { emoji: '\u{1F52E}', label: 'Ada', role: 'Knowledge' },
+  { emoji: '\u{1F3E0}', label: 'Vesta', role: 'Personal' },
 ];
 
 // ---- ChatRail component -----------------------------------------------------
@@ -80,6 +30,7 @@ export function ChatRail() {
 
   const { messages, loading, sendMessage } = useChat();
   const { connectionState, isConnected } = useGateway();
+  const { needsChristianTasks } = useTasks();
 
   const [activeAgent, setActiveAgent] = useState(0);
   const [inputValue, setInputValue] = useState('');
@@ -135,6 +86,8 @@ export function ChatRail() {
       ? 'Connecting...'
       : 'Offline';
 
+  const currentAgent = AGENT_TABS[activeAgent];
+
   // ---- Render ---------------------------------------------------------------
 
   return (
@@ -188,8 +141,8 @@ export function ChatRail() {
             <div
               style={{
                 display: 'flex',
-                gap: '4px',
-                padding: '8px 12px',
+                gap: '6px',
+                padding: '10px 12px',
                 borderBottom: '1px solid var(--border)',
                 overflowX: 'auto',
                 scrollbarWidth: 'none',
@@ -203,8 +156,8 @@ export function ChatRail() {
                   style={{
                     width: '32px',
                     height: '32px',
-                    borderRadius: '6px',
-                    border: i === activeAgent ? '2px solid var(--accent)' : '1px solid var(--border)',
+                    borderRadius: '8px',
+                    border: i === activeAgent ? '1px solid var(--accent)' : '1px solid transparent',
                     background: i === activeAgent ? 'var(--accent-bg)' : 'transparent',
                     cursor: 'pointer',
                     fontSize: '16px',
@@ -218,63 +171,44 @@ export function ChatRail() {
                   title={tab.label}
                 >
                   {tab.emoji}
-                  {tab.badge != null && tab.badge > 0 && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '-4px',
-                        right: '-4px',
-                        fontSize: '8px',
-                        fontWeight: 700,
-                        color: '#fff',
-                        backgroundColor: 'var(--red)',
-                        borderRadius: '6px',
-                        padding: '1px 4px',
-                        lineHeight: '11px',
-                      }}
-                    >
-                      {tab.badge}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
 
-            {/* Rail header */}
+            {/* Rail header — dynamic based on selected agent */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                padding: '10px 14px',
+                justifyContent: 'space-between',
+                padding: '14px 16px',
                 borderBottom: '1px solid var(--border)',
                 flexShrink: 0,
               }}
             >
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--accent-bg)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '18px',
-                  flexShrink: 0,
-                }}
-              >
-                {AGENT_TABS[activeAgent].emoji}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div
                   style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: 'var(--text)',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--accent-bg)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px',
+                    flexShrink: 0,
                   }}
                 >
-                  CD &mdash; Chief of Staff
+                  {currentAgent.emoji}
+                </div>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
+                    {currentAgent.label}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                    {currentAgent.role}
+                  </div>
                 </div>
               </div>
               <div
@@ -282,8 +216,9 @@ export function ChatRail() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '5px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   color: statusColor,
+                  fontWeight: 500,
                 }}
               >
                 <span
@@ -319,127 +254,95 @@ export function ChatRail() {
             {/* Approval queue */}
             <ApprovalCard />
 
-            {/* NEEDS CHRISTIAN card */}
-            <div
-              style={{
-                margin: '10px 12px',
-                padding: '12px 14px',
-                border: '1px solid var(--accent)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--accent-bg)',
-                flexShrink: 0,
-              }}
-            >
+            {/* Needs attention card — data-driven from tasks */}
+            {needsChristianTasks.length > 0 && (
               <div
                 style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: 'var(--yellow)',
-                  letterSpacing: '0.06em',
-                  marginBottom: '8px',
+                  margin: '10px 12px',
+                  padding: '12px 14px',
+                  border: '1px solid var(--accent)',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--accent-bg)',
+                  flexShrink: 0,
                 }}
               >
-                &#9889; NEEDS CHRISTIAN
+                <div
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    color: 'var(--accent)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: '6px',
+                  }}
+                >
+                  &#9889; {needsChristianTasks.length} item{needsChristianTasks.length !== 1 ? 's' : ''} need{needsChristianTasks.length === 1 ? 's' : ''} you
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-2)', lineHeight: '1.7' }}>
+                  {needsChristianTasks.slice(0, 5).map((t) => (
+                    <div key={t.id}>
+                      &bull; {t.id.toUpperCase()}: {t.title}
+                    </div>
+                  ))}
+                  {needsChristianTasks.length > 5 && (
+                    <div style={{ color: 'var(--muted)', fontSize: '11px', marginTop: '4px' }}>
+                      + {needsChristianTasks.length - 5} more
+                    </div>
+                  )}
+                </div>
               </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-2)', lineHeight: '1.7' }}>
-                &bull; OPS-019: Budget approval
-                <br />
-                &bull; OPS-024: Investor reply
-                <br />
-                &bull; Nashville flights not booked
-              </div>
-            </div>
+            )}
 
-            {/* Chat messages area */}
+            {/* Chat messages area — live gateway messages only */}
             <div
               style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: '10px 12px',
+                padding: '14px 16px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '10px',
               }}
             >
-              {MOCK_MESSAGES.map((msg, i) => (
+              {/* Empty state when no messages */}
+              {messages.length === 0 && !loading && (
                 <div
-                  key={i}
                   style={{
-                    backgroundColor: 'var(--bg)',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    border: '1px solid var(--border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: 1,
+                    gap: '8px',
+                    color: 'var(--muted)',
+                    fontSize: '13px',
+                    textAlign: 'center',
+                    padding: '20px',
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: 'var(--accent)',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    {msg.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--text-2)',
-                      lineHeight: '1.6',
-                      marginBottom: msg.actions ? '8px' : '4px',
-                    }}
-                  >
-                    {msg.text}
-                  </div>
-                  {msg.actions && (
-                    <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
-                      {msg.actions.map((action) => (
-                        <button
-                          key={action.label}
-                          style={{
-                            padding: '4px 12px',
-                            borderRadius: '5px',
-                            border:
-                              action.variant === 'primary'
-                                ? 'none'
-                                : '1px solid var(--border)',
-                            background:
-                              action.variant === 'primary'
-                                ? 'var(--accent)'
-                                : 'transparent',
-                            color:
-                              action.variant === 'primary'
-                                ? '#fff'
-                                : 'var(--text-2)',
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {action.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div style={{ fontSize: '10px', color: 'var(--muted)' }}>{msg.time}</div>
+                  <span style={{ fontSize: '24px' }}>{currentAgent.emoji}</span>
+                  <span>No messages yet</span>
+                  <span style={{ fontSize: '11px', color: 'var(--dimmer)' }}>
+                    Send a message to start chatting with {currentAgent.label}
+                  </span>
                 </div>
-              ))}
+              )}
 
-              {/* Live chat thread from gateway (below mock messages) */}
+              {/* Live chat thread from gateway */}
               <ChatThread messages={messages} loading={loading} />
             </div>
 
             {/* Composer input */}
             <div
               style={{
-                padding: '10px 12px',
+                padding: '12px 16px',
                 borderTop: '1px solid var(--border)',
                 flexShrink: 0,
               }}
             >
               <input
                 type="text"
-                placeholder="Message CD..."
+                placeholder={`Message ${currentAgent.label}...`}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => {
@@ -452,13 +355,14 @@ export function ChatRail() {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   border: '1px solid var(--border)',
-                  background: 'var(--bg)',
+                  background: 'var(--bg-card)',
                   color: 'var(--text)',
                   fontSize: '13px',
                   outline: 'none',
                   boxSizing: 'border-box',
+                  fontFamily: 'inherit',
                 }}
               />
             </div>

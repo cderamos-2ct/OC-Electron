@@ -46,7 +46,7 @@ export function MessageList({ messages, selectedId, onSelect }: MessageListProps
                 : msg.isUnread
                 ? '#141418'
                 : 'transparent',
-              borderLeft: isSelected ? '2px solid #c2703a' : '2px solid transparent',
+              borderLeft: isSelected ? '2px solid var(--accent)' : '2px solid transparent',
               borderBottom: '1px solid #13131a',
               transition: 'background 0.1s',
               display: 'flex',
@@ -61,8 +61,8 @@ export function MessageList({ messages, selectedId, onSelect }: MessageListProps
                 width: 28,
                 height: 28,
                 borderRadius: '50%',
-                background: isSelected ? '#3c1e17' : '#1e1e28',
-                border: isSelected ? '1px solid #c2703a' : '1px solid #2a2a38',
+                background: isSelected ? 'rgba(163,134,42,0.15)' : '#1e1e28',
+                border: isSelected ? '1px solid var(--accent)' : '1px solid #2a2a38',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -96,7 +96,7 @@ export function MessageList({ messages, selectedId, onSelect }: MessageListProps
                   width: 6,
                   height: 6,
                   borderRadius: '50%',
-                  background: '#c2703a',
+                  background: 'var(--accent)',
                   flexShrink: 0,
                 }} />
               )}

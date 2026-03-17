@@ -1,18 +1,15 @@
 import React from 'react';
 
-interface TodayItem {
+export interface TodayItem {
   text: string;
   dotColor?: string; // defaults to gold/accent
 }
 
-const TODAY_ITEMS: TodayItem[] = [
-  { text: '3 meetings (first at 10:00 \u2014 Investor sync)' },
-  { text: '7 tasks need decisions', dotColor: '#e67e22' },
-  { text: '2 PRs awaiting your review' },
-  { text: '1 relationship risk flagged (Lynn Nelson)', dotColor: 'var(--red)' },
-];
+interface TodaySummaryProps {
+  items?: TodayItem[];
+}
 
-export function TodaySummary() {
+export function TodaySummary({ items = [] }: TodaySummaryProps) {
   return (
     <div style={{ marginBottom: '32px' }}>
       <p
@@ -27,32 +24,45 @@ export function TodaySummary() {
       >
         Today
       </p>
-      {TODAY_ITEMS.map((item, i) => (
-        <div
-          key={i}
+      {items.length === 0 ? (
+        <p
           style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: '10px',
-            marginBottom: '10px',
             fontSize: '14px',
-            color: 'var(--text-2)',
+            color: 'var(--muted)',
+            margin: 0,
             lineHeight: '1.5',
           }}
         >
-          <span
+          No items for today.
+        </p>
+      ) : (
+        items.map((item, i) => (
+          <div
+            key={i}
             style={{
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              backgroundColor: item.dotColor ?? 'var(--accent)',
-              flexShrink: 0,
-              marginTop: '6px',
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '10px',
+              marginBottom: '10px',
+              fontSize: '14px',
+              color: 'var(--text-2)',
+              lineHeight: '1.5',
             }}
-          />
-          <span>{item.text}</span>
-        </div>
-      ))}
+          >
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: item.dotColor ?? 'var(--accent)',
+                flexShrink: 0,
+                marginTop: '6px',
+              }}
+            />
+            <span>{item.text}</span>
+          </div>
+        ))
+      )}
     </div>
   );
 }

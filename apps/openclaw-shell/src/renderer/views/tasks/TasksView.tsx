@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useTasks } from '../../hooks/use-tasks';
+import type { TaskDocument } from '../../../shared/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -26,145 +28,95 @@ interface TaskCardData {
   actions?: Array<{ label: string; variant: 'primary' | 'secondary' | 'danger' }>;
 }
 
-// ─── Mock data ───────────────────────────────────────────────────────────────
+// ─── Agent registry ──────────────────────────────────────────────────────────
+// Maps known agent identifiers to display data
 
-const TASKS: TaskCardData[] = [
-  {
-    id: 'ops-024',
-    variant: 'approval',
-    avatarEmoji: '🛡️',
-    avatarBg: '#5e1f2d',
-    taskId: 'OPS-024',
-    badgeVariant: 'approval',
-    badgeLabel: 'Approval',
-    title: 'Draft reply to Sequoia partner email',
-    description: 'Karoline drafted response — confirms March 21 meeting, references Q4 growth metrics. Tone: professional but warm.',
-    agents: [{ emoji: '🛡️', name: 'Karoline' }],
-    time: '8:44 AM',
-    actions: [
-      { label: 'Approve & Send', variant: 'primary' },
-      { label: 'Edit tone', variant: 'secondary' },
-    ],
-  },
-  {
-    id: 'ops-019',
-    variant: 'urgent',
-    avatarEmoji: '🏛️',
-    avatarBg: '#1f3d5e',
-    taskId: 'OPS-019',
-    badgeVariant: 'blocked',
-    badgeLabel: 'Blocked',
-    title: 'Budget approval needed for Q2 infrastructure',
-    description: 'Marcus needs sign-off on $4,200 hosting upgrade. Breakdown attached. Hermes flagged — this vendor has been reliable.',
-    agents: [{ emoji: '🏛️', name: 'Marcus' }],
-    time: 'Yesterday',
-    actions: [
+const AGENT_DISPLAY: Record<string, { emoji: string; avatarBg: string; name: string }> = {
+  karoline:  { emoji: '🛡️', avatarBg: '#5e1f2d', name: 'Karoline' },
+  marcus:    { emoji: '🏛️', avatarBg: '#1f3d5e', name: 'Marcus' },
+  vulcan:    { emoji: '🔥', avatarBg: '#5e2d1f', name: 'Vulcan' },
+  kronos:    { emoji: '⏳', avatarBg: '#5e4e1f', name: 'Kronos' },
+  ada:       { emoji: '🔮', avatarBg: '#3d1f5e', name: 'Ada' },
+  vesta:     { emoji: '🏠', avatarBg: '#5e3d1f', name: 'Vesta' },
+  hermes:    { emoji: '📡', avatarBg: '#1f4e5e', name: 'Hermes' },
+  argus:     { emoji: '👁️', avatarBg: '#2d2d5e', name: 'Argus' },
+  iris:      { emoji: '🌈', avatarBg: '#3d1f5e', name: 'Iris' },
+};
+
+const FALLBACK_AGENT = { emoji: '🤖', avatarBg: '#2d2d2d', name: 'Agent' };
+
+function agentDisplay(ownerAgent: string) {
+  const key = ownerAgent.toLowerCase();
+  return AGENT_DISPLAY[key] ?? { ...FALLBACK_AGENT, name: ownerAgent };
+}
+
+// ─── Mapping TaskDocument → TaskCardData ─────────────────────────────────────
+
+function relativeTime(iso: string): string {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function toCardVariant(task: TaskDocument): CardVariant {
+  if (task.status === 'done' || task.status === 'cancelled') return 'done';
+  if (task.status === 'blocked') return 'urgent';
+  if (task.status === 'needs_christian') return 'approval';
+  if (task.status === 'in_progress') return 'running';
+  return 'queued';
+}
+
+function toBadge(task: TaskDocument): { variant: BadgeVariant; label: string } {
+  switch (task.status) {
+    case 'done':        return { variant: 'done', label: 'Done' };
+    case 'cancelled':   return { variant: 'done', label: 'Cancelled' };
+    case 'blocked':     return { variant: 'blocked', label: 'Blocked' };
+    case 'needs_christian': return { variant: 'approval', label: 'Needs You' };
+    case 'in_progress': return { variant: 'running', label: 'Running' };
+    default:            return { variant: 'queued', label: 'Queued' };
+  }
+}
+
+function toCardActions(task: TaskDocument): TaskCardData['actions'] {
+  if (task.status === 'needs_christian') {
+    return [
+      { label: 'Approve', variant: 'primary' },
+      { label: 'Defer', variant: 'secondary' },
+    ];
+  }
+  if (task.status === 'blocked') {
+    return [
       { label: 'Review', variant: 'primary' },
       { label: 'Defer', variant: 'secondary' },
-    ],
-  },
-  {
-    id: 'run-045',
-    variant: 'running',
-    avatarEmoji: '🛡️',
-    avatarBg: '#5e1f2d',
-    taskId: 'RUN-045',
-    badgeVariant: 'running',
-    badgeLabel: 'Running',
-    title: 'Email triage batch (47 unread)',
-    description: '38 auto-archived (newsletters), 9 labeled important, 3 drafts created for review. Dispatched 2 invoices to Marcus.',
-    agents: [{ emoji: '🛡️', name: 'Karoline' }, { emoji: '🏛️', name: 'Marcus' }],
-    agentSeparator: 'arrow',
-    time: '8:42 AM',
-  },
-  {
-    id: 'run-055',
-    variant: 'running',
-    avatarEmoji: '🔥',
-    avatarBg: '#5e2d1f',
-    taskId: 'RUN-055',
-    badgeVariant: 'running',
-    badgeLabel: 'Running',
-    title: 'Electron shell — tab bar + IPC bridge',
-    description: 'Tab system rendering, IPC bridge connected. Gateway WebSocket client integrated. Remaining: window state persistence.',
-    agents: [{ emoji: '🔥', name: 'Vulcan' }],
-    time: 'Running 45m',
-  },
-  {
-    id: 'run-051',
-    variant: 'queued',
-    avatarEmoji: '⏳',
-    avatarBg: '#5e4e1f',
-    taskId: 'RUN-051',
-    badgeVariant: 'queued',
-    badgeLabel: 'Queued',
-    title: 'Calendar sync — recurring events',
-    description: 'Prep briefs for 3 meetings today. 10:00 Investor sync (prep ready), 2:00 VG standup, 4:30 PrintDeed review.',
-    agents: [{ emoji: '⏳', name: 'Kronos' }],
-    time: 'Next sync: 5m',
-  },
-  {
-    id: 'run-060',
-    variant: 'running',
-    avatarEmoji: '🔮',
-    avatarBg: '#3d1f5e',
-    taskId: 'RUN-060',
-    badgeVariant: 'running',
-    badgeLabel: 'Running',
-    title: 'Fireflies recap processing — 2 meetings',
-    description: 'Extracting action items from Kyle/Lynn sync and VG partner review. 5 tasks created, 2 follow-ups pending.',
-    agents: [{ emoji: '🔮', name: 'Ada' }, { emoji: '🛡️', name: 'Karoline' }],
-    agentSeparator: 'arrow',
-    time: '8:38 AM',
-  },
-  {
-    id: 'run-062',
-    variant: 'approval',
-    avatarEmoji: '🏠',
-    avatarBg: '#5e3d1f',
-    taskId: 'RUN-062',
-    badgeVariant: 'approval',
-    badgeLabel: 'Needs You',
-    title: 'Nashville cheer comp — book flights for Bella + Christian',
-    description: 'March 26-29. Calendar event created. Vesta found 3 flight options. Need your pick to book.',
-    agents: [{ emoji: '🏠', name: 'Vesta' }],
-    time: 'Yesterday',
-    actions: [
-      { label: 'View Options', variant: 'primary' },
-    ],
-  },
-  {
-    id: 'alert-hermes',
-    variant: 'urgent',
-    avatarEmoji: '📡',
-    avatarBg: '#1f4e5e',
-    taskId: 'ALERT',
-    badgeVariant: 'blocked',
-    badgeLabel: 'Risk',
-    title: 'Lynn Nelson — 3 deliverables overdue, Kyle adding more',
-    description: 'Hermes: risk score elevated. Buckner site on hold, Alphagraphics Q2 prints stacking. Kyle sold another project without clearing backlog.',
-    agents: [{ emoji: '📡', name: 'Hermes' }],
-    time: 'Flagged 1m ago',
-    actions: [
-      { label: 'Escalate', variant: 'danger' },
-      { label: 'View Graph', variant: 'secondary' },
-    ],
-  },
-  {
-    id: 'ops-010',
-    variant: 'done',
-    avatarEmoji: '👁️',
-    avatarBg: '#2d2d5e',
-    taskId: 'OPS-010',
-    badgeVariant: 'done',
-    badgeLabel: 'Done',
-    title: 'Gateway WebSocket RPC — 40 methods typed',
-    description: 'Contracts, auth, heartbeat all passing. Argus verified — all green.',
-    agents: [{ emoji: '🔥', name: 'Vulcan' }, { emoji: '👁️', name: 'Argus' }],
-    agentSeparator: 'verified',
-    time: '7:55 AM',
-  },
-];
+    ];
+  }
+  return undefined;
+}
+
+function taskDocToCardData(task: TaskDocument): TaskCardData {
+  const agent = agentDisplay(task.owner_agent || 'agent');
+  const badge = toBadge(task);
+  return {
+    id: task.id,
+    variant: toCardVariant(task),
+    avatarEmoji: agent.emoji,
+    avatarBg: agent.avatarBg,
+    taskId: task.id.toUpperCase(),
+    badgeVariant: badge.variant,
+    badgeLabel: badge.label,
+    title: task.title,
+    description: task.description || task.currentState || '',
+    agents: [{ emoji: agent.emoji, name: agent.name }],
+    time: relativeTime(task.updated_at),
+    actions: toCardActions(task),
+  };
+}
 
 // ─── Badge styles ────────────────────────────────────────────────────────────
 
@@ -220,8 +172,8 @@ function TaskCard({ card }: { card: TaskCardData }) {
   return (
     <div
       style={{
-        background: '#131d33',
-        border: '1px solid rgba(241,245,249,0.14)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
         borderLeft: cardBorderLeft(card.variant),
         borderRadius: '10px',
         padding: '14px 16px',
@@ -293,8 +245,8 @@ function TaskCard({ card }: { card: TaskCardData }) {
                   fontSize: '11px',
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  background: '#131d33',
-                  border: '1px solid rgba(241,245,249,0.14)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
                 }}
               >
                 <span style={{ fontSize: '12px' }}>{agent.emoji}</span>
@@ -320,343 +272,28 @@ function TaskCard({ card }: { card: TaskCardData }) {
   );
 }
 
-// ─── Right Rail ──────────────────────────────────────────────────────────────
+// ─── Skeleton card ────────────────────────────────────────────────────────────
 
-const RAIL_TABS = [
-  { emoji: '🧠', badge: null, active: false },
-  { emoji: '🛡️', badge: 3, active: true },
-  { emoji: '🌈', badge: null, active: false },
-  { emoji: '📡', badge: null, active: false },
-  { emoji: '⏳', badge: null, active: false },
-  { emoji: '🏛️', badge: null, active: false },
-  { emoji: '🔮', badge: null, active: false },
-  { emoji: '🏠', badge: null, active: false },
-];
-
-function RightRail() {
+function SkeletonCard() {
   return (
     <div
       style={{
-        width: '300px',
-        minWidth: '300px',
-        borderLeft: '1px solid rgba(241,245,249,0.14)',
-        background: '#0f172a',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderLeft: '3px solid #4a4a4a',
+        borderRadius: '10px',
+        padding: '14px 16px',
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        flexShrink: 0,
+        gap: '12px',
+        alignItems: 'flex-start',
+        opacity: 0.5,
       }}
     >
-      {/* Agent tabs */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '6px',
-          padding: '10px 12px',
-          borderBottom: '1px solid rgba(241,245,249,0.14)',
-          overflowX: 'auto',
-          flexShrink: 0,
-        }}
-      >
-        {RAIL_TABS.map((tab, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'relative',
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px',
-              cursor: 'pointer',
-              flexShrink: 0,
-              background: tab.active ? 'rgba(163,134,42,0.2)' : 'transparent',
-              border: tab.active ? '1px solid #a3862a' : '1px solid transparent',
-            }}
-          >
-            {tab.emoji}
-            {tab.badge !== null && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-2px',
-                  right: '-2px',
-                  width: '14px',
-                  height: '14px',
-                  borderRadius: '50%',
-                  background: '#e74c3c',
-                  color: '#fff',
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {tab.badge}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Rail header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '14px 16px',
-          borderBottom: '1px solid rgba(241,245,249,0.14)',
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: '#5e1f2d',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px',
-            }}
-          >
-            🛡️
-          </div>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#fff' }}>Karoline</div>
-            <div style={{ fontSize: '11px', color: '#94a3b8' }}>Comms Commander</div>
-          </div>
-        </div>
-        <div style={{ fontSize: '12px', color: '#2ecc71', fontWeight: 500 }}>Active</div>
-      </div>
-
-      {/* Chat */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '14px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        {/* Highlight message */}
-        <div
-          style={{
-            background: 'rgba(163,134,42,0.2)',
-            border: '1px solid #a3862a',
-            borderRadius: '8px',
-            padding: '10px 12px',
-            fontSize: '13px',
-            color: '#e0e0e4',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              color: '#a3862a',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '6px',
-            }}
-          >
-            🛡️ 3 DRAFTS READY
-          </div>
-          1. Sequoia partner reply<br />
-          2. Lynn Nelson — Buckner hold<br />
-          3. Kyle Lasseter — pipeline ping
-        </div>
-
-        {/* Agent message with draft preview */}
-        <div
-          style={{
-            background: 'rgba(241,245,249,0.07)',
-            borderRadius: '8px',
-            padding: '10px 12px',
-            fontSize: '13px',
-            color: '#cbd5e1',
-            alignSelf: 'flex-start',
-            maxWidth: '100%',
-          }}
-        >
-          <strong style={{ color: '#f1f5f9' }}>Karoline</strong><br />
-          <span style={{ fontSize: '12px' }}>
-            Sequoia draft is ready. Key points: confirms March 21 meeting, references Q4 growth, asks about Series B timeline. Tone is professional but warm.
-          </span>
-
-          {/* Draft preview */}
-          <div
-            style={{
-              background: '#131d33',
-              border: '1px solid rgba(241,245,249,0.14)',
-              borderRadius: '8px',
-              padding: '10px 12px',
-              marginTop: '8px',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '6px',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  color: '#a3862a',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                DRAFT
-              </span>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>Gmail · r8518913...</span>
-            </div>
-            <div style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: 500 }}>To: Marcus Chen &lt;marcus@sequoia...&gt;</div>
-            <div style={{ fontSize: '12px', color: '#fff', fontWeight: 500, margin: '4px 0' }}>Re: Series A Term Sheet</div>
-            <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
-              Marcus, thank you for the follow-up. Yes sir, March 21st works perfectly for the deeper dive. I've attached our Q4 metrics as discussed...
-            </div>
-          </div>
-
-          {/* Action row */}
-          <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
-            <button
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                background: '#a3862a',
-                color: '#fff',
-              }}
-            >
-              Approve &amp; send
-            </button>
-            <button
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                background: 'rgba(241,245,249,0.14)',
-                color: '#cbd5e1',
-              }}
-            >
-              Edit tone
-            </button>
-            <button
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                background: 'transparent',
-                border: '1px solid #3a3a3e',
-                color: '#94a3b8',
-              }}
-            >
-              Defer to Monday
-            </button>
-          </div>
-          <div style={{ fontSize: '11px', color: '#4a4a5a', marginTop: '6px', textAlign: 'right' }}>8:44 AM</div>
-        </div>
-
-        {/* Second agent message */}
-        <div
-          style={{
-            background: 'rgba(241,245,249,0.07)',
-            borderRadius: '8px',
-            padding: '10px 12px',
-            fontSize: '13px',
-            color: '#cbd5e1',
-            alignSelf: 'flex-start',
-            maxWidth: '100%',
-          }}
-        >
-          <strong style={{ color: '#f1f5f9' }}>Karoline</strong><br />
-          <span style={{ fontSize: '12px' }}>
-            Also — Kyle just sent Lynn another project. That's 4 active now with 3 overdue. Want me to draft the pipeline review email, or are you handling this one directly?
-          </span>
-          <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
-            <button
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                background: '#a3862a',
-                color: '#fff',
-              }}
-            >
-              Draft it
-            </button>
-            <button
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                background: 'rgba(241,245,249,0.14)',
-                color: '#cbd5e1',
-              }}
-            >
-              I'll handle
-            </button>
-          </div>
-          <div style={{ fontSize: '11px', color: '#4a4a5a', marginTop: '6px', textAlign: 'right' }}>8:46 AM</div>
-        </div>
-      </div>
-
-      {/* Input */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid rgba(241,245,249,0.14)',
-          flexShrink: 0,
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Message Karoline..."
-          style={{
-            width: '100%',
-            background: '#131d33',
-            border: '1px solid rgba(241,245,249,0.14)',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            fontSize: '13px',
-            color: '#f1f5f9',
-            outline: 'none',
-            fontFamily: 'inherit',
-            boxSizing: 'border-box',
-          }}
-        />
+      <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(241,245,249,0.1)', flexShrink: 0 }} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ height: '10px', width: '80px', borderRadius: '4px', background: 'rgba(241,245,249,0.1)' }} />
+        <div style={{ height: '14px', width: '60%', borderRadius: '4px', background: 'rgba(241,245,249,0.1)' }} />
+        <div style={{ height: '12px', width: '90%', borderRadius: '4px', background: 'rgba(241,245,249,0.08)' }} />
       </div>
     </div>
   );
@@ -670,6 +307,27 @@ const FILTERS = ['All', 'Needs Me', 'Running', 'Blocked', 'By Agent'];
 
 export function TasksView() {
   const [activeFilter, setActiveFilter] = useState('All');
+  const {
+    tasks,
+    loading,
+    needsChristianTasks,
+    inProgressTasks,
+    queuedTasks,
+    blockedTasks,
+    handledTasks,
+  } = useTasks();
+
+  // Apply filter
+  const filteredTasks: TaskDocument[] = (() => {
+    switch (activeFilter) {
+      case 'Needs Me': return needsChristianTasks;
+      case 'Running':  return inProgressTasks;
+      case 'Blocked':  return blockedTasks;
+      default:         return [...needsChristianTasks, ...blockedTasks, ...inProgressTasks, ...queuedTasks, ...handledTasks];
+    }
+  })();
+
+  const cards = filteredTasks.map(taskDocToCardData);
 
   return (
     <div
@@ -734,7 +392,7 @@ export function TasksView() {
                       ? '1px solid #a3862a'
                       : '1px solid rgba(241,245,249,0.14)',
                     background: isActive ? 'rgba(163,134,42,0.2)' : 'transparent',
-                    color: isActive ? '#ffc8c8' : '#94a3b8',
+                    color: isActive ? 'var(--yellow)' : '#94a3b8',
                     userSelect: 'none',
                   }}
                 >
@@ -747,14 +405,30 @@ export function TasksView() {
 
         {/* Task grid */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {TASKS.map((card) => (
-            <TaskCard key={card.id} card={card} />
-          ))}
+          {loading ? (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          ) : cards.length === 0 ? (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                color: '#4a4a5a',
+                fontSize: '14px',
+              }}
+            >
+              No active tasks
+            </div>
+          ) : (
+            cards.map((card) => (
+              <TaskCard key={card.id} card={card} />
+            ))
+          )}
         </div>
       </div>
-
-      {/* Right rail */}
-      <RightRail />
     </div>
   );
 }

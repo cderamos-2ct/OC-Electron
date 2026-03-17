@@ -1,1474 +1,307 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { invoke } from '../../lib/ipc-client';
+import type { CalendarEvent } from '../../../shared/types';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
-type ViewMode = 'Day' | 'Week' | 'Month';
+type EventType = 'meeting' | 'focus' | 'personal' | 'travel';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const HOUR_HEIGHT = 60; // px per hour
-const START_HOUR = 8;   // 8 AM
-const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]; // 8 AM – 8 PM
-
-function hourLabel(h: number): string {
-  if (h === 12) return '12 PM';
-  if (h > 12) return `${h - 12} PM`;
-  return `${h} AM`;
-}
-
-// ─── Styles (inline, matching mockup CSS) ───────────────────────────────────
-
-const S = {
-  // Shell
-  view: {
-    display: 'flex',
-    flexDirection: 'row' as const,
-    height: '100%',
-    overflow: 'hidden',
-    background: '#0f172a',
-  },
-  calShell: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    overflow: 'hidden',
-    position: 'relative' as const,
-    background: '#0f172a',
-    minWidth: 0,
-  },
-
-  // Nav bar
-  calNav: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '0 20px',
-    height: '44px',
-    background: '#0d0d11',
-    borderBottom: '1px solid rgba(241,245,249,0.14)',
-    flexShrink: 0,
-  },
-  calNavLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    minWidth: 0,
-  },
-  calMonthLabel: {
-    fontSize: '16px',
-    fontWeight: 600,
-    color: '#f1f5f9',
-    whiteSpace: 'nowrap' as const,
-    minWidth: '160px',
-  },
-  calArrowBtn: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '6px',
-    background: 'transparent',
-    border: '1px solid rgba(241,245,249,0.14)',
-    color: '#94a3b8',
-    fontSize: '14px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    flexShrink: 0,
-    fontFamily: 'inherit',
-  },
-  calTodayBtn: {
-    padding: '5px 12px',
-    borderRadius: '6px',
-    fontSize: '12px',
-    fontWeight: 500,
-    background: 'transparent',
-    border: '1px solid rgba(241,245,249,0.14)',
-    color: '#cbd5e1',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap' as const,
-  },
-  calNavCenter: { flex: 1 },
-  calViewToggle: {
-    display: 'flex',
-    gap: '2px',
-    background: '#131d33',
-    border: '1px solid rgba(241,245,249,0.14)',
-    borderRadius: '7px',
-    padding: '3px',
-  },
-  calViewBtnBase: {
-    padding: '4px 12px',
-    borderRadius: '5px',
-    fontSize: '12px',
-    fontWeight: 500,
-    background: 'transparent',
-    border: 'none',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap' as const,
-  },
-  calViewBtnActive: {
-    background: 'rgba(241,245,249,0.14)',
-    color: '#f1f5f9',
-  },
-
-  // Body
-  calBody: {
-    flex: 1,
-    display: 'flex',
-    overflow: 'hidden',
-    minHeight: 0,
-  },
-
-  // Agenda sidebar
-  calAgenda: {
-    width: '200px',
-    minWidth: '200px',
-    background: '#0e0e12',
-    borderRight: '1px solid rgba(241,245,249,0.14)',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    overflowY: 'auto' as const,
-    flexShrink: 0,
-    padding: '0 0 16px',
-  },
-  calAgendaSection: {
-    padding: '14px 16px 8px',
-  },
-  calAgendaDayLabel: {
-    fontSize: '10px',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '1px',
-    color: '#94a3b8',
-    marginBottom: '10px',
-    paddingBottom: '6px',
-    borderBottom: '1px solid rgba(241,245,249,0.14)',
-  },
-  calAgendaItem: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '8px',
-    padding: '6px 0',
-    cursor: 'pointer',
-    borderRadius: '4px',
-  },
-  calAgendaDotMeeting: {
-    width: '7px',
-    height: '7px',
-    borderRadius: '50%',
-    marginTop: '5px',
-    flexShrink: 0,
-    background: '#a3862a',
-  },
-  calAgendaDotFocus: {
-    width: '7px',
-    height: '7px',
-    borderRadius: '50%',
-    marginTop: '5px',
-    flexShrink: 0,
-    background: '#2ecc71',
-  },
-  calAgendaDotPersonal: {
-    width: '7px',
-    height: '7px',
-    borderRadius: '50%',
-    marginTop: '5px',
-    flexShrink: 0,
-    background: '#666670',
-  },
-  calAgendaTime: {
-    fontSize: '10px',
-    color: '#94a3b8',
-    whiteSpace: 'nowrap' as const,
-    minWidth: '38px',
-    marginTop: '2px',
-  },
-  calAgendaName: {
-    fontSize: '12px',
-    color: '#cbd5e1',
-    lineHeight: 1.35,
-    minWidth: 0,
-  },
-  calAgendaBadgeAda: {
-    marginLeft: 'auto',
-    flexShrink: 0,
-    fontSize: '9px',
-    padding: '1px 5px',
-    borderRadius: '3px',
-    fontWeight: 700,
-    background: '#1f1f3d',
-    color: '#8888ff',
-    border: '1px solid #3d3d6a',
-  },
-  calAgendaBadgeKronos: {
-    marginLeft: 'auto',
-    flexShrink: 0,
-    fontSize: '9px',
-    padding: '1px 5px',
-    borderRadius: '3px',
-    fontWeight: 700,
-    background: '#2a2010',
-    color: '#a3862a',
-    border: '1px solid #4a3a18',
-  },
-
-  // Week wrap
-  calWeekWrap: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    overflow: 'hidden',
-    minWidth: 0,
-  },
-  calDayHeaders: {
-    display: 'grid',
-    gridTemplateColumns: '48px repeat(7, 1fr)',
-    borderBottom: '1px solid rgba(241,245,249,0.14)',
-    flexShrink: 0,
-    background: '#0d0d11',
-  },
-  calGutterSpacer: {
-    borderRight: '1px solid rgba(241,245,249,0.14)',
-  },
-  calDayHeader: {
-    padding: '8px 6px',
-    textAlign: 'center' as const,
-    borderRight: '1px solid rgba(241,245,249,0.14)',
-    cursor: 'default',
-  },
-  calDayHeaderLast: {
-    padding: '8px 6px',
-    textAlign: 'center' as const,
-    cursor: 'default',
-  },
-  calDayName: {
-    fontSize: '10px',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.8px',
-    color: '#94a3b8',
-    marginBottom: '3px',
-  },
-  calDayNameToday: {
-    fontSize: '10px',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.8px',
-    color: '#a3862a',
-    marginBottom: '3px',
-  },
-  calDayNum: {
-    fontSize: '18px',
-    fontWeight: 300,
-    color: '#cbd5e1',
-    lineHeight: 1,
-  },
-  calDayNumToday: {
-    color: '#fff',
-    background: '#a3862a',
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-    fontWeight: 600,
-    margin: '0 auto',
-  },
-
-  // Time grid
-  calTimeGrid: {
-    flex: 1,
-    overflowY: 'auto' as const,
-    position: 'relative' as const,
-    paddingBottom: '60px',
-  },
-  calGridInner: {
-    display: 'grid',
-    gridTemplateColumns: '48px repeat(7, 1fr)',
-    minHeight: '100%',
-    position: 'relative' as const,
-  },
-  calTimeCol: {
-    position: 'relative' as const,
-    borderRight: '1px solid rgba(241,245,249,0.14)',
-    minHeight: `${HOURS.length * HOUR_HEIGHT}px`,
-  },
-  calHourLabel: {
-    position: 'absolute' as const,
-    right: '6px',
-    fontSize: '10px',
-    color: 'rgba(148,163,184,0.5)',
-    transform: 'translateY(-50%)',
-    whiteSpace: 'nowrap' as const,
-    userSelect: 'none' as const,
-  },
-
-  // Day columns
-  calDayCol: {
-    borderRight: '1px solid rgba(241,245,249,0.14)',
-    position: 'relative' as const,
-    minHeight: `${HOURS.length * HOUR_HEIGHT}px`,
-  },
-  calDayColToday: {
-    borderRight: '1px solid rgba(241,245,249,0.14)',
-    position: 'relative' as const,
-    minHeight: `${HOURS.length * HOUR_HEIGHT}px`,
-    background: 'rgba(232, 93, 58, 0.025)',
-  },
-  calDayColLast: {
-    position: 'relative' as const,
-    minHeight: `${HOURS.length * HOUR_HEIGHT}px`,
-  },
-  calHourLine: {
-    position: 'absolute' as const,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'rgba(241,245,249,0.14)',
-  },
-  calHalfLine: {
-    position: 'absolute' as const,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'rgba(255,255,255,0.03)',
-    borderTop: '1px dashed rgba(255,255,255,0.04)',
-  },
-  calNowLine: {
-    position: 'absolute' as const,
-    left: 0,
-    right: 0,
-    height: '2px',
-    background: '#a3862a',
-    zIndex: 10,
-    pointerEvents: 'none' as const,
-  },
-
-  // Events
-  calEventMeeting: {
-    position: 'absolute' as const,
-    left: '3px',
-    right: '3px',
-    borderRadius: '5px',
-    padding: '4px 7px',
-    fontSize: '11px',
-    lineHeight: 1.3,
-    overflow: 'hidden',
-    cursor: 'pointer',
-    zIndex: 5,
-    borderLeft: '3px solid #a3862a',
-    background: 'rgba(232, 93, 58, 0.18)',
-    color: '#ffb8a0',
-  },
-  calEventFocus: {
-    position: 'absolute' as const,
-    left: '3px',
-    right: '3px',
-    borderRadius: '5px',
-    padding: '4px 7px',
-    fontSize: '11px',
-    lineHeight: 1.3,
-    overflow: 'hidden',
-    cursor: 'pointer',
-    zIndex: 5,
-    borderLeft: '3px solid #2ecc71',
-    background: 'rgba(46, 204, 113, 0.12)',
-    color: '#7de8a8',
-  },
-  calEventTravel: {
-    position: 'absolute' as const,
-    left: '3px',
-    right: '3px',
-    borderRadius: '5px',
-    padding: '4px 7px',
-    fontSize: '11px',
-    lineHeight: 1.3,
-    overflow: 'hidden',
-    cursor: 'pointer',
-    zIndex: 5,
-    borderLeft: '3px solid #3b9ede',
-    background: 'rgba(59, 158, 222, 0.14)',
-    color: '#88c8f0',
-  },
-  calEventPersonal: {
-    position: 'absolute' as const,
-    left: '3px',
-    right: '3px',
-    borderRadius: '5px',
-    padding: '4px 7px',
-    fontSize: '11px',
-    lineHeight: 1.3,
-    overflow: 'hidden',
-    cursor: 'pointer',
-    zIndex: 5,
-    borderLeft: '3px solid #666670',
-    background: 'rgba(102, 102, 112, 0.18)',
-    color: '#94a3b8',
-  },
-  calEventTitle: {
-    fontWeight: 600,
-    fontSize: '11px',
-    whiteSpace: 'nowrap' as const,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-  calEventTime: {
-    fontSize: '10px',
-    opacity: 0.75,
-    marginTop: '1px',
-    whiteSpace: 'nowrap' as const,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-  calEventBadges: {
-    display: 'flex',
-    gap: '3px',
-    marginTop: '3px',
-    flexWrap: 'wrap' as const,
-  },
-  calEventBadgeAda: {
-    fontSize: '8px',
-    fontWeight: 700,
-    padding: '1px 4px',
-    borderRadius: '3px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.3px',
-    background: '#1f1f3d',
-    color: '#9999ff',
-  },
-  calEventBadgeKronos: {
-    fontSize: '8px',
-    fontWeight: 700,
-    padding: '1px 4px',
-    borderRadius: '3px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.3px',
-    background: '#3d2010',
-    color: '#e88060',
-  },
-
-  // Detail panel
-  calDetailPanel: {
-    position: 'absolute' as const,
-    top: '44px',
-    right: 0,
-    bottom: '52px',
-    width: '360px',
-    background: '#131d33',
-    borderLeft: '1px solid rgba(241,245,249,0.14)',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    zIndex: 30,
-    boxShadow: '-8px 0 32px rgba(0,0,0,0.5)',
-    transition: 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
-  },
-  calDetailHeader: {
-    padding: '16px 18px 12px',
-    borderBottom: '1px solid rgba(241,245,249,0.14)',
-    flexShrink: 0,
-  },
-  calDetailClose: {
-    width: '26px',
-    height: '26px',
-    borderRadius: '6px',
-    background: 'transparent',
-    border: 'none',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontSize: '15px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    float: 'right' as const,
-    marginTop: '-2px',
-    fontFamily: 'inherit',
-  },
-  calDetailTypeDot: {
-    display: 'inline-block',
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    background: '#a3862a',
-    marginRight: '6px',
-    verticalAlign: 'middle',
-  },
-  calDetailTitle: {
-    fontSize: '17px',
-    fontWeight: 600,
-    color: '#fff',
-    margin: '6px 0 4px',
-  },
-  calDetailMeta: {
-    fontSize: '12px',
-    color: '#94a3b8',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '3px',
-  },
-  calDetailMetaRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
-  calDetailMetaIcon: { fontSize: '12px', width: '14px', textAlign: 'center' as const },
-  calDetailBody: {
-    flex: 1,
-    overflowY: 'auto' as const,
-    padding: '16px 18px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '16px',
-  },
-  calDetailSectionLabel: {
-    fontSize: '10px',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.8px',
-    color: '#94a3b8',
-    marginBottom: '8px',
-  },
-  calDetailAttendees: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '6px',
-  },
-  calAttendee: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  calAttendeeAvatar: {
-    width: '26px',
-    height: '26px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '10px',
-    fontWeight: 700,
-    color: '#fff',
-    flexShrink: 0,
-  },
-  calAttendeeName: {
-    fontSize: '12px',
-    color: '#cbd5e1',
-  },
-  calAttendeeStatus: {
-    marginLeft: 'auto',
-    fontSize: '10px',
-    color: '#2ecc71',
-  },
-  calAdaBrief: {
-    background: '#12122a',
-    border: '1px solid #2e2e5a',
-    borderRadius: '8px',
-    padding: '12px 14px',
-  },
-  calAdaHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '10px',
-  },
-  calAdaAvatar: {
-    width: '22px',
-    height: '22px',
-    borderRadius: '5px',
-    background: '#1f1f4e',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '11px',
-    flexShrink: 0,
-  },
-  calAdaLabel: {
-    fontSize: '11px',
-    fontWeight: 600,
-    color: '#8888cc',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-  },
-  calAdaBriefItem: {
-    fontSize: '12px',
-    color: '#cbd5e1',
-    padding: '4px 0 4px 12px',
-    position: 'relative' as const,
-    lineHeight: 1.45,
-  },
-  calDetailActions: {
-    padding: '12px 18px',
-    borderTop: '1px solid rgba(241,245,249,0.14)',
-    display: 'flex',
-    gap: '8px',
-    flexShrink: 0,
-    flexWrap: 'wrap' as const,
-  },
-
-  // Toast
-  calToast: {
-    position: 'absolute' as const,
-    top: '52px',
-    right: '16px',
-    width: '340px',
-    background: '#131d33',
-    border: '1px solid rgba(241,245,249,0.14)',
-    borderLeft: '3px solid #a3862a',
-    borderRadius: '8px',
-    padding: '12px 14px',
-    zIndex: 30,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-    display: 'flex',
-    gap: '10px',
-    alignItems: 'flex-start',
-  },
-  toastIcon: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '7px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-    flexShrink: 0,
-    background: '#3d1a08',
-  },
-  toastBody: { flex: 1 },
-  toastAgent: {
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#a3862a',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-    marginBottom: '3px',
-  },
-  toastText: {
-    fontSize: '12px',
-    color: '#cbd5e1',
-    lineHeight: 1.4,
-  },
-  toastAction: {
-    fontSize: '11px',
-    color: '#a3862a',
-    cursor: 'pointer',
-    marginTop: '4px',
-    display: 'inline-block',
-  },
-  toastDismiss: {
-    background: 'transparent',
-    border: 'none',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontSize: '13px',
-    padding: '0',
-    fontFamily: 'inherit',
-    flexShrink: 0,
-  },
-
-  // Agent overlay toolbar
-  agentOverlayToolbar: {
-    position: 'absolute' as const,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '52px',
-    background: 'rgba(13,13,17,0.96)',
-    borderTop: '1px solid rgba(241,245,249,0.14)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    padding: '0 16px',
-    zIndex: 20,
-    backdropFilter: 'blur(8px)',
-    flexShrink: 0,
-  },
-  toolbarAgentIdentity: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    flexShrink: 0,
-  },
-  toolbarAgentAvatar: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '14px',
-    position: 'relative' as const,
-    background: '#3d1a08',
-  },
-  toolbarStatusDot: {
-    position: 'absolute' as const,
-    bottom: '-2px',
-    right: '-2px',
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    background: '#2ecc71',
-    border: '2px solid #0d0d11',
-  },
-  toolbarAgentName: {
-    fontSize: '13px',
-    fontWeight: 600,
-    color: '#f1f5f9',
-    whiteSpace: 'nowrap' as const,
-  },
-  toolbarSeparator: {
-    width: '1px',
-    height: '24px',
-    background: 'rgba(241,245,249,0.14)',
-    flexShrink: 0,
-  },
-  toolbarSummary: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontSize: '12px',
-    color: '#94a3b8',
-    overflow: 'hidden',
-  },
-  toolbarSummaryHighlight: {
-    color: '#e0c875',
-    fontWeight: 500,
-  },
-  toolbarSummarySep: { color: 'rgba(148,163,184,0.4)' },
-  toolbarActions: {
-    display: 'flex',
-    gap: '6px',
-    flexShrink: 0,
-  },
-  toolbarBtnPrimary: {
-    padding: '6px 14px',
-    borderRadius: '6px',
-    fontSize: '12px',
-    fontWeight: 600,
-    background: '#a3862a',
-    border: 'none',
-    color: '#fff',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap' as const,
-  },
-  toolbarBtnSecondary: {
-    padding: '6px 14px',
-    borderRadius: '6px',
-    fontSize: '12px',
-    fontWeight: 500,
-    background: 'rgba(241,245,249,0.08)',
-    border: '1px solid rgba(241,245,249,0.14)',
-    color: '#cbd5e1',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap' as const,
-  },
-  toolbarBtnGhost: {
-    padding: '6px 14px',
-    borderRadius: '6px',
-    fontSize: '12px',
-    fontWeight: 500,
-    background: 'transparent',
-    border: '1px solid rgba(241,245,249,0.1)',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap' as const,
-  },
-
-  // Right rail
-  rightRail: {
-    width: '280px',
-    minWidth: '280px',
-    background: '#0e0e12',
-    borderLeft: '1px solid rgba(241,245,249,0.14)',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    flexShrink: 0,
-    height: '100%',
-    overflow: 'hidden',
-  },
-  railAgentTabs: {
-    display: 'flex',
-    borderBottom: '1px solid rgba(241,245,249,0.14)',
-    background: '#0d0d11',
-    padding: '0 8px',
-    gap: '2px',
-  },
-  railAgentTab: {
-    padding: '8px 10px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    color: '#94a3b8',
-    borderBottom: '2px solid transparent',
-    position: 'relative' as const,
-  },
-  railAgentTabActive: {
-    padding: '8px 10px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    color: '#f1f5f9',
-    borderBottom: '2px solid #a3862a',
-    position: 'relative' as const,
-  },
-  tabBadge: {
-    position: 'absolute' as const,
-    top: '4px',
-    right: '2px',
-    background: '#a3862a',
-    color: '#fff',
-    fontSize: '8px',
-    fontWeight: 700,
-    borderRadius: '10px',
-    padding: '1px 4px',
-    lineHeight: 1,
-  },
-  railHeader: {
-    padding: '12px 14px',
-    borderBottom: '1px solid rgba(241,245,249,0.14)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexShrink: 0,
-  },
-  railAgentInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  railAvatar: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '9px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '16px',
-    background: '#3d1a08',
-  },
-  railName: {
-    fontSize: '13px',
-    fontWeight: 600,
-    color: '#f1f5f9',
-  },
-  railRole: {
-    fontSize: '11px',
-    color: '#94a3b8',
-  },
-  railStatus: {
-    fontSize: '10px',
-    fontWeight: 600,
-    color: '#2ecc71',
-    background: 'rgba(46,204,113,0.12)',
-    padding: '3px 8px',
-    borderRadius: '10px',
-  },
-  railChat: {
-    flex: 1,
-    overflowY: 'auto' as const,
-    padding: '12px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '10px',
-  },
-  chatMsgHighlight: {
-    background: 'rgba(163,134,42,0.1)',
-    border: '1px solid rgba(163,134,42,0.25)',
-    borderRadius: '8px',
-    padding: '10px 12px',
-    fontSize: '12px',
-    color: '#cbd5e1',
-    lineHeight: 1.5,
-  },
-  chatMsgAgent: {
-    background: 'rgba(241,245,249,0.04)',
-    border: '1px solid rgba(241,245,249,0.08)',
-    borderRadius: '8px',
-    padding: '10px 12px',
-    fontSize: '12px',
-    color: '#cbd5e1',
-    lineHeight: 1.5,
-  },
-  msgLabel: {
-    fontSize: '9px',
-    fontWeight: 700,
-    color: '#a3862a',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.8px',
-    marginBottom: '5px',
-  },
-  chatActionRow: {
-    display: 'flex',
-    gap: '6px',
-    marginTop: '8px',
-  },
-  chatBtnPrimary: {
-    padding: '5px 10px',
-    borderRadius: '5px',
-    fontSize: '11px',
-    fontWeight: 600,
-    background: '#a3862a',
-    border: 'none',
-    color: '#fff',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-  chatBtnSecondary: {
-    padding: '5px 10px',
-    borderRadius: '5px',
-    fontSize: '11px',
-    fontWeight: 500,
-    background: 'rgba(241,245,249,0.08)',
-    border: '1px solid rgba(241,245,249,0.12)',
-    color: '#cbd5e1',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-  chatBtnOutline: {
-    padding: '5px 10px',
-    borderRadius: '5px',
-    fontSize: '11px',
-    fontWeight: 500,
-    background: 'transparent',
-    border: '1px solid rgba(241,245,249,0.14)',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-  msgTime: {
-    fontSize: '10px',
-    color: '#94a3b8',
-    marginTop: '5px',
-  },
-  railInput: {
-    padding: '10px 12px',
-    borderTop: '1px solid rgba(241,245,249,0.14)',
-    flexShrink: 0,
-  },
-  railInputField: {
-    width: '100%',
-    background: 'rgba(241,245,249,0.06)',
-    border: '1px solid rgba(241,245,249,0.12)',
-    borderRadius: '7px',
-    padding: '8px 12px',
-    fontSize: '12px',
-    color: '#f1f5f9',
-    fontFamily: 'inherit',
-    outline: 'none',
-    boxSizing: 'border-box' as const,
-  },
-
-  // Action buttons (detail panel)
-  actionBtnPrimary: {
-    padding: '7px 16px',
-    borderRadius: '7px',
-    fontSize: '12px',
-    fontWeight: 600,
-    background: '#a3862a',
-    border: 'none',
-    color: '#fff',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-  actionBtnOutline: {
-    padding: '7px 14px',
-    borderRadius: '7px',
-    fontSize: '12px',
-    fontWeight: 500,
-    background: 'transparent',
-    border: '1px solid rgba(241,245,249,0.2)',
-    color: '#cbd5e1',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  },
-} as const;
-
-// ─── Sub-components (inlined) ────────────────────────────────────────────────
-
-function AgendaSidebar({ onOpenDetail }: { onOpenDetail: () => void }) {
-  return (
-    <div style={S.calAgenda}>
-      {/* Today */}
-      <div style={S.calAgendaSection}>
-        <div style={S.calAgendaDayLabel}>Today — Sun Mar 15</div>
-        <div style={S.calAgendaItem} onClick={onOpenDetail}>
-          <span style={S.calAgendaDotMeeting} />
-          <span style={S.calAgendaTime}>10 AM</span>
-          <span style={S.calAgendaName}>Investor Sync</span>
-          <span style={S.calAgendaBadgeAda}>Ada</span>
-        </div>
-        <div style={S.calAgendaItem}>
-          <span style={S.calAgendaDotFocus} />
-          <span style={S.calAgendaTime}>1 PM</span>
-          <span style={S.calAgendaName}>Focus: Dashboard Build</span>
-        </div>
-        <div style={S.calAgendaItem}>
-          <span style={S.calAgendaDotMeeting} />
-          <span style={S.calAgendaTime}>4:30 PM</span>
-          <span style={S.calAgendaName}>VG Standup ⚠</span>
-          <span style={S.calAgendaBadgeKronos}>K</span>
-        </div>
-      </div>
-      {/* Tomorrow */}
-      <div style={S.calAgendaSection}>
-        <div style={S.calAgendaDayLabel}>Tomorrow — Mon Mar 16</div>
-        <div style={S.calAgendaItem}>
-          <span style={S.calAgendaDotMeeting} />
-          <span style={S.calAgendaTime}>9 AM</span>
-          <span style={S.calAgendaName}>Sprint Planning</span>
-          <span style={S.calAgendaBadgeAda}>Ada</span>
-        </div>
-        <div style={S.calAgendaItem}>
-          <span style={S.calAgendaDotMeeting} />
-          <span style={S.calAgendaTime}>2 PM</span>
-          <span style={S.calAgendaName}>Lynn Nelson — Buckner</span>
-          <span style={S.calAgendaBadgeKronos}>K</span>
-        </div>
-      </div>
-      {/* Tue Mar 17 */}
-      <div style={S.calAgendaSection}>
-        <div style={S.calAgendaDayLabel}>Tue Mar 17</div>
-        <div style={S.calAgendaItem}>
-          <span style={S.calAgendaDotPersonal} />
-          <span style={S.calAgendaTime}>11 AM</span>
-          <span style={S.calAgendaName}>Dentist</span>
-        </div>
-        <div style={S.calAgendaItem}>
-          <span style={S.calAgendaDotMeeting} />
-          <span style={S.calAgendaTime}>3 PM</span>
-          <span style={S.calAgendaName}>All Hands</span>
-          <span style={S.calAgendaBadgeAda}>Ada</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CalNowDot() {
-  return (
-    <div
-      style={{
-        content: '',
-        position: 'absolute',
-        left: '-4px',
-        top: '-4px',
-        width: '10px',
-        height: '10px',
-        borderRadius: '50%',
-        background: '#a3862a',
-      }}
-    />
-  );
-}
-
-function HourLines() {
-  return (
-    <>
-      {HOURS.map((h, i) => (
-        <React.Fragment key={h}>
-          <div style={{ ...S.calHourLine, top: `${i * HOUR_HEIGHT}px` }} />
-          <div style={{ ...S.calHalfLine, top: `${i * HOUR_HEIGHT + HOUR_HEIGHT / 2}px` }} />
-        </React.Fragment>
-      ))}
-    </>
-  );
-}
-
-function CalEventBlock({
-  style,
-  type,
-  title,
-  time,
-  badges,
-  onClick,
-}: {
-  style: React.CSSProperties;
-  type: 'meeting' | 'focus' | 'travel' | 'personal';
+interface CalEvent {
+  id: string;
   title: string;
-  time: string;
-  badges?: { type: 'ada' | 'kronos'; label: string }[];
-  onClick?: () => void;
-}) {
-  const baseStyle =
-    type === 'meeting'
-      ? S.calEventMeeting
-      : type === 'focus'
-        ? S.calEventFocus
-        : type === 'travel'
-          ? S.calEventTravel
-          : S.calEventPersonal;
+  type: EventType;
+  day: number; // 0–6 index into the current week
+  startHour: number;
+  startMin: number;
+  endHour: number;
+  endMin: number;
+  agent?: string;
+  conflict?: boolean;
+  conflictRight?: boolean;
+  zoomLink?: string;
+  attendees?: { name: string; initials: string; color: string }[];
+  location?: string;
+  description?: string;
+}
 
+// ─── Design tokens ─────────────────────────────────────────────────────────────
+
+const C = {
+  bg:       '#0f172a',
+  bgMid:    '#131d33',
+  bgCard:   '#131d33',
+  border:   'rgba(241,245,249,0.14)',
+  border2:  'rgba(241,245,249,0.08)',
+  text:     '#f1f5f9',
+  text2:    '#cbd5e1',
+  muted:    '#94a3b8',
+  accent:   '#a3862a',
+  accentBg: 'rgba(163,134,42,0.2)',
+  green:    '#2ecc71',
+  yellow:   '#e0c875',
+  red:      '#e74c3c',
+};
+
+// ─── Event colour maps ──────────────────────────────────────────────────────────
+
+function evColors(type: EventType) {
+  switch (type) {
+    case 'meeting': return { bg: 'rgba(163,134,42,0.18)',  border: '#a3862a', label: '#e0c875' };
+    case 'focus':   return { bg: 'rgba(31,94,61,0.38)',    border: '#2ecc71', label: '#2ecc71' };
+    case 'personal':return { bg: 'rgba(31,45,94,0.48)',    border: '#4a80d4', label: '#7eb3f5' };
+    case 'travel':  return { bg: 'rgba(61,31,94,0.48)',    border: '#9b59b6', label: '#c39bd3' };
+  }
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────────
+
+function guessEventType(title: string): EventType {
+  const t = title.toLowerCase();
+  if (t.includes('focus') || t.includes('deep work') || t.includes('heads down')) return 'focus';
+  if (t.includes('travel') || t.includes('flight') || t.includes('drive')) return 'travel';
+  if (t.includes('dentist') || t.includes('doctor') || t.includes('gym') || t.includes('personal') || t.includes('family')) return 'personal';
+  return 'meeting';
+}
+
+function parseISO(iso: string): Date {
+  return new Date(iso);
+}
+
+function weekStart(d: Date): Date {
+  const s = new Date(d);
+  s.setHours(0, 0, 0, 0);
+  const day = s.getDay(); // 0=Sun
+  s.setDate(s.getDate() - day);
+  return s;
+}
+
+function isoWeekBounds(refDate: Date): { timeMin: string; timeMax: string; weekDates: Date[] } {
+  const ws = weekStart(refDate);
+  const weekDates: Date[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ws);
+    d.setDate(ws.getDate() + i);
+    weekDates.push(d);
+  }
+  const timeMin = ws.toISOString();
+  const end = new Date(ws);
+  end.setDate(ws.getDate() + 7);
+  const timeMax = end.toISOString();
+  return { timeMin, timeMax, weekDates };
+}
+
+function toCalEvent(raw: CalendarEvent, weekDates: Date[]): CalEvent | null {
+  const start = parseISO(raw.start);
+  const end   = parseISO(raw.end);
+
+  // Find which day of the week this falls on
+  const dayIdx = weekDates.findIndex(d =>
+    d.getFullYear() === start.getFullYear() &&
+    d.getMonth()    === start.getMonth() &&
+    d.getDate()     === start.getDate()
+  );
+  if (dayIdx === -1) return null;
+
+  const ev: CalEvent = {
+    id:        raw.id,
+    title:     raw.summary,
+    type:      guessEventType(raw.summary),
+    day:       dayIdx,
+    startHour: start.getHours(),
+    startMin:  start.getMinutes(),
+    endHour:   end.getHours(),
+    endMin:    end.getMinutes(),
+    description: raw.description,
+    location:    raw.location,
+  };
+
+  // Extract zoom link from description/location
+  const zoomRe = /https:\/\/[^\s"]+zoom\.us\/j\/[^\s"<]*/i;
+  const zoomSrc = [raw.description ?? '', raw.location ?? ''].join(' ');
+  const zm = zoomSrc.match(zoomRe);
+  if (zm) ev.zoomLink = zm[0];
+
+  // Build attendee list from raw attendees
+  if (raw.attendees && raw.attendees.length > 0) {
+    const COLORS = ['#a3862a', '#4a80d4', '#2ecc71', '#e74c3c', '#9b59b6', '#e0c875'];
+    ev.attendees = raw.attendees.slice(0, 6).map((a: { email: string }, i: number) => {
+      const parts = a.email.split('@')[0].split(/[._-]/);
+      const initials = parts.length >= 2
+        ? (parts[0][0] + parts[1][0]).toUpperCase()
+        : a.email.slice(0, 2).toUpperCase();
+      return { name: a.email, initials, color: COLORS[i % COLORS.length] };
+    });
+  }
+
+  return ev;
+}
+
+function buildAgendaSections(events: CalEvent[], weekDates: Date[], today: Date) {
+  const todayIdx  = weekDates.findIndex(d => d.toDateString() === today.toDateString());
+  const tomorrowIdx = todayIdx + 1;
+
+  const sections: { label: string; items: CalEvent[] }[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const dayEvs = events.filter(e => e.day === i).sort((a, b) =>
+      (a.startHour * 60 + a.startMin) - (b.startHour * 60 + b.startMin)
+    );
+    if (dayEvs.length === 0) continue;
+
+    const d = weekDates[i];
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const prefix = i === todayIdx ? 'Today — ' : i === tomorrowIdx ? 'Tomorrow — ' : '';
+    sections.push({ label: prefix + dayName, items: dayEvs });
+  }
+  return sections;
+}
+
+const HOURS      = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const PX_PER_HR  = 60;
+const GRID_START = 8;
+
+function hrLabel(h: number) {
+  if (h === 12) return '12 pm';
+  return h > 12 ? `${h - 12} pm` : `${h} am`;
+}
+function fmtTime(h: number, m: number) {
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const hr   = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  const mn   = m === 0 ? '' : `:${String(m).padStart(2, '0')}`;
+  return `${hr}${mn} ${ampm}`;
+}
+function evTop(sh: number, sm: number) {
+  return (sh - GRID_START) * PX_PER_HR + (sm / 60) * PX_PER_HR;
+}
+function evHeight(sh: number, sm: number, eh: number, em: number) {
+  return Math.max(((eh * 60 + em - sh * 60 - sm) / 60) * PX_PER_HR, 20);
+}
+
+// ─── Skeleton ──────────────────────────────────────────────────────────────────
+
+function SkeletonBlock({ top, height, left, right }: { top: number; height: number; left: string; right: string }) {
   return (
-    <div style={{ ...baseStyle, ...style }} onClick={onClick}>
-      <div style={S.calEventTitle}>{title}</div>
-      <div style={S.calEventTime}>{time}</div>
-      {badges && badges.length > 0 && (
-        <div style={S.calEventBadges}>
-          {badges.map((b, i) => (
-            <span
-              key={i}
-              style={b.type === 'ada' ? S.calEventBadgeAda : S.calEventBadgeKronos}
-            >
-              {b.label}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+    <div style={{
+      position: 'absolute',
+      top, left, right, height,
+      background: 'rgba(241,245,249,0.05)',
+      borderLeft: '3px solid rgba(241,245,249,0.1)',
+      borderRadius: '0 4px 4px 0',
+      animation: 'calSkeletonPulse 1.6s ease-in-out infinite',
+    }} />
   );
 }
 
-function DetailPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return (
-    <div
-      style={{
-        ...S.calDetailPanel,
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-      }}
-    >
-      <div style={S.calDetailHeader}>
-        <button style={S.calDetailClose} onClick={onClose}>✕</button>
-        <div>
-          <span style={S.calDetailTypeDot} />
-          <span
-            style={{
-              fontSize: '10px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.8px',
-              color: '#a3862a',
-            }}
-          >
-            Meeting · Zoom
-          </span>
-        </div>
-        <div style={S.calDetailTitle}>Investor Sync</div>
-        <div style={S.calDetailMeta}>
-          <div style={S.calDetailMetaRow}>
-            <span style={S.calDetailMetaIcon}>📅</span>
-            <span>Sunday, March 15, 2026</span>
-          </div>
-          <div style={S.calDetailMetaRow}>
-            <span style={S.calDetailMetaIcon}>🕐</span>
-            <span>10:00 – 11:00 AM (1 hour)</span>
-          </div>
-          <div style={S.calDetailMetaRow}>
-            <span style={S.calDetailMetaIcon}>🔗</span>
-            <span style={{ color: '#3b9ede', cursor: 'pointer' }}>zoom.us/j/98412630011</span>
-          </div>
-        </div>
-      </div>
+// ─── CalendarView ───────────────────────────────────────────────────────────────
 
-      <div style={S.calDetailBody}>
-        {/* Attendees */}
-        <div>
-          <div style={S.calDetailSectionLabel}>Attendees</div>
-          <div style={S.calDetailAttendees}>
-            <div style={S.calAttendee}>
-              <div style={{ ...S.calAttendeeAvatar, background: '#1f2d5e' }}>CD</div>
-              <span style={S.calAttendeeName}>
-                Christian De Ramos{' '}
-                <span style={{ color: '#94a3b8', fontSize: '10px' }}>(you)</span>
-              </span>
-              <span style={S.calAttendeeStatus}>✓ Accepted</span>
-            </div>
-            <div style={S.calAttendee}>
-              <div style={{ ...S.calAttendeeAvatar, background: '#1f3d2d' }}>MC</div>
-              <span style={S.calAttendeeName}>Marcus Chen · Sequoia</span>
-              <span style={S.calAttendeeStatus}>✓ Accepted</span>
-            </div>
-            <div style={S.calAttendee}>
-              <div style={{ ...S.calAttendeeAvatar, background: '#3d2d1f' }}>JR</div>
-              <span style={S.calAttendeeName}>Jordan Reed · Partner</span>
-              <span style={{ ...S.calAttendeeStatus, color: '#e0c875' }}>? Tentative</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Ada's brief */}
-        <div style={S.calAdaBrief}>
-          <div style={S.calAdaHeader}>
-            <div style={S.calAdaAvatar}>🔮</div>
-            <span style={S.calAdaLabel}>Ada's Brief</span>
-            <span style={{ marginLeft: 'auto', fontSize: '10px', color: '#94a3b8' }}>
-              Ready 8:42 AM
-            </span>
-          </div>
-          {[
-            'Marcus asked about Q4 ARR growth at last meeting — have slide 7 ready',
-            'Series B timeline question expected — current guidance: H2 2026',
-            'Jordan was skeptical of PrintDeed vertical — address proactively',
-            <><strong style={{ color: '#f1f5f9' }}>Action from last:</strong> Send updated cap table by EOD Friday (not done)</>,
-            'Tone: confident, data-forward, concise. Avoid over-promising.',
-          ].map((item, i) => (
-            <div key={i} style={S.calAdaBriefItem}>
-              <span
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: '10px',
-                  width: '5px',
-                  height: '5px',
-                  borderRadius: '50%',
-                  background: '#6666bb',
-                  display: 'block',
-                }}
-              />
-              {item}
-            </div>
-          ))}
-        </div>
-
-        {/* Kronos note */}
-        <div
-          style={{
-            background: '#1a1208',
-            border: '1px solid #3d2e10',
-            borderRadius: '8px',
-            padding: '12px 14px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <div
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '5px',
-                background: '#3d1a08',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '11px',
-              }}
-            >
-              ⏳
-            </div>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#cc8844',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              Kronos — Schedule Note
-            </span>
-          </div>
-          <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
-            3 conflicts resolved this week. VG Standup and PrintDeed Review overlap at 4:30 today
-            — awaiting your decision on which to move.
-          </div>
-        </div>
-      </div>
-
-      <div style={S.calDetailActions}>
-        <button style={S.actionBtnPrimary}>🔗 Join Zoom</button>
-        <button style={S.actionBtnOutline}>📅 Reschedule</button>
-        <button style={S.actionBtnOutline}>📝 Add Notes</button>
-      </div>
-    </div>
-  );
-}
-
-function KronosToast({ onDismiss }: { onDismiss: () => void }) {
-  return (
-    <div style={S.calToast}>
-      <div style={S.toastIcon}>⏳</div>
-      <div style={S.toastBody}>
-        <div style={S.toastAgent}>Kronos</div>
-        <div style={S.toastText}>
-          Lynn Nelson requested Tuesday 2pm — conflicts with Sprint Planning. Suggested
-          alternatives sent.
-        </div>
-        <span style={S.toastAction}>View schedule →</span>
-      </div>
-      <button style={S.toastDismiss} onClick={onDismiss}>
-        ✕
-      </button>
-    </div>
-  );
-}
-
-function AgentOverlayToolbar({ onViewBrief }: { onViewBrief: () => void }) {
-  return (
-    <div style={S.agentOverlayToolbar}>
-      <div style={S.toolbarAgentIdentity}>
-        <div style={S.toolbarAgentAvatar}>
-          ⏳
-          <div style={S.toolbarStatusDot} />
-        </div>
-        <span style={S.toolbarAgentName}>Kronos ⏳</span>
-      </div>
-      <div style={S.toolbarSeparator} />
-      <div style={S.toolbarSummary}>
-        <span style={S.toolbarSummaryHighlight}>Next: Investor Sync in 2h</span>
-        <span style={S.toolbarSummarySep}>·</span>
-        <span>3 conflicts resolved</span>
-        <span style={S.toolbarSummarySep}>·</span>
-        <span style={S.toolbarSummaryHighlight}>Ada brief ready</span>
-      </div>
-      <div style={S.toolbarActions}>
-        <button style={S.toolbarBtnPrimary} onClick={onViewBrief}>
-          View Brief
-        </button>
-        <button style={S.toolbarBtnSecondary}>Scheduling</button>
-        <button style={S.toolbarBtnGhost}>Pause Agent</button>
-      </div>
-    </div>
-  );
-}
-
-function RightRail({ onViewBrief }: { onViewBrief: () => void }) {
-  return (
-    <div style={S.rightRail}>
-      {/* Agent tabs */}
-      <div style={S.railAgentTabs}>
-        {[
-          { icon: '🧠', active: false },
-          { icon: '⏳', active: true, badge: '2' },
-          { icon: '🔮', active: false },
-          { icon: '🛡', active: false },
-          { icon: '💡', active: false },
-        ].map((t, i) => (
-          <div key={i} style={t.active ? S.railAgentTabActive : S.railAgentTab}>
-            {t.icon}
-            {t.badge && <span style={S.tabBadge}>{t.badge}</span>}
-          </div>
-        ))}
-      </div>
-
-      {/* Header */}
-      <div style={S.railHeader}>
-        <div style={S.railAgentInfo}>
-          <div style={S.railAvatar}>⏳</div>
-          <div>
-            <div style={S.railName}>Kronos</div>
-            <div style={S.railRole}>Scheduling Agent</div>
-          </div>
-        </div>
-        <div style={S.railStatus}>Active</div>
-      </div>
-
-      {/* Chat messages */}
-      <div style={S.railChat}>
-        <div style={S.chatMsgHighlight}>
-          <div style={S.msgLabel}>⏳ Schedule Summary</div>
-          3 meetings today (conflict at 4:30)
-          <br />
-          Ada brief ready for Investor Sync
-          <br />
-          Lynn Nelson Tuesday request — resolved
-        </div>
-
-        <div style={S.chatMsgAgent}>
-          <strong>Kronos</strong>
-          <br />
-          Good morning! Your Investor Sync is at 10:00 AM — Ada's prep brief is ready. Key point:
-          Marcus will likely ask about Q4 ARR and Series B timeline. Slide 7 is prepped.
-          <div style={S.chatActionRow}>
-            <button style={S.chatBtnPrimary} onClick={onViewBrief}>
-              View Brief
-            </button>
-            <button style={S.chatBtnSecondary}>Join Zoom</button>
-          </div>
-          <div style={S.msgTime}>8:42 AM</div>
-        </div>
-
-        <div style={S.chatMsgAgent}>
-          <strong>Kronos</strong>
-          <br />
-          ⚠️ Conflict detected: VG Standup and PrintDeed Review both at 4:30 PM today. Lynn Nelson
-          requested Tuesday 2pm for Buckner review — but that conflicts with Sprint Planning. I've
-          sent Lynn three alternative windows (Tue 10am, Wed 9am, Wed 2pm).
-          <div style={S.chatActionRow}>
-            <button style={S.chatBtnPrimary}>Resolve Conflicts</button>
-            <button style={S.chatBtnSecondary}>Move VG</button>
-          </div>
-          <div style={S.msgTime}>8:45 AM</div>
-        </div>
-
-        <div style={S.chatMsgAgent}>
-          <strong>Kronos</strong>
-          <br />
-          Thursday's Sequoia deep dive (10am) is confirmed — Ada brief will be ready by Wednesday
-          evening. Jordan Reed is tentative; want me to send a nudge?
-          <div style={S.chatActionRow}>
-            <button style={S.chatBtnPrimary}>Send nudge</button>
-            <button style={S.chatBtnOutline}>Ignore</button>
-          </div>
-          <div style={S.msgTime}>8:46 AM</div>
-        </div>
-      </div>
-
-      {/* Input */}
-      <div style={S.railInput}>
-        <input
-          type="text"
-          placeholder="Message Kronos..."
-          style={S.railInputField}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── CalendarView ────────────────────────────────────────────────────────────
+const AGENT_ID = 'primary';
 
 export function CalendarView() {
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [toastVisible, setToastVisible] = useState(true);
-  const [activeView] = useState<ViewMode>('Week');
+  const today = new Date();
+  const [refDate, setRefDate]   = useState<Date>(today);
+  const [events, setEvents]     = useState<CalEvent[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
+  const [selected, setSelected] = useState<CalEvent | null>(null);
 
-  // Current time indicator position
-  const nowTop = (() => {
-    const now = new Date();
-    const hours = now.getHours() + now.getMinutes() / 60;
-    const offset = hours - START_HOUR;
-    return offset * HOUR_HEIGHT;
-  })();
+  const { timeMin, timeMax, weekDates } = isoWeekBounds(refDate);
 
-  const openDetail = () => setDetailOpen(true);
-  const closeDetail = () => setDetailOpen(false);
+  const monthLabel = weekDates[0].toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  const days = [
-    { name: 'Sun', num: 15, today: true },
-    { name: 'Mon', num: 16, today: false },
-    { name: 'Tue', num: 17, today: false },
-    { name: 'Wed', num: 18, today: false },
-    { name: 'Thu', num: 19, today: false },
-    { name: 'Fri', num: 20, today: false },
-    { name: 'Sat', num: 21, today: false },
-  ];
+  // Day header labels derived from real week dates
+  const DAY_LABELS = weekDates.map(d => ({
+    short: d.toLocaleDateString('en-US', { weekday: 'short' }),
+    num:   String(d.getDate()),
+  }));
+
+  const todayIdx = weekDates.findIndex(d => d.toDateString() === today.toDateString());
+
+  // Load events when week changes
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setSelected(null);
+
+    invoke('api.calendar.list', AGENT_ID, timeMin, timeMax)
+      .then((raw) => {
+        if (cancelled) return;
+        const list = Array.isArray(raw) ? (raw as CalendarEvent[]) : [];
+        const parsed = list
+          .map(e => toCalEvent(e, weekDates))
+          .filter((e): e is CalEvent => e !== null);
+        setEvents(parsed);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(String(err));
+        setEvents([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeMin]);
+
+  const agendaSections = buildAgendaSections(events, weekDates, today);
+  const pick = (ev: CalEvent) => setSelected(p => (p?.id === ev.id ? null : ev));
+
+  const totalH = HOURS.length * PX_PER_HR;
+
+  const btnReset: React.CSSProperties = {
+    fontFamily: 'inherit',
+    cursor: 'pointer',
+    border: 'none',
+    background: 'transparent',
+    padding: 0,
+    margin: 0,
+  };
+
+  const prevWeek = () => {
+    const d = new Date(refDate);
+    d.setDate(d.getDate() - 7);
+    setRefDate(d);
+  };
+  const nextWeek = () => {
+    const d = new Date(refDate);
+    d.setDate(d.getDate() + 7);
+    setRefDate(d);
+  };
 
   return (
-    <div style={S.view}>
-      {/* ── Cal shell ── */}
-      <div style={S.calShell}>
+    <>
+      <style>{`
+        @keyframes calSkeletonPulse { 0%,100%{opacity:0.4} 50%{opacity:0.9} }
+      `}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, color: C.text, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 13, overflow: 'hidden' }}>
 
-        {/* Top nav bar */}
-        <div style={S.calNav}>
-          <div style={S.calNavLeft}>
-            <button style={S.calArrowBtn}>‹</button>
-            <button style={S.calArrowBtn}>›</button>
-            <span style={S.calMonthLabel}>March 2026</span>
-            <button style={S.calTodayBtn}>Today</button>
+        {/* ══ TOP NAV BAR ══════════════════════════════════════════════════════════ */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 48, minHeight: 48, padding: '0 16px', borderBottom: `1px solid ${C.border}`, background: C.bgMid, flexShrink: 0 }}>
+
+          {/* Left */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={prevWeek} style={{ ...btnReset, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text2, fontSize: 15 }}>‹</button>
+            <button onClick={nextWeek} style={{ ...btnReset, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text2, fontSize: 15 }}>›</button>
+            <span style={{ fontSize: 15, fontWeight: 600, color: C.text, marginLeft: 4 }}>{monthLabel}</span>
+            <button onClick={() => setRefDate(new Date())} style={{ ...btnReset, marginLeft: 6, padding: '3px 10px', border: `1px solid ${C.border}`, borderRadius: 6, color: C.text2, fontSize: 12 }}>Today</button>
           </div>
-          <div style={S.calNavCenter} />
-          <div style={S.calViewToggle}>
-            {(['Day', 'Week', 'Month'] as ViewMode[]).map((v) => (
+
+          {/* Right: view toggle (display only) */}
+          <div style={{ display: 'flex', border: `1px solid ${C.border}`, borderRadius: 6, overflow: 'hidden', background: C.bg }}>
+            {(['Day','Week','Month'] as const).map((v, i) => (
               <button
                 key={v}
-                style={
-                  v === activeView
-                    ? { ...S.calViewBtnBase, ...S.calViewBtnActive }
-                    : S.calViewBtnBase
-                }
+                style={{
+                  ...btnReset,
+                  padding: '5px 14px',
+                  fontSize: 12,
+                  fontWeight: v === 'Week' ? 600 : 400,
+                  color: v === 'Week' ? C.yellow : C.muted,
+                  background: v === 'Week' ? C.accentBg : 'transparent',
+                  borderRight: i < 2 ? `1px solid ${C.border}` : 'none',
+                }}
               >
                 {v}
               </button>
@@ -1476,223 +309,261 @@ export function CalendarView() {
           </div>
         </div>
 
-        {/* Body: agenda + week grid */}
-        <div style={S.calBody}>
+        {/* ══ BODY ════════════════════════════════════════════════════════════════ */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-          {/* Agenda sidebar */}
-          <AgendaSidebar onOpenDetail={openDetail} />
-
-          {/* Week grid */}
-          <div style={S.calWeekWrap}>
-
-            {/* Day headers */}
-            <div style={S.calDayHeaders}>
-              <div style={S.calGutterSpacer} />
-              {days.map((d, i) => (
-                <div
-                  key={d.num}
-                  style={i === 6 ? S.calDayHeaderLast : S.calDayHeader}
-                >
-                  <div style={d.today ? S.calDayNameToday : S.calDayName}>{d.name}</div>
-                  {d.today ? (
-                    <div style={S.calDayNumToday}>{d.num}</div>
-                  ) : (
-                    <div style={S.calDayNum}>{d.num}</div>
-                  )}
+          {/* ── AGENDA SIDEBAR ─────────────────────────────────────────────────── */}
+          <div style={{ width: 220, minWidth: 220, borderRight: `1px solid ${C.border}`, background: C.bgMid, overflowY: 'auto', flexShrink: 0 }}>
+            {loading && (
+              <div style={{ padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[80, 60, 70, 55, 65].map((w, i) => (
+                  <div key={i} style={{ height: 12, borderRadius: 4, background: 'rgba(241,245,249,0.07)', width: `${w}%`, animation: 'calSkeletonPulse 1.6s ease-in-out infinite' }} />
+                ))}
+              </div>
+            )}
+            {!loading && agendaSections.length === 0 && !error && (
+              <div style={{ padding: '20px 12px', textAlign: 'center', color: C.muted, fontSize: 12 }}>
+                No events this week
+              </div>
+            )}
+            {!loading && error && (
+              <div style={{ padding: '12px', fontSize: 11, color: C.red }}>
+                Failed to load
+              </div>
+            )}
+            {!loading && agendaSections.map((section, si) => (
+              <div key={si}>
+                <div style={{ padding: '10px 12px 6px', fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.07em', borderBottom: `1px solid ${C.border2}` }}>
+                  {section.label}
                 </div>
-              ))}
+                {section.items.map(item => {
+                  const col = evColors(item.type);
+                  const isActive = selected?.id === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => pick(item)}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '7px 12px', cursor: 'pointer', borderBottom: `1px solid ${C.border2}`, background: isActive ? 'rgba(255,255,255,0.04)' : 'transparent' }}
+                    >
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: col.border, marginTop: 4, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 10, color: C.muted, marginBottom: 1 }}>{fmtTime(item.startHour, item.startMin)}</div>
+                        <div style={{ fontSize: 12, color: C.text2, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* ── WEEK GRID ──────────────────────────────────────────────────────── */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+            {/* Day header row */}
+            <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, background: C.bgMid, flexShrink: 0 }}>
+              <div style={{ width: 52, minWidth: 52, flexShrink: 0 }} />
+              {DAY_LABELS.map((d, di) => {
+                const isToday = di === todayIdx;
+                return (
+                  <div key={di} style={{ flex: 1, textAlign: 'center', padding: '7px 4px', borderLeft: `1px solid ${C.border2}` }}>
+                    <div style={{ fontSize: 10, color: isToday ? C.yellow : C.muted, fontWeight: isToday ? 700 : 400, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{d.short}</div>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: isToday ? C.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '2px auto 0', fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? '#fff' : C.text2 }}>{d.num}</div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Scrollable time grid */}
-            <div style={S.calTimeGrid}>
-              <div style={S.calGridInner}>
+            {/* Scrollable time + events */}
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div style={{ display: 'flex', height: totalH, position: 'relative' }}>
 
                 {/* Time gutter */}
-                <div style={S.calTimeCol}>
-                  {HOURS.map((h, i) => (
-                    <div
-                      key={h}
-                      style={{ ...S.calHourLabel, top: `${i * HOUR_HEIGHT}px` }}
-                    >
-                      {hourLabel(h)}
+                <div style={{ width: 52, minWidth: 52, flexShrink: 0, position: 'relative' }}>
+                  {HOURS.map(h => (
+                    <div key={h} style={{ position: 'absolute', top: (h - GRID_START) * PX_PER_HR - 7, right: 8, fontSize: 10, color: C.muted, whiteSpace: 'nowrap' }}>
+                      {hrLabel(h)}
                     </div>
                   ))}
                 </div>
 
-                {/* ── Sunday Mar 15 (TODAY) ── */}
-                <div style={S.calDayColToday}>
-                  <HourLines />
-                  {/* Current time indicator */}
-                  <div style={{ ...S.calNowLine, top: `${nowTop}px` }}>
-                    <CalNowDot />
-                  </div>
-                  <CalEventBlock
-                    style={{ top: '120px', height: '60px' }}
-                    type="meeting"
-                    title="Investor Sync"
-                    time="10:00 – 11:00 AM"
-                    badges={[{ type: 'ada', label: 'Ada Brief' }, { type: 'kronos', label: 'Prep' }]}
-                    onClick={openDetail}
-                  />
-                  <CalEventBlock
-                    style={{ top: '300px', height: '180px' }}
-                    type="focus"
-                    title="Focus: Dashboard Build"
-                    time="1:00 – 4:00 PM"
-                  />
-                  <CalEventBlock
-                    style={{ top: '510px', height: '30px' }}
-                    type="meeting"
-                    title="VG Standup ⚠"
-                    time="4:30 PM"
-                    badges={[{ type: 'kronos', label: 'Conflict' }]}
-                  />
-                  <CalEventBlock
-                    style={{ top: '510px', height: '60px', left: '48%', right: '3px' }}
-                    type="meeting"
-                    title="PrintDeed Review"
-                    time="4:30 – 5:30 PM"
-                    badges={[{ type: 'kronos', label: 'Conflict' }]}
-                  />
-                </div>
+                {/* Day columns */}
+                {DAY_LABELS.map((_, di) => {
+                  const dayEvs = events.filter(e => e.day === di);
+                  return (
+                    <div key={di} style={{ flex: 1, borderLeft: `1px solid ${C.border2}`, position: 'relative', minWidth: 0 }}>
+                      {/* Hour lines */}
+                      {HOURS.map(h => (
+                        <div key={h} style={{ position: 'absolute', top: (h - GRID_START) * PX_PER_HR, left: 0, right: 0, height: 1, background: C.border2 }} />
+                      ))}
 
-                {/* ── Monday Mar 16 ── */}
-                <div style={S.calDayCol}>
-                  <HourLines />
-                  <CalEventBlock
-                    style={{ top: '60px', height: '60px' }}
-                    type="meeting"
-                    title="Sprint Planning"
-                    time="9:00 – 10:00 AM"
-                    badges={[{ type: 'ada', label: 'Ada Brief' }]}
-                  />
-                  <CalEventBlock
-                    style={{ top: '360px', height: '60px' }}
-                    type="meeting"
-                    title="Lynn Nelson — Buckner"
-                    time="2:00 – 3:00 PM"
-                    badges={[{ type: 'kronos', label: 'Prep' }]}
-                  />
-                  <CalEventBlock
-                    style={{ top: '480px', height: '30px' }}
-                    type="travel"
-                    title="✈ Travel: Austin → DAL"
-                    time="4:00 PM"
-                  />
-                </div>
+                      {/* Loading skeletons */}
+                      {loading && di < 5 && (
+                        <>
+                          <SkeletonBlock top={30 + di * 20} height={40} left="2px" right="1px" />
+                          <SkeletonBlock top={140 + di * 15} height={60} left="2px" right="1px" />
+                        </>
+                      )}
 
-                {/* ── Tuesday Mar 17 ── */}
-                <div style={S.calDayCol}>
-                  <HourLines />
-                  <CalEventBlock
-                    style={{ top: '180px', height: '60px' }}
-                    type="personal"
-                    title="Dentist Appt"
-                    time="11:00 AM – 12:00 PM"
-                  />
-                  <CalEventBlock
-                    style={{ top: '420px', height: '60px' }}
-                    type="meeting"
-                    title="All Hands"
-                    time="3:00 – 4:00 PM"
-                    badges={[{ type: 'ada', label: 'Ada Brief' }]}
-                  />
-                </div>
+                      {/* Events */}
+                      {!loading && dayEvs.map(ev => {
+                        const col   = evColors(ev.type);
+                        const top   = evTop(ev.startHour, ev.startMin);
+                        const ht    = evHeight(ev.startHour, ev.startMin, ev.endHour, ev.endMin);
+                        const isSel = selected?.id === ev.id;
 
-                {/* ── Wednesday Mar 18 ── */}
-                <div style={S.calDayCol}>
-                  <HourLines />
-                  <CalEventBlock
-                    style={{ top: '0px', height: '90px' }}
-                    type="focus"
-                    title="Focus: API Review"
-                    time="8:00 – 9:30 AM"
-                  />
-                  <CalEventBlock
-                    style={{ top: '210px', height: '60px' }}
-                    type="meeting"
-                    title="1:1 with Vulcan"
-                    time="11:30 AM – 12:30 PM"
-                  />
-                  <CalEventBlock
-                    style={{ top: '390px', height: '30px' }}
-                    type="meeting"
-                    title="Design Review"
-                    time="2:30 PM"
-                  />
-                </div>
+                        const leftPct  = ev.conflict && ev.conflictRight  ? '50%' : '2px';
+                        const rightPct = ev.conflict && !ev.conflictRight ? '50%' : '1px';
 
-                {/* ── Thursday Mar 19 ── */}
-                <div style={S.calDayCol}>
-                  <HourLines />
-                  <CalEventBlock
-                    style={{ top: '120px', height: '90px' }}
-                    type="meeting"
-                    title="Sequoia — Series A Deep Dive"
-                    time="10:00 – 11:30 AM"
-                    badges={[{ type: 'ada', label: 'Ada Brief' }, { type: 'kronos', label: 'Prep' }]}
-                  />
-                  <CalEventBlock
-                    style={{ top: '360px', height: '120px' }}
-                    type="focus"
-                    title="Focus: Q2 Planning"
-                    time="2:00 – 4:00 PM"
-                  />
-                </div>
+                        return (
+                          <div
+                            key={ev.id}
+                            onClick={() => pick(ev)}
+                            style={{
+                              position: 'absolute',
+                              top,
+                              left: leftPct,
+                              right: rightPct,
+                              height: ht,
+                              background: col.bg,
+                              borderLeft: `3px solid ${col.border}`,
+                              borderRadius: '0 4px 4px 0',
+                              padding: '3px 5px',
+                              cursor: 'pointer',
+                              overflow: 'hidden',
+                              boxSizing: 'border-box',
+                              outline: isSel ? `1px solid ${col.border}` : 'none',
+                              filter: isSel ? 'brightness(1.25)' : 'none',
+                            }}
+                          >
+                            <div style={{ fontSize: 11, fontWeight: 600, color: col.label, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {ev.title}
+                            </div>
+                            {ht >= 30 && (
+                              <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>
+                                {fmtTime(ev.startHour, ev.startMin)}–{fmtTime(ev.endHour, ev.endMin)}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
 
-                {/* ── Friday Mar 20 ── */}
-                <div style={S.calDayCol}>
-                  <HourLines />
-                  <CalEventBlock
-                    style={{ top: '30px', height: '30px' }}
-                    type="meeting"
-                    title="Engineering Standup"
-                    time="8:30 AM"
-                  />
-                  <CalEventBlock
-                    style={{ top: '300px', height: '60px' }}
-                    type="meeting"
-                    title="Investor Relations Update"
-                    time="1:00 – 2:00 PM"
-                    badges={[{ type: 'ada', label: 'Ada Brief' }]}
-                  />
-                  <CalEventBlock
-                    style={{ top: '480px', height: '60px' }}
-                    type="personal"
-                    title="🌺 Bella: Cheer Practice Pickup"
-                    time="4:00 – 5:00 PM"
-                  />
-                </div>
-
-                {/* ── Saturday Mar 21 ── */}
-                <div style={{ ...S.calDayColLast }}>
-                  <HourLines />
-                  <CalEventBlock
-                    style={{ top: '120px', height: '180px' }}
-                    type="personal"
-                    title="Family Day 🏠"
-                    time="10:00 AM – 1:00 PM"
-                  />
-                </div>
-
+                      {/* Empty state per day — only show when loaded and no events */}
+                      {!loading && dayEvs.length === 0 && events.length === 0 && di === 0 && (
+                        <div style={{ position: 'absolute', top: 80, left: 0, right: 0, textAlign: 'center', fontSize: 11, color: C.border, pointerEvents: 'none' }}>
+                          No events
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
+
+          {/* ── DETAIL PANEL ───────────────────────────────────────────────────── */}
+          {selected && (
+            <div style={{ width: 300, minWidth: 300, borderLeft: `1px solid ${C.border}`, background: C.bgCard, display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0 }}>
+
+              {/* Header row: badge + close */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 10px', borderBottom: `1px solid ${C.border}` }}>
+                <span style={{
+                  display: 'inline-block',
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: evColors(selected.type).bg,
+                  color: evColors(selected.type).label,
+                  border: `1px solid ${evColors(selected.type).border}`,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}>
+                  {selected.type}
+                </span>
+                <button onClick={() => setSelected(null)} style={{ ...btnReset, color: C.muted, fontSize: 20, lineHeight: 1, padding: '0 2px' }}>×</button>
+              </div>
+
+              {/* Title + meta */}
+              <div style={{ padding: '14px 14px 0' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.3, marginBottom: 10 }}>{selected.title}</div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.muted, marginBottom: 5 }}>
+                  <span>📅</span>
+                  <span>{weekDates[selected.day]?.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) ?? ''}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.muted, marginBottom: selected.zoomLink ? 5 : 14 }}>
+                  <span>🕐</span><span>{fmtTime(selected.startHour, selected.startMin)} – {fmtTime(selected.endHour, selected.endMin)}</span>
+                </div>
+                {selected.location && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.muted, marginBottom: 5 }}>
+                    <span>📍</span><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.location}</span>
+                  </div>
+                )}
+                {selected.zoomLink && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, marginBottom: 14 }}>
+                    <span>🔗</span>
+                    <a href={selected.zoomLink} style={{ color: '#4a80d4', textDecoration: 'none' }}>Zoom link</a>
+                  </div>
+                )}
+                {selected.description && (
+                  <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5, marginBottom: 14, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {selected.description.slice(0, 280)}{selected.description.length > 280 ? '…' : ''}
+                  </div>
+                )}
+              </div>
+
+              {/* Attendees */}
+              {selected.attendees && selected.attendees.length > 0 && (
+                <div style={{ padding: '0 14px 14px', borderBottom: `1px solid ${C.border2}` }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Attendees</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {selected.attendees.map((a, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: a.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
+                        <span style={{ fontSize: 12, color: C.text2 }}>{a.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {selected.zoomLink && (
+                  <button
+                    onClick={() => window.open(selected.zoomLink, '_blank')}
+                    style={{ ...btnReset, padding: '7px 0', width: '100%', background: C.accentBg, border: `1px solid ${C.accent}`, borderRadius: 6, color: C.yellow, fontSize: 12, fontWeight: 600 }}
+                  >
+                    Join Zoom
+                  </button>
+                )}
+                <button style={{ ...btnReset, padding: '7px 0', width: '100%', background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6, color: C.text2, fontSize: 12 }}>
+                  Reschedule
+                </button>
+                <button style={{ ...btnReset, padding: '7px 0', width: '100%', background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 6, color: C.text2, fontSize: 12 }}>
+                  Add Notes
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Empty state overlay when no events and not loading */}
+          {!loading && events.length === 0 && !error && !selected && (
+            <div style={{
+              position: 'absolute',
+              top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              pointerEvents: 'none',
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 10 }}>📅</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.text2, marginBottom: 6 }}>No events this week</div>
+              <div style={{ fontSize: 12, color: C.muted }}>Connect Google Calendar to see your schedule</div>
+            </div>
+          )}
         </div>
-
-        {/* Meeting detail panel */}
-        <DetailPanel open={detailOpen} onClose={closeDetail} />
-
-        {/* Scheduling suggestion toast */}
-        {toastVisible && <KronosToast onDismiss={() => setToastVisible(false)} />}
-
-        {/* Kronos agent overlay toolbar */}
-        <AgentOverlayToolbar onViewBrief={openDetail} />
-
       </div>
-
-      {/* Right Rail */}
-      <RightRail onViewBrief={openDetail} />
-    </div>
+    </>
   );
 }

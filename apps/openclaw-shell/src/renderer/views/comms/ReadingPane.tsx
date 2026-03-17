@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { Message, ChannelType, MOCK_IMESSAGES, MOCK_VOICEMAIL } from './mock-data';
-import { BubbleThread } from './BubbleThread';
-import { VoicemailPlayer } from './VoicemailPlayer';
+import { Message, ChannelType } from './mock-data';
 import { AgentOverlayToolbar } from './AgentOverlayToolbar';
 import { ConfirmSendModal } from './ConfirmSendModal';
 
@@ -78,20 +76,17 @@ export function ReadingPane({ message }: ReadingPaneProps) {
 
         {/* iMessage channel */}
         {message.channel === 'imessage' ? (
-          <div style={{ flex: 1 }}>
-            <BubbleThread
-              messages={MOCK_IMESSAGES}
-              contactName={message.sender}
-              contactInitials={message.senderInitials}
-            />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '48px 24px', color: '#555568' }}>
+            <span style={{ fontSize: 36, opacity: 0.5 }}>💬</span>
+            <span style={{ fontSize: 14, fontWeight: 500 }}>iMessage not connected</span>
+            <span style={{ fontSize: 12, color: '#444460', textAlign: 'center', maxWidth: 240, lineHeight: 1.5 }}>Coming soon — connect your iMessage account to view threads here.</span>
           </div>
         ) : message.channel === 'phone' ? (
           /* Voicemail channel */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#e8e8f0' }}>
-              Voicemail from {message.sender}
-            </h2>
-            <VoicemailPlayer voicemail={MOCK_VOICEMAIL} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '48px 24px', color: '#555568' }}>
+            <span style={{ fontSize: 36, opacity: 0.5 }}>📞</span>
+            <span style={{ fontSize: 14, fontWeight: 500 }}>Voicemail not connected</span>
+            <span style={{ fontSize: 12, color: '#444460', textAlign: 'center', maxWidth: 240, lineHeight: 1.5 }}>Coming soon — link your phone to access voicemails and transcripts here.</span>
           </div>
         ) : (
           /* Email / Slack / Social */
@@ -207,10 +202,10 @@ export function ReadingPane({ message }: ReadingPaneProps) {
                   <button
                     onClick={() => setShowConfirm(true)}
                     style={{
-                      background: 'rgba(194,112,58,0.1)',
-                      border: '1px solid rgba(194,112,58,0.3)',
+                      background: 'rgba(163,134,42,0.1)',
+                      border: '1px solid rgba(163,134,42,0.3)',
                       borderRadius: 6,
-                      color: '#c2703a',
+                      color: 'var(--accent)',
                       fontSize: 11,
                       padding: '4px 10px',
                       cursor: 'pointer',
@@ -275,10 +270,10 @@ export function ReadingPane({ message }: ReadingPaneProps) {
                   <button
                     onClick={() => { setShowDraftPanel(false); setShowConfirm(true); }}
                     style={{
-                      background: '#3c1e17',
-                      border: '1px solid #c2703a',
+                      background: 'rgba(163,134,42,0.2)',
+                      border: '1px solid var(--accent)',
                       borderRadius: 8,
-                      color: '#ffb86b',
+                      color: 'var(--accent)',
                       fontSize: 12,
                       fontWeight: 600,
                       padding: '6px 14px',

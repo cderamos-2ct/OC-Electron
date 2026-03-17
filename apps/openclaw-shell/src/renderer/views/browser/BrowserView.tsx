@@ -1,355 +1,614 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { invoke, on } from '../../lib/ipc-client';
+import type { ServiceConfig, BrowserTab } from '../../../shared/types';
 
-const V = {
-  bg: '#0f172a',
-  bgMid: '#131d33',
-  bgCard: '#131d33',
-  border: 'rgba(241,245,249,0.14)',
-  border2: 'rgba(241,245,249,0.08)',
-  text: '#f1f5f9',
-  text2: '#cbd5e1',
-  muted: '#94a3b8',
-  accent: '#a3862a',
+// ─── Design tokens ─────────────────────────────────────────────────────────────
+
+const C = {
+  bg:       'var(--bg, #0f172a)',
+  bgMid:    'var(--bg-mid, #131d33)',
+  bgCard:   'var(--bg-card, #131d33)',
+  border:   'var(--border, rgba(241,245,249,0.14))',
+  border2:  'rgba(241,245,249,0.08)',
+  text:     'var(--text, #f1f5f9)',
+  text2:    'var(--text-2, #cbd5e1)',
+  muted:    'var(--muted, #94a3b8)',
+  accent:   'var(--accent, #a3862a)',
   accentBg: 'rgba(163,134,42,0.2)',
-  green: '#2ecc71',
-  yellow: '#e0c875',
-  red: '#e74c3c',
+  green:    '#2ecc71',
+  yellow:   '#e0c875',
+  red:      '#e74c3c',
 };
 
+// ─── AddAppModal ────────────────────────────────────────────────────────────────
+
+interface AddAppModalProps {
+  onClose: () => void;
+  onAdd: (name: string, url: string) => void;
+}
+
+function AddAppModal({ onClose, onAdd }: AddAppModalProps) {
+  const [name, setName] = useState('');
+  const [url, setUrl] = useState('');
+
+  const handleSubmit = () => {
+    const trimmedName = name.trim();
+    const trimmedUrl = url.trim();
+    if (!trimmedName || !trimmedUrl) return;
+    const finalUrl = trimmedUrl.startsWith('http') ? trimmedUrl : `https://${trimmedUrl}`;
+    onAdd(trimmedName, finalUrl);
+    onClose();
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 100,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: C.bgCard,
+          border: `1px solid ${C.border}`,
+          borderRadius: 12,
+          padding: '24px',
+          width: 360,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Add App</div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            App Name
+          </label>
+          <input
+            autoFocus
+            type="text"
+            placeholder="e.g. Linear"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            style={{
+              background: C.bg,
+              border: `1px solid ${C.border}`,
+              borderRadius: 7,
+              padding: '8px 12px',
+              fontSize: 13,
+              color: C.text,
+              outline: 'none',
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            URL
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. linear.app"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            style={{
+              background: C.bg,
+              border: `1px solid ${C.border}`,
+              borderRadius: 7,
+              padding: '8px 12px',
+              fontSize: 13,
+              color: C.text,
+              outline: 'none',
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '7px 16px',
+              fontSize: 12,
+              fontWeight: 600,
+              border: `1px solid ${C.border}`,
+              borderRadius: 7,
+              background: 'transparent',
+              color: C.text2,
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!name.trim() || !url.trim()}
+            style={{
+              padding: '7px 16px',
+              fontSize: 12,
+              fontWeight: 700,
+              border: 'none',
+              borderRadius: 7,
+              background: name.trim() && url.trim() ? C.accent : 'rgba(163,134,42,0.3)',
+              color: '#fff',
+              cursor: name.trim() && url.trim() ? 'pointer' : 'not-allowed',
+            }}
+          >
+            Add App
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PinnedAppGrid ──────────────────────────────────────────────────────────────
+
+interface PinnedApp {
+  id: string;
+  name: string;
+  url: string;
+  icon?: string;
+}
+
+interface PinnedAppGridProps {
+  apps: PinnedApp[];
+  onOpenApp: (app: PinnedApp) => void;
+  onAddApp: () => void;
+}
+
+function PinnedAppGrid({ apps, onOpenApp, onAddApp }: PinnedAppGridProps) {
+  if (apps.length === 0) {
+    return (
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+          color: C.muted,
+        }}
+      >
+        <div style={{ fontSize: 40 }}>🌐</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: C.text2 }}>Add apps to your browser</div>
+        <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', maxWidth: 260 }}>
+          Pin frequently used web apps for quick access.
+        </div>
+        <button
+          onClick={onAddApp}
+          style={{
+            padding: '9px 20px',
+            fontSize: 13,
+            fontWeight: 700,
+            border: 'none',
+            borderRadius: 8,
+            background: C.accent,
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+        >
+          + Add App
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 20,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Pinned Apps
+        </div>
+        <button
+          onClick={onAddApp}
+          style={{
+            padding: '5px 12px',
+            fontSize: 11,
+            fontWeight: 600,
+            border: `1px solid ${C.border}`,
+            borderRadius: 6,
+            background: 'transparent',
+            color: C.text2,
+            cursor: 'pointer',
+          }}
+        >
+          + Add App
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+          gap: 12,
+        }}
+      >
+        {apps.map(app => (
+          <AppTile key={app.id} app={app} onClick={() => onOpenApp(app)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AppTile({ app, onClick }: { app: PinnedApp; onClick: () => void }) {
+  const initial = app.name.charAt(0).toUpperCase();
+  const faviconUrl = app.url ? `https://www.google.com/s2/favicons?sz=64&domain=${new URL(app.url).hostname}` : null;
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 8,
+        padding: '16px 12px',
+        background: C.bgCard,
+        border: `1px solid ${C.border}`,
+        borderRadius: 10,
+        cursor: 'pointer',
+        color: C.text,
+        transition: 'border-color 0.15s',
+      }}
+    >
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          background: `linear-gradient(135deg, ${C.accentBg}, rgba(163,134,42,0.08))`,
+          border: `1px solid ${C.border}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}
+      >
+        {faviconUrl ? (
+          <img
+            src={faviconUrl}
+            alt={app.name}
+            style={{ width: 24, height: 24 }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        ) : (
+          <span style={{ fontSize: 18, fontWeight: 700, color: C.accent }}>{initial}</span>
+        )}
+      </div>
+      <span style={{ fontSize: 12, fontWeight: 500, color: C.text2, textAlign: 'center', lineHeight: 1.3, wordBreak: 'break-word' }}>
+        {app.name}
+      </span>
+    </button>
+  );
+}
+
+// ─── BrowserToolbar ─────────────────────────────────────────────────────────────
+
+interface BrowserToolbarProps {
+  currentUrl: string;
+  onNavigate: (url: string) => void;
+}
+
+function BrowserToolbar({ currentUrl, onNavigate }: BrowserToolbarProps) {
+  const [urlInput, setUrlInput] = useState(currentUrl);
+
+  useEffect(() => {
+    setUrlInput(currentUrl);
+  }, [currentUrl]);
+
+  const handleNavigate = () => {
+    let url = urlInput.trim();
+    if (!url) return;
+    if (!url.startsWith('http')) url = `https://${url}`;
+    onNavigate(url);
+  };
+
+  return (
+    <div
+      style={{
+        background: C.bgMid,
+        borderBottom: `1px solid ${C.border}`,
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 12px',
+      }}
+    >
+      <button
+        style={{ background: 'none', border: 'none', color: C.text2, fontSize: 16, cursor: 'pointer', padding: '4px 8px', borderRadius: 6, lineHeight: 1 }}
+      >
+        ←
+      </button>
+      <button
+        style={{ background: 'none', border: 'none', color: C.muted, fontSize: 16, cursor: 'pointer', padding: '4px 8px', borderRadius: 6, lineHeight: 1 }}
+      >
+        →
+      </button>
+      <button
+        style={{ background: 'none', border: 'none', color: C.text2, fontSize: 16, cursor: 'pointer', padding: '4px 8px', borderRadius: 6, lineHeight: 1 }}
+      >
+        ↻
+      </button>
+
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          background: 'rgba(241,245,249,0.06)',
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+          padding: '6px 12px',
+        }}
+      >
+        <span style={{ color: C.green, fontSize: 12, flexShrink: 0 }}>🔒</span>
+        <input
+          type="text"
+          value={urlInput}
+          onChange={e => setUrlInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleNavigate()}
+          placeholder="Enter URL or search..."
+          style={{
+            flex: 1,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            color: C.text2,
+            fontSize: 13,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── BrowserTabBar ──────────────────────────────────────────────────────────────
+
+interface BrowserTabBarProps {
+  tabs: BrowserTab[];
+  activeTabId: string | null;
+  onSelectTab: (tabId: string) => void;
+  onCloseTab: (tabId: string) => void;
+}
+
+function BrowserTabBar({ tabs, activeTabId, onSelectTab, onCloseTab }: BrowserTabBarProps) {
+  if (tabs.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        background: C.bgMid,
+        borderBottom: `1px solid ${C.border}`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        padding: '0 12px',
+        flexShrink: 0,
+        overflowX: 'auto',
+      }}
+    >
+      {tabs.map(tab => {
+        const isActive = tab.id === activeTabId;
+        return (
+          <div
+            key={tab.id}
+            onClick={() => onSelectTab(tab.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 12px',
+              fontSize: 12,
+              color: isActive ? C.text : C.muted,
+              background: isActive ? 'rgba(241,245,249,0.06)' : 'transparent',
+              borderBottom: isActive ? `2px solid ${C.accent}` : '2px solid transparent',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              maxWidth: 180,
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>
+              {tab.title || tab.url}
+            </span>
+            <button
+              onClick={e => { e.stopPropagation(); onCloseTab(tab.id); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: C.muted,
+                fontSize: 14,
+                cursor: 'pointer',
+                padding: 0,
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              ×
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Main BrowserView ───────────────────────────────────────────────────────────
+
 export function BrowserView() {
+  const [tabs, setTabs] = useState<BrowserTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [currentUrl, setCurrentUrl] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [pinnedApps, setPinnedApps] = useState<PinnedApp[]>([]);
+  const [loadingTabs, setLoadingTabs] = useState(true);
+
+  // Load pinned apps from services
+  useEffect(() => {
+    invoke('service:list').then((result) => {
+      const services = (result as ServiceConfig[]) ?? [];
+      const pinned: PinnedApp[] = services
+        .filter(s => s.pinned)
+        .sort((a, b) => a.order - b.order)
+        .map(s => ({ id: s.id, name: s.name, url: s.url, icon: s.icon }));
+      setPinnedApps(pinned);
+    }).catch(() => {});
+  }, []);
+
+  // Load browser tabs
+  useEffect(() => {
+    invoke('browser:list-tabs').then((result) => {
+      const list = (result as BrowserTab[]) ?? [];
+      setTabs(list);
+      if (list.length > 0 && !activeTabId) {
+        setActiveTabId(list[0].id);
+        setCurrentUrl(list[0].url);
+      }
+    }).catch(() => {}).finally(() => setLoadingTabs(false));
+
+    const unsub1 = on('browser:tab-updated', (tab: BrowserTab) => {
+      setTabs(prev => {
+        const idx = prev.findIndex(t => t.id === tab.id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = tab;
+          return next;
+        }
+        return [...prev, tab];
+      });
+    });
+
+    const unsub2 = on('browser:tab-removed', ({ tabId }: { tabId: string }) => {
+      setTabs(prev => prev.filter(t => t.id !== tabId));
+      setActiveTabId(prev => prev === tabId ? null : prev);
+    });
+
+    const unsub3 = on('browser:tabs-list', (list: BrowserTab[]) => {
+      setTabs(list);
+    });
+
+    return () => { unsub1(); unsub2(); unsub3(); };
+  }, []);
+
+  const handleNavigate = (url: string) => {
+    setCurrentUrl(url);
+    invoke('browser:navigate', url, activeTabId ?? undefined).catch(() => {});
+  };
+
+  const handleSelectTab = (tabId: string) => {
+    setActiveTabId(tabId);
+    const tab = tabs.find(t => t.id === tabId);
+    if (tab) setCurrentUrl(tab.url);
+  };
+
+  const handleCloseTab = (tabId: string) => {
+    invoke('browser:close-tab', tabId).catch(() => {});
+  };
+
+  const handleAddApp = (name: string, url: string) => {
+    const config: ServiceConfig = {
+      id: `svc-${Date.now()}`,
+      name,
+      url,
+      partition: `persist:${name.toLowerCase().replace(/\s+/g, '-')}`,
+      pinned: true,
+      order: pinnedApps.length,
+    };
+    invoke('service:add', config).then(() => {
+      setPinnedApps(prev => [...prev, { id: config.id, name: config.name, url: config.url }]);
+    }).catch(() => {});
+  };
+
+  const handleOpenApp = (app: PinnedApp) => {
+    invoke('browser:add-tab', app.name, app.url, undefined, true).catch(() => {});
+    setCurrentUrl(app.url);
+  };
+
+  const activeTab = tabs.find(t => t.id === activeTabId) ?? null;
+
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        background: V.bg,
+        background: C.bg,
         overflow: 'hidden',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-        color: V.text,
+        color: C.text,
       }}
     >
-      {/* ── BROWSER CHROME ────────────────────────────────────────────────── */}
-      <div
-        style={{
-          background: V.bgMid,
-          borderBottom: `1px solid ${V.border}`,
-          flexShrink: 0,
-        }}
-      >
-        {/* Top row: nav buttons + URL bar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 12px',
-          }}
-        >
-          {/* Back */}
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              color: V.text2,
-              fontSize: 16,
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 6,
-              lineHeight: 1,
-            }}
-          >
-            ←
-          </button>
-          {/* Forward */}
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              color: V.muted,
-              fontSize: 16,
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 6,
-              lineHeight: 1,
-            }}
-          >
-            →
-          </button>
-          {/* Reload */}
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              color: V.text2,
-              fontSize: 16,
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 6,
-              lineHeight: 1,
-            }}
-          >
-            ↻
-          </button>
+      {/* Toolbar */}
+      <BrowserToolbar currentUrl={currentUrl} onNavigate={handleNavigate} />
 
-          {/* URL bar */}
+      {/* Tab bar */}
+      <BrowserTabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelectTab={handleSelectTab}
+        onCloseTab={handleCloseTab}
+      />
+
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Main content area */}
+        {activeTab ? (
           <div
             style={{
               flex: 1,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              gap: 8,
-              background: 'rgba(241,245,249,0.06)',
-              border: `1px solid ${V.border}`,
-              borderRadius: 8,
-              padding: '6px 12px',
+              justifyContent: 'center',
+              background: C.bg,
+              color: C.muted,
+              gap: 12,
             }}
           >
-            {/* Lock icon */}
-            <span style={{ color: V.green, fontSize: 12 }}>🔒</span>
-            <span style={{ color: V.text2, fontSize: 13, flex: 1 }}>
-              https://producthunt.com
-            </span>
-            {/* Bookmark star */}
-            <button
-              style={{
-                background: 'none',
-                border: 'none',
-                color: V.muted,
-                fontSize: 14,
-                cursor: 'pointer',
-                padding: 0,
-                lineHeight: 1,
-              }}
-            >
-              ☆
-            </button>
+            <div style={{ fontSize: 32 }}>🌐</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: C.text2 }}>
+              {activeTab.state === 'loading' ? 'Loading...' : activeTab.title || activeTab.url}
+            </div>
+            <div style={{ fontSize: 12, color: C.muted }}>{activeTab.url}</div>
           </div>
-        </div>
+        ) : (
+          <PinnedAppGrid
+            apps={pinnedApps}
+            onOpenApp={handleOpenApp}
+            onAddApp={() => setShowAddModal(true)}
+          />
+        )}
 
-        {/* Bookmarks bar */}
+        {/* Agent rail */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            padding: '0 12px 8px',
-            borderTop: `1px solid ${V.border2}`,
-            paddingTop: 6,
-          }}
-        >
-          {[
-            { icon: '🏠', label: 'Home' },
-            { icon: '📈', label: 'Trending' },
-            { icon: '🔥', label: 'Launches' },
-            { icon: '🏆', label: 'Collections' },
-            { icon: '💬', label: 'Discussions' },
-            { icon: '📞', label: 'Newsletter' },
-          ].map((bm) => (
-            <button
-              key={bm.label}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-                background: 'none',
-                border: 'none',
-                color: V.text2,
-                fontSize: 12,
-                cursor: 'pointer',
-                padding: '4px 10px',
-                borderRadius: 6,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span>{bm.icon}</span>
-              <span>{bm.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── BROWSER BODY ──────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
-        {/* LEFT: Page area */}
-        <div
-          style={{
-            flex: 1,
-            background: '#ffffff',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* PH top bar */}
-          <div
-            style={{
-              background: '#ffffff',
-              borderBottom: '1px solid #e5e7eb',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
-              padding: '12px 24px',
-              flexShrink: 0,
-            }}
-          >
-            {/* Logo */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                fontWeight: 700,
-                fontSize: 15,
-                color: '#da552f',
-              }}
-            >
-              <span style={{ fontSize: 20 }}>🐇</span>
-              <span>Product Hunt</span>
-            </div>
-
-            {/* Search */}
-            <div
-              style={{
-                flex: 1,
-                background: '#f3f4f6',
-                border: '1px solid #e5e7eb',
-                borderRadius: 8,
-                padding: '8px 14px',
-                color: '#9ca3af',
-                fontSize: 13,
-              }}
-            >
-              Search products, makers, collections...
-            </div>
-
-            {/* Buttons */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                style={{
-                  background: 'none',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: 8,
-                  padding: '7px 16px',
-                  fontSize: 13,
-                  color: '#374151',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                }}
-              >
-                Sign in
-              </button>
-              <button
-                style={{
-                  background: '#da552f',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '7px 16px',
-                  fontSize: 13,
-                  color: '#ffffff',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                }}
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-
-          {/* Feed header */}
-          <div
-            style={{
-              padding: '20px 24px 12px',
-              display: 'flex',
-              alignItems: 'baseline',
-              justifyContent: 'space-between',
-              flexShrink: 0,
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#111827',
-              }}
-            >
-              Top Products — Today
-            </h2>
-            <span style={{ fontSize: 13, color: '#6b7280' }}>
-              March 15, 2026
-            </span>
-          </div>
-
-          {/* Product rows */}
-          <div style={{ padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: 0 }}>
-
-            {/* Row 1: Gemini Ultra 3.0 */}
-            <ProductRow
-              rank={1}
-              iconBg="linear-gradient(135deg, #4285f4, #34a853)"
-              iconChar="G"
-              name="Gemini Ultra 3.0"
-              maker="Google DeepMind"
-              tagline="The most capable AI model ever"
-              tags={['AI', 'Productivity', 'Dev Tools']}
-              votes={1204}
-              voted={false}
-              trending={false}
-            />
-
-            {/* Row 2: Aegilume — TRENDING */}
-            <ProductRow
-              rank={2}
-              iconBg={`linear-gradient(135deg, ${V.accent}, #c8a84b)`}
-              iconChar="A"
-              name="Aegilume"
-              maker="Christian De Ramos"
-              tagline="AI agents that actually run your business"
-              tags={['AI Agents', 'Automation', 'Operations']}
-              votes={847}
-              voted={true}
-              trending={true}
-            />
-
-            {/* Row 3: Linear AI Copilot */}
-            <ProductRow
-              rank={3}
-              iconBg="linear-gradient(135deg, #5e6ad2, #8b91e3)"
-              iconChar="L"
-              name="Linear AI Copilot"
-              maker="Linear"
-              tagline="Your AI teammate for planning"
-              tags={['PM', 'AI']}
-              votes={632}
-              voted={false}
-              trending={false}
-            />
-
-            {/* Row 4: v0 3.0 */}
-            <ProductRow
-              rank={4}
-              iconBg="linear-gradient(135deg, #000000, #333333)"
-              iconChar="v"
-              name="v0 3.0"
-              maker="Vercel"
-              tagline="Ship full-stack apps from a single prompt"
-              tags={['Dev Tools', 'No-Code']}
-              votes={511}
-              voted={false}
-              trending={false}
-            />
-          </div>
-        </div>
-
-        {/* RIGHT: CD Agent rail */}
-        <div
-          style={{
-            width: 280,
+            width: 260,
             flexShrink: 0,
-            background: V.bgMid,
-            borderLeft: `1px solid ${V.border}`,
+            background: C.bgMid,
+            borderLeft: `1px solid ${C.border}`,
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'auto',
@@ -358,140 +617,113 @@ export function BrowserView() {
           {/* Rail header */}
           <div
             style={{
-              padding: '16px',
-              borderBottom: `1px solid ${V.border}`,
+              padding: '14px 16px',
+              borderBottom: `1px solid ${C.border}`,
               display: 'flex',
               alignItems: 'center',
               gap: 10,
             }}
           >
-            <CDAvatar size={32} />
+            <div
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #a3862a, #c8a84b)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 11,
+                color: '#fff',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              CD
+            </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: V.text }}>
-                CD · Browser Assistant
-              </div>
-              <div style={{ fontSize: 11, color: V.muted }}>
-                Context-aware for this page
-              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>CD · Browser Assistant</div>
+              <div style={{ fontSize: 11, color: C.muted }}>Context-aware browsing</div>
             </div>
           </div>
 
           {/* Rail body */}
           <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-            {/* Context bubble */}
-            <div
-              style={{
-                background: 'rgba(241,245,249,0.05)',
-                border: `1px solid ${V.border}`,
-                borderRadius: 10,
-                padding: '12px 14px',
-                fontSize: 12,
-                color: V.text2,
-                lineHeight: 1.6,
-              }}
-            >
-              You're browsing Product Hunt. I notice Aegilume is trending at #2 today with 847 upvotes
-            </div>
-
-            {/* Highlight */}
-            <div
-              style={{
-                background: V.accentBg,
-                border: `1px solid rgba(163,134,42,0.35)`,
-                borderRadius: 10,
-                padding: '10px 14px',
-                fontSize: 12,
-                color: V.yellow,
-                fontWeight: 500,
-              }}
-            >
-              🔥 Aegilume is in the top 3 for 6 hours straight
-            </div>
-
-            {/* Quick Actions */}
-            <div>
+            {activeTab ? (
+              <>
+                <div
+                  style={{
+                    background: 'rgba(241,245,249,0.04)',
+                    border: `1px solid ${C.border2}`,
+                    borderRadius: 10,
+                    padding: '12px 14px',
+                    fontSize: 12,
+                    color: C.text2,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Browsing <span style={{ color: C.accent, fontWeight: 600 }}>{activeTab.title || activeTab.url}</span>. Ready to assist.
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                    Quick Actions
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {[
+                      { icon: '🔖', label: 'Save bookmark' },
+                      { icon: '📤', label: 'Share page' },
+                      { icon: '📱', label: 'Save as App' },
+                    ].map(action => (
+                      <button
+                        key={action.label}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: 'none',
+                          border: `1px solid ${C.border2}`,
+                          borderRadius: 8,
+                          padding: '9px 12px',
+                          color: C.text2,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{action.icon}</span>
+                          <span>{action.label}</span>
+                        </span>
+                        <span style={{ color: C.muted, fontSize: 12 }}>→</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
               <div
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: V.muted,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  marginBottom: 8,
+                  background: 'rgba(241,245,249,0.04)',
+                  border: `1px solid ${C.border2}`,
+                  borderRadius: 10,
+                  padding: '12px 14px',
+                  fontSize: 12,
+                  color: C.muted,
+                  lineHeight: 1.6,
                 }}
               >
-                Quick Actions
+                Open an app or navigate to a URL to get context-aware assistance.
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {[
-                  { icon: '📣', label: 'Share to Slack' },
-                  { icon: '🐦', label: 'Draft tweet' },
-                  { icon: '🔖', label: 'Save bookmark' },
-                ].map((action) => (
-                  <button
-                    key={action.label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      background: 'none',
-                      border: `1px solid ${V.border2}`,
-                      borderRadius: 8,
-                      padding: '9px 12px',
-                      color: V.text2,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span>{action.icon}</span>
-                      <span>{action.label}</span>
-                    </span>
-                    <span style={{ color: V.muted, fontSize: 12 }}>→</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Page Stats */}
-            <div
-              style={{
-                background: 'rgba(241,245,249,0.04)',
-                border: `1px solid ${V.border2}`,
-                borderRadius: 10,
-                padding: '12px 14px',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: V.muted,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  marginBottom: 10,
-                }}
-              >
-                Page Stats
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                <StatRow label="Products today" value="28" />
-                <StatRow label="Aegilume rank" value="#2 🔥" accent />
-                <StatRow label="Total upvotes" value="847" />
-                <StatRow label="Comments" value="43" />
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── AGENT TOOLBAR (bottom) ─────────────────────────────────────────── */}
+      {/* Bottom agent toolbar */}
       <div
         style={{
-          background: V.bgMid,
-          borderTop: `1px solid ${V.border}`,
+          background: C.bgMid,
+          borderTop: `1px solid ${C.border}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -499,26 +731,37 @@ export function BrowserView() {
           flexShrink: 0,
         }}
       >
-        {/* Left: identity */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <CDAvatar size={28} />
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #a3862a, #c8a84b)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 10,
+              color: '#fff',
+              fontWeight: 700,
+            }}
+          >
+            CD
+          </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: V.text }}>
-              CD · Browser Assistant
-            </div>
-            <div style={{ fontSize: 11, color: V.muted }}>
-              Browsing Product Hunt · No blocked trackers · Secure connection
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>CD · Browser Assistant</div>
+            <div style={{ fontSize: 11, color: C.muted }}>
+              {activeTab ? `${activeTab.url} · Secure connection` : 'No active tab'}
             </div>
           </div>
         </div>
 
-        {/* Right: action buttons */}
         <div style={{ display: 'flex', gap: 8 }}>
           {[
             { icon: '🔖', label: 'Bookmark' },
             { icon: '📤', label: 'Share' },
             { icon: '📱', label: 'Save as App' },
-          ].map((btn) => (
+          ].map(btn => (
             <button
               key={btn.label}
               style={{
@@ -526,10 +769,10 @@ export function BrowserView() {
                 alignItems: 'center',
                 gap: 6,
                 background: 'rgba(241,245,249,0.06)',
-                border: `1px solid ${V.border}`,
+                border: `1px solid ${C.border}`,
                 borderRadius: 7,
                 padding: '6px 12px',
-                color: V.text2,
+                color: C.text2,
                 fontSize: 12,
                 cursor: 'pointer',
               }}
@@ -540,230 +783,13 @@ export function BrowserView() {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
 
-// ── Sub-components (inline) ────────────────────────────────────────────────
-
-interface ProductRowProps {
-  rank: number;
-  iconBg: string;
-  iconChar: string;
-  name: string;
-  maker: string;
-  tagline: string;
-  tags: string[];
-  votes: number;
-  voted: boolean;
-  trending: boolean;
-}
-
-function ProductRow({
-  rank,
-  iconBg,
-  iconChar,
-  name,
-  maker,
-  tagline,
-  tags,
-  votes,
-  voted,
-  trending,
-}: ProductRowProps) {
-  return (
-    <div
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '16px 0',
-        borderBottom: '1px solid #f3f4f6',
-      }}
-    >
-      {/* Trending badge */}
-      {trending && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            right: 70,
-            background: 'rgba(163,134,42,0.15)',
-            border: '1px solid rgba(163,134,42,0.4)',
-            borderRadius: 6,
-            padding: '2px 8px',
-            fontSize: 11,
-            color: '#a3862a',
-            fontWeight: 600,
-          }}
-        >
-          🔥 Trending
-        </div>
+      {showAddModal && (
+        <AddAppModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddApp}
+        />
       )}
-
-      {/* Rank */}
-      <div
-        style={{
-          width: 24,
-          textAlign: 'center',
-          fontSize: 13,
-          fontWeight: 600,
-          color: '#9ca3af',
-          flexShrink: 0,
-        }}
-      >
-        {rank}
-      </div>
-
-      {/* Product icon */}
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 10,
-          background: iconBg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 20,
-          color: '#ffffff',
-          fontWeight: 700,
-          flexShrink: 0,
-        }}
-      >
-        {iconChar}
-      </div>
-
-      {/* Product info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: 6,
-            marginBottom: 3,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: '#111827',
-            }}
-          >
-            {name}
-          </span>
-          <span style={{ fontSize: 12, color: '#6b7280' }}>by {maker}</span>
-        </div>
-        <div style={{ fontSize: 13, color: '#374151', marginBottom: 7 }}>
-          {tagline}
-        </div>
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              style={{
-                fontSize: 11,
-                color: '#6b7280',
-                border: '1px solid #e5e7eb',
-                borderRadius: 5,
-                padding: '2px 7px',
-                background: '#f9fafb',
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Upvote button */}
-      <button
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          background: voted ? 'rgba(163,134,42,0.1)' : '#f9fafb',
-          border: `1px solid ${voted ? 'rgba(163,134,42,0.5)' : '#e5e7eb'}`,
-          borderRadius: 8,
-          padding: '8px 14px',
-          cursor: 'pointer',
-          flexShrink: 0,
-          minWidth: 56,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 14,
-            color: voted ? '#a3862a' : '#6b7280',
-            lineHeight: 1,
-          }}
-        >
-          ▲
-        </span>
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: voted ? '#a3862a' : '#374151',
-          }}
-        >
-          {votes.toLocaleString()}
-        </span>
-      </button>
-    </div>
-  );
-}
-
-function CDAvatar({ size }: { size: number }) {
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        background: 'linear-gradient(135deg, #a3862a, #c8a84b)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: size * 0.4,
-        color: '#ffffff',
-        fontWeight: 700,
-        flexShrink: 0,
-      }}
-    >
-      CD
-    </div>
-  );
-}
-
-interface StatRowProps {
-  label: string;
-  value: string;
-  accent?: boolean;
-}
-
-function StatRow({ label, value, accent }: StatRowProps) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: 12,
-      }}
-    >
-      <span style={{ color: V.muted }}>{label}</span>
-      <span
-        style={{
-          color: accent ? V.yellow : V.text2,
-          fontWeight: accent ? 600 : 400,
-        }}
-      >
-        {value}
-      </span>
     </div>
   );
 }

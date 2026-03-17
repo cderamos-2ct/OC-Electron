@@ -166,10 +166,10 @@ export function VoicemailPlayer({ voicemail }: VoicemailPlayerProps) {
           <button
             key={label}
             style={{
-              background: label === 'Delete' ? 'transparent' : 'rgba(194,112,58,0.1)',
-              border: `1px solid ${label === 'Delete' ? '#3c1e28' : 'rgba(194,112,58,0.3)'}`,
+              background: label === 'Delete' ? 'transparent' : 'rgba(163,134,42,0.1)',
+              border: `1px solid ${label === 'Delete' ? '#3c1e28' : 'rgba(163,134,42,0.3)'}`,
               borderRadius: 8,
-              color: label === 'Delete' ? '#e05a6a' : '#c2703a',
+              color: label === 'Delete' ? '#e05a6a' : 'var(--accent)',
               fontSize: 12,
               fontWeight: 500,
               padding: '6px 12px',

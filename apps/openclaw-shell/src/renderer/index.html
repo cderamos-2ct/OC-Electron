@@ -5,24 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://127.0.0.1:* http://127.0.0.1:*; img-src 'self' data: https:; font-src 'self' data:"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; connect-src 'self' ws://127.0.0.1:* http://127.0.0.1:*; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet" />
     <title>Aegilume Shell</title>
     <style>
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
       :root {
-        /* Aegilume Stellar Agora palette */
-        --bg: #0f172a;
-        --bg-mid: #131d33;
-        --bg-card: #131d33;
-        --border: rgba(241,245,249,0.14);
-        --text: #f1f5f9;
-        --text-2: #cbd5e1;
-        --muted: #94a3b8;
-        --accent: #a3862a;
+        /* Aegilume Stellar Agora palette — matches mockup exactly */
+        --bg:        #0f172a;
+        --bg-mid:    #131d33;
+        --bg-card:   #131d33;
+        --border:    rgba(241,245,249,0.14);
+        --border-2:  rgba(241,245,249,0.08);
+        --text:      #f1f5f9;
+        --text-2:    #cbd5e1;
+        --text-3:    #cbd5e1;
+        --muted:     #94a3b8;
+        --dim:       #94a3b8;
+        --dimmer:    #94a3b8;
+        --faint:     rgba(241,245,249,0.2);
+        --accent:    #a3862a;
         --accent-bg: rgba(163,134,42,0.2);
-        --green: #2ecc71;
-        --yellow: #e0c875;
-        --red: #e74c3c;
+        --accent-bg2:rgba(163,134,42,0.12);
+        --green:     #2ecc71;
+        --yellow:    #e0c875;
+        --red:       #e74c3c;
+
+        /* Layout — matches mockup */
+        --title-h:   38px;
+        --tabbar-h:  40px;
+        --navbar-h:  48px;
+        --rail-w:    340px;
+        --shell-h:   calc(100vh - var(--title-h) - var(--tabbar-h));
 
         /* Aliases for legacy component compatibility */
         --bg-primary: #0f172a;
@@ -34,15 +52,24 @@
         --text-secondary: #cbd5e1;
         --text-muted: #94a3b8;
         --accent-blue: #a3862a;
+        --accent-green: #2ecc71;
+        --accent-red: #e74c3c;
         --accent-orange: #e0c875;
-        --accent-bg: rgba(163,134,42,0.2);
       }
+
+      /* Scrollbars — matches mockup */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #333338; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+      * { scrollbar-width: thin; scrollbar-color: #333338 transparent; }
+
       html, body {
         margin: 0;
         padding: 0;
         background: var(--bg);
         color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
         height: 100%;
         overflow: hidden;
       }
@@ -50,6 +77,12 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+      }
+
+      /* View transition animation — matches mockup */
+      @keyframes viewIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
     </style>
   </head>

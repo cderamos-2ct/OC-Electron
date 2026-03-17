@@ -46,7 +46,7 @@ export function ChannelSidebar({ activeNav, onNavChange, onCompose }: ChannelSid
         onClick={onCompose}
         style={{
           background: '#3c1e17',
-          border: '1px solid #c2703a',
+          border: '1px solid var(--accent)',
           borderRadius: 20,
           color: '#ffb86b',
           fontSize: 13,
@@ -87,7 +87,7 @@ export function ChannelSidebar({ activeNav, onNavChange, onCompose }: ChannelSid
                 onClick={() => onNavChange(item.id)}
                 style={{
                   width: '100%',
-                  background: isActive ? 'rgba(194,112,58,0.15)' : 'transparent',
+                  background: isActive ? 'rgba(163,134,42,0.15)' : 'transparent',
                   border: 'none',
                   borderRadius: '0 20px 20px 0',
                   color: isActive ? '#ffb86b' : '#9898b0',
@@ -109,7 +109,7 @@ export function ChannelSidebar({ activeNav, onNavChange, onCompose }: ChannelSid
                     fontSize: 11,
                     fontWeight: 600,
                     color: isActive ? '#ffb86b' : '#555568',
-                    background: isActive ? 'rgba(194,112,58,0.2)' : '#1e1e28',
+                    background: isActive ? 'rgba(163,134,42,0.2)' : '#1e1e28',
                     borderRadius: 8,
                     padding: '1px 6px',
                   }}>

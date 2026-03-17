@@ -37,7 +37,7 @@ export function SubtabBar({ activeTab, onTabChange }: SubtabBarProps) {
             style={{
               background: 'transparent',
               border: 'none',
-              borderBottom: isActive ? '2px solid #c2703a' : '2px solid transparent',
+              borderBottom: isActive ? '2px solid var(--accent)' : '2px solid transparent',
               color: isActive ? '#ffb86b' : '#6e6e88',
               fontSize: 12,
               fontWeight: isActive ? 500 : 400,
@@ -56,7 +56,7 @@ export function SubtabBar({ activeTab, onTabChange }: SubtabBarProps) {
               <span style={{
                 fontSize: 10,
                 fontWeight: 600,
-                background: isActive ? 'rgba(194,112,58,0.25)' : '#1e1e28',
+                background: isActive ? 'rgba(163,134,42,0.25)' : '#1e1e28',
                 color: isActive ? '#ffb86b' : '#555568',
                 borderRadius: 8,
                 padding: '1px 5px',

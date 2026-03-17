@@ -41,8 +41,8 @@ export function NavRail({ activeView, onViewChange, badges = {} }: NavRailProps)
     <div style={{
       width: 56,
       minWidth: 56,
-      background: '#09090d',
-      borderRight: '1px solid #1a1a24',
+      background: 'var(--bg)',
+      borderRight: '1px solid var(--border)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -57,8 +57,8 @@ export function NavRail({ activeView, onViewChange, badges = {} }: NavRailProps)
         width: 32,
         height: 32,
         borderRadius: 8,
-        background: '#3c1e17',
-        border: '1px solid #c2703a',
+        background: 'var(--accent-bg)',
+        border: '1px solid var(--accent)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -66,11 +66,11 @@ export function NavRail({ activeView, onViewChange, badges = {} }: NavRailProps)
         marginBottom: 8,
         flexShrink: 0,
       }}>
-        🦞
+        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 10, fontWeight: 700, color: 'var(--accent)' }}>AE</span>
       </div>
 
       {/* Divider */}
-      <div style={{ width: 28, height: 1, background: '#1a1a24', marginBottom: 6 }} />
+      <div style={{ width: 28, height: 1, background: 'var(--border)', marginBottom: 6 }} />
 
       {/* Nav items */}
       {NAV_ITEMS.map((item) => {
@@ -86,8 +86,8 @@ export function NavRail({ activeView, onViewChange, badges = {} }: NavRailProps)
               width: 40,
               height: 40,
               borderRadius: 10,
-              border: isActive ? '1px solid rgba(194,112,58,0.5)' : '1px solid transparent',
-              background: isActive ? 'rgba(194,112,58,0.15)' : 'transparent',
+              border: isActive ? '1px solid var(--accent)' : '1px solid transparent',
+              background: isActive ? 'var(--accent-bg)' : 'transparent',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -118,7 +118,7 @@ export function NavRail({ activeView, onViewChange, badges = {} }: NavRailProps)
                 width: 3,
                 height: 20,
                 borderRadius: '0 2px 2px 0',
-                background: '#c2703a',
+                background: 'var(--accent)',
               }} />
             )}
             {/* Badge */}
@@ -130,7 +130,7 @@ export function NavRail({ activeView, onViewChange, badges = {} }: NavRailProps)
                 width: 14,
                 height: 14,
                 borderRadius: '50%',
-                background: '#c2703a',
+                background: 'var(--accent)',
                 fontSize: 9,
                 fontWeight: 700,
                 color: '#fff',

@@ -136,7 +136,7 @@ export function MorningBrief({ tasks, onDismiss }: MorningBriefProps) {
               margin: '0 0 4px 0',
             }}
           >
-            Good morning, Christian.
+            Good morning.
           </h2>
           <p style={{ fontSize: '12px', color: '#71717a', margin: 0 }}>{formatDate()}</p>
         </div>

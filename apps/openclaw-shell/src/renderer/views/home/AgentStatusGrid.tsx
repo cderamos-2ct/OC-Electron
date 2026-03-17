@@ -1,20 +1,12 @@
 import React from 'react';
 
-interface AgentStat {
+export interface AgentStat {
   emoji: string;
-  count: number;
+  count: number | string;
   label: string;
   agent: string;
   accent?: string;
 }
-
-const STATS: AgentStat[] = [
-  { emoji: '\u{1F6E1}\uFE0F', count: 47, label: 'Emails triaged', agent: 'Karoline', accent: 'var(--green)' },
-  { emoji: '\u{1F525}', count: 3, label: 'PRs merged', agent: 'Vulcan' },
-  { emoji: '\u23F3', count: 5, label: 'Invites handled', agent: 'Kronos' },
-  { emoji: '\u{1F52E}', count: 2, label: 'Recaps processed', agent: 'Ada' },
-  { emoji: '\u{1F4E1}', count: 1, label: 'Risk flagged', agent: 'Hermes', accent: 'var(--red)' },
-];
 
 function StatCard({ emoji, count, label, agent, accent }: AgentStat) {
   return (
@@ -64,7 +56,21 @@ function StatCard({ emoji, count, label, agent, accent }: AgentStat) {
   );
 }
 
-export function AgentStatusGrid() {
+interface AgentStatusGridProps {
+  stats?: AgentStat[];
+}
+
+const DEFAULT_STATS: AgentStat[] = [
+  { emoji: '\u{1F6E1}\uFE0F', count: '—', label: 'Emails triaged', agent: 'Karoline' },
+  { emoji: '\u{1F525}', count: '—', label: 'PRs merged', agent: 'Vulcan' },
+  { emoji: '\u23F3', count: '—', label: 'Invites handled', agent: 'Kronos' },
+  { emoji: '\u{1F52E}', count: '—', label: 'Recaps processed', agent: 'Ada' },
+  { emoji: '\u{1F4E1}', count: '—', label: 'Risks flagged', agent: 'Hermes' },
+];
+
+export function AgentStatusGrid({ stats }: AgentStatusGridProps) {
+  const displayStats = stats && stats.length > 0 ? stats : DEFAULT_STATS;
+
   return (
     <div
       style={{
@@ -74,7 +80,7 @@ export function AgentStatusGrid() {
         marginBottom: '24px',
       }}
     >
-      {STATS.map((stat) => (
+      {displayStats.map((stat) => (
         <StatCard key={stat.label} {...stat} />
       ))}
     </div>

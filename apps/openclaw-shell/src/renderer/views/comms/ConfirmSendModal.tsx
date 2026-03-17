@@ -13,7 +13,7 @@ export function ConfirmSendModal({
   isOpen,
   onClose,
   onConfirm,
-  recipient = 'Sarah Chen',
+  recipient = '',
   subject = 'Q1 Design Review — Feedback Needed',
   channel = 'Email',
 }: ConfirmSendModalProps) {
@@ -114,10 +114,10 @@ export function ConfirmSendModal({
           <button
             onClick={() => { onConfirm(); onClose(); }}
             style={{
-              background: '#3c1e17',
-              border: '1px solid #c2703a',
+              background: 'rgba(163,134,42,0.2)',
+              border: '1px solid var(--accent)',
               borderRadius: 8,
-              color: '#ffb86b',
+              color: 'var(--accent)',
               fontSize: 13,
               fontWeight: 600,
               padding: '8px 18px',
