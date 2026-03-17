@@ -60,6 +60,22 @@ docs/archive/
 legacy/imported/
 legacy/links/
 
+# Claude Code local config
+.claude/
+
+# Secrets
+.secrets/
+
+# Finance local workspace
+Finance/
+
+# Electron build outputs
+apps/openclaw-shell/out/
+apps/openclaw-shell/release/
+
+# Reports (generated)
+docs/reports/
+
 # Finance mutable workspace data
 domains/finance/finance.db*
 domains/finance/Documents/
