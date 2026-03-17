@@ -580,4 +580,26 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return Array.from(browserTabs.values());
   });
 
+  // ── Setup Wizard ──────────────────────────────────────────────────────────
+  const SETUP_FILE = join(SHELL_CONFIG_DIR, 'setup.json');
+
+  ipcMain.handle('setup:check', async () => {
+    try {
+      if (existsSync(SETUP_FILE)) {
+        const raw = readFileSync(SETUP_FILE, 'utf-8');
+        const config = JSON.parse(raw);
+        return { setupComplete: true, config };
+      }
+    } catch { /* ignore */ }
+    return { setupComplete: false, config: null };
+  });
+
+  ipcMain.handle('setup:complete', async (_event, config: unknown) => {
+    if (!existsSync(SHELL_CONFIG_DIR)) {
+      mkdirSync(SHELL_CONFIG_DIR, { recursive: true });
+    }
+    writeFileSync(SETUP_FILE, JSON.stringify(config, null, 2), 'utf-8');
+    return { ok: true };
+  });
+
 }

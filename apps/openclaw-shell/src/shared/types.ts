@@ -268,6 +268,23 @@ export interface BrowserTab {
   updatedAt: string;
 }
 
+// ─── Setup Types ─────────────────────────────────────────────────
+
+export interface SetupAgentConfig {
+  id: string;
+  displayName: string;
+  emoji: string;
+  role: string;
+  enabled: boolean;
+}
+
+export interface SetupConfig {
+  userName: string;
+  enabledServices: string[];  // service IDs from DEFAULT_SERVICES
+  agents: SetupAgentConfig[];
+  completedAt: string;
+}
+
 // ─── IPC Channel Types ───────────────────────────────────────────
 
 // Main -> Renderer (events via webContents.send)
@@ -295,6 +312,7 @@ export interface MainToRendererEvents {
   'browser:tab-updated': BrowserTab;
   'browser:tab-removed': { tabId: string };
   'browser:tabs-list': BrowserTab[];
+  'setup:status': { setupComplete: boolean };
 }
 
 // Renderer -> Main (invoke/handle)
@@ -370,6 +388,8 @@ export interface RendererToMainHandlers {
   'browser:pin-tab': [tabId: string];
   'browser:unpin-tab': [tabId: string];
   'browser:list-tabs': [];
+  'setup:check': [];
+  'setup:complete': [config: SetupConfig];
 }
 
 // ─── Shell Config ────────────────────────────────────────────────

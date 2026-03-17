@@ -75,6 +75,8 @@ const INVOKE_CHANNELS: RendererToMainChannel[] = [
   'browser:pin-tab',
   'browser:unpin-tab',
   'browser:list-tabs',
+  'setup:check',
+  'setup:complete',
 ];
 
 // Allowed channels for on (main -> renderer)
@@ -98,6 +100,7 @@ const EVENT_CHANNELS: MainToRendererChannel[] = [
   'browser:tab-updated',
   'browser:tab-removed',
   'browser:tabs-list',
+  'setup:status',
 ];
 
 const electronAPI = {
@@ -352,6 +355,16 @@ const electronAPI = {
     const handler = (_e: Electron.IpcRendererEvent, tabs: MainToRendererEvents['browser:tabs-list']) => callback(tabs);
     ipcRenderer.on('browser:tabs-list', handler);
     return () => ipcRenderer.removeListener('browser:tabs-list', handler);
+  },
+
+  // ── Setup ──────────────────────────────────────────────────────────────────
+
+  setupCheck(): Promise<unknown> {
+    return ipcRenderer.invoke('setup:check');
+  },
+
+  setupComplete(config: unknown): Promise<unknown> {
+    return ipcRenderer.invoke('setup:complete', config);
   },
 };
 

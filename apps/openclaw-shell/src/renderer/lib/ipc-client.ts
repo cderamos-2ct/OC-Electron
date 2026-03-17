@@ -11,6 +11,7 @@ import type {
   CDActionResult,
   AutoApproveRule,
   AuditLogEntry,
+  SetupConfig,
 } from '../../shared/types';
 import type { ElectronAPI } from '../../main/preload';
 
@@ -186,4 +187,14 @@ export function onNotification(
   callback: (data: MainToRendererEvents['service:notification']) => void,
 ): Unsubscribe {
   return window.electronAPI.onNotification(callback);
+}
+
+// ─── Setup ───────────────────────────────────────────────────────────────────
+
+export function setupCheck(): Promise<{ setupComplete: boolean; config: unknown }> {
+  return window.electronAPI.setupCheck() as Promise<{ setupComplete: boolean; config: unknown }>;
+}
+
+export function setupComplete(config: SetupConfig): Promise<{ ok: boolean }> {
+  return window.electronAPI.setupComplete(config) as Promise<{ ok: boolean }>;
 }

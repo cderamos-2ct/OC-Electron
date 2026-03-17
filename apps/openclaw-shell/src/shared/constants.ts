@@ -1,9 +1,20 @@
 // ─── Paths ───────────────────────────────────────────────────────
-// Note: These path constants are used by Main process only.
-// Renderer code should access them via IPC, not import directly.
+// Path constants are resolved at runtime. In dev, env vars override.
+// In production, the main process sets OPENCLAW_ROOT / OPENCLAW_DATA_DIR
+// env vars during app.whenReady() before these are consumed.
+// Renderer code should NEVER import path constants — use IPC instead.
+//
+// Fallbacks use platform-standard locations:
+//   macOS:   ~/.aegilume/data
+//   Linux:   ~/.aegilume/data
+//   Windows: %USERPROFILE%/.aegilume/data
 
-export const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT ?? '/Volumes/Storage/OpenClaw';
-export const OPENCLAW_DATA_DIR = process.env.OPENCLAW_DATA_DIR ?? '/Volumes/Storage/OpenClaw-Data';
+const HOME = typeof process !== 'undefined'
+  ? (process.env.HOME ?? process.env.USERPROFILE ?? '')
+  : '';
+
+export const OPENCLAW_ROOT = process.env.OPENCLAW_ROOT ?? (HOME ? `${HOME}/.aegilume` : '');
+export const OPENCLAW_DATA_DIR = process.env.OPENCLAW_DATA_DIR ?? (HOME ? `${HOME}/.aegilume/data` : '');
 export const TASKS_DIR = `${OPENCLAW_DATA_DIR}/tasks/items`;
 export const AGENTS_DIR = `${OPENCLAW_DATA_DIR}/agents`;
 export const RUNTIME_DIR = `${OPENCLAW_DATA_DIR}/runtime`;
@@ -125,7 +136,7 @@ export const DEFAULT_SERVICES = [
 
 export const RAIL_MIN_WIDTH = 280;
 export const RAIL_MAX_WIDTH = 600;
-export const RAIL_DEFAULT_WIDTH = 380;
+export const RAIL_DEFAULT_WIDTH = 340;
 export const TAB_SWITCH_HOTKEY_PREFIX = 'CommandOrControl+';
 export const TOGGLE_RAIL_HOTKEY = 'CommandOrControl+Shift+C';
 export const SHOW_SHELL_HOTKEY = 'CommandOrControl+Shift+O';

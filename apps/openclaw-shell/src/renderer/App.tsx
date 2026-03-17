@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useShellStore } from './stores/shell-store';
 import { on } from './lib/ipc-client';
 import { TabBar } from './components/shell/TabBar';
@@ -7,6 +7,10 @@ import { ServiceWebview } from './components/services/ServiceWebview';
 import { ChatRail } from './components/rail/ChatRail';
 import { AgentStatusBar, ToastStack, ActionPanel } from './components/overlay';
 import { useViewStore } from './stores/view-store';
+import { useSetupStore } from './stores/setup-store';
+import { SetupWizard } from './views/setup/SetupWizard';
+import type { SetupResult } from './views/setup/SetupWizard';
+import { BootstrapOverlay } from './views/setup/BootstrapOverlay';
 
 export function App() {
   const services = useShellStore((s) => s.services);
@@ -14,6 +18,45 @@ export function App() {
   const setActiveService = useShellStore((s) => s.setActiveService);
   const removeService = useShellStore((s) => s.removeService);
   const activeView = useViewStore((s) => s.activeView);
+  const setupComplete = useSetupStore((s) => s.setupComplete);
+  const setupLoading = useSetupStore((s) => s.setupLoading);
+  const bootstrapping = useSetupStore((s) => s.bootstrapping);
+  const bootstrapConfig = useSetupStore((s) => s.bootstrapConfig);
+
+  // Check setup status on mount
+  useEffect(() => {
+    window.electronAPI.setupCheck().then((result: unknown) => {
+      const r = result as { setupComplete: boolean; config?: { userName?: string } };
+      useSetupStore.getState().setSetupComplete(r.setupComplete);
+      if (r.config?.userName) {
+        useSetupStore.getState().setUserName(r.config.userName);
+      }
+      useSetupStore.getState().setSetupLoading(false);
+    }).catch(() => {
+      useSetupStore.getState().setSetupLoading(false);
+    });
+  }, []);
+
+  const handleSetupComplete = useCallback((result: SetupResult) => {
+    const config = {
+      ...result,
+      completedAt: new Date().toISOString(),
+    };
+    window.electronAPI.setupComplete(config).then(() => {
+      useSetupStore.getState().setUserName(result.userName);
+      // Transition to bootstrap phase — agents pull initial data
+      useSetupStore.getState().setBootstrapping(true, {
+        userName: result.userName,
+        enabledServices: result.enabledServices,
+        agents: result.agents,
+      });
+    }).catch(console.error);
+  }, []);
+
+  const handleBootstrapComplete = useCallback(() => {
+    useSetupStore.getState().setBootstrapping(false);
+    useSetupStore.getState().setSetupComplete(true);
+  }, []);
 
   // Handle IPC events from the main process
   useEffect(() => {
@@ -50,16 +93,49 @@ export function App() {
   const isBrowserView = activeView === 'browser';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        height: '100%',
-        background: 'var(--bg)',
-        overflow: 'hidden',
-      }}
-    >
+    <>
+      {/* Setup wizard overlay */}
+      {!setupLoading && !setupComplete && !bootstrapping && (
+        <SetupWizard onComplete={handleSetupComplete} />
+      )}
+
+      {/* Bootstrap overlay — agents pull initial data after setup */}
+      {bootstrapping && bootstrapConfig && (
+        <BootstrapOverlay config={bootstrapConfig} onComplete={handleBootstrapComplete} />
+      )}
+
+      {/* Loading state while checking setup */}
+      {setupLoading && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg)',
+          zIndex: 9999,
+        }}>
+          <div style={{
+            fontFamily: "'Cinzel', serif",
+            fontSize: '18px',
+            color: 'var(--accent)',
+            letterSpacing: '2px',
+          }}>
+            AE
+          </div>
+        </div>
+      )}
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          height: '100%',
+          background: 'var(--bg)',
+          overflow: 'hidden',
+        }}
+      >
       {/* Title bar drag region with branding */}
       <div
         style={{
@@ -81,13 +157,13 @@ export function App() {
             fontFamily: "'Cinzel', serif",
             fontSize: '12px',
             letterSpacing: '1px',
-            color: 'var(--text)',
+            color: 'var(--dimmer)',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
           }}
         >
-          <span style={{ fontWeight: 700 }}>AE</span>
+          <span style={{ fontWeight: 700, color: 'var(--text-3)' }}>AE</span>
           <span style={{ color: 'var(--muted)', fontSize: '10px' }}>|</span>
           <span style={{ letterSpacing: '0.5px' }}>Aegilume</span>
         </span>
@@ -157,5 +233,6 @@ export function App() {
         <ChatRail />
       </div>
     </div>
+    </>
   );
 }
