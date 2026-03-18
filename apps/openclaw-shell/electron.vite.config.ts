@@ -13,7 +13,9 @@ export default defineConfig({
       alias: {
         '@shared': resolve('src/shared'),
         '@main': resolve('src/main'),
+        '@openclaw/core': resolve('../../packages/openclaw-core/src/index.ts'),
         'openclaw-db': resolve('../../packages/openclaw-db/src/index.ts'),
+        '@openclaw/gateway-client': resolve('../../packages/openclaw-gateway-client/src/index.ts'),
       },
     },
   },
