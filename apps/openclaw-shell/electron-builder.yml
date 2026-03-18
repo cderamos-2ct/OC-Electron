@@ -21,6 +21,8 @@ extraResources:
       - "**/*"
 
 # ── macOS ────────────────────────────────────────────────────────────────────
+afterSign: scripts/notarize.mjs
+
 mac:
   icon: assets/icons/icon.icns
   category: public.app-category.productivity
@@ -34,7 +36,10 @@ mac:
         - arm64
         - x64
   darkModeSupport: true
-  identity: null
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.inherit.plist
 
 dmg:
   title: Aegilume
