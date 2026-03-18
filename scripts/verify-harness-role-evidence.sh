@@ -10,6 +10,11 @@ resolve_harness_bin() {
     command -v harness
     return 0
   fi
+  # CI fallback: harness cloned by ci-harness-gates.sh
+  if [ -x ".harness/.ci-core/bin/harness" ]; then
+    echo ".harness/.ci-core/bin/harness"
+    return 0
+  fi
   if [ -f ".harness/config.json" ] && command -v python3 >/dev/null 2>&1; then
     core_path="$(python3 - <<'PY'
 import json, pathlib
