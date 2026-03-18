@@ -89,6 +89,9 @@ const INVOKE_CHANNELS: RendererToMainChannel[] = [
   'vault:revoke-all',
   'vault:pending-approvals',
   'vault:decide-approval',
+  'updater:check',
+  'updater:install-now',
+  'updater:status',
 ];
 
 // Allowed channels for on (main -> renderer)
@@ -114,6 +117,7 @@ const EVENT_CHANNELS: MainToRendererChannel[] = [
   'browser:tabs-list',
   'setup:status',
   'deeplink:navigate',
+  'updater:status',
 ];
 
 const electronAPI = {

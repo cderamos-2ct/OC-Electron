@@ -22,6 +22,7 @@ import type { GwsCalendarWorker } from './api-workers/gws-calendar-worker.js';
 import { readAuditLog } from './audit-log.js';
 import { wrapWithRateLimit, rateLimiter } from './security/ipc-rate-limiter.js';
 import { setTelemetryConsent, getTelemetryConfig } from './telemetry/crash-reporter.js';
+import { checkForUpdates, installUpdate, getUpdateStatus } from './updater.js';
 
 function readShellConfig(): ShellConfig {
   if (!existsSync(SHELL_CONFIG_FILE)) {
@@ -685,5 +686,10 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   handle('telemetry:get-config', async () => {
     return getTelemetryConfig();
   });
+
+  // ── Auto-Updater ──────────────────────────────────────────────────────────
+  handle('updater:check', async () => { checkForUpdates(); return { ok: true }; });
+  handle('updater:install-now', async () => { installUpdate(); return { ok: true }; });
+  handle('updater:status', async () => getUpdateStatus());
 
 }

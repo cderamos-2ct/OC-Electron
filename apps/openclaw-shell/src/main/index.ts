@@ -57,6 +57,7 @@ import { registerVaultIpcHandlers } from './vault/vault-ipc.js';
 import { assertEnvironment } from './config/env.js';
 import { runCredentialMigration } from './config/credentials-migration.js';
 import { registerDeepLinkProtocol, handleDeepLink, processPendingDeepLink } from './deep-link.js';
+import { initUpdater } from './updater.js';
 
 // NOTE: All instances are created inside app.whenReady() or at worst after
 // app.requestSingleInstanceLock(). Do NOT call Electron window/screen/tray
@@ -217,6 +218,9 @@ if (!gotLock) {
     // Phase 5: Apply saved window state (position, size, maximized)
     applyWindowState(mainWindow);
     trackWindowState(mainWindow);
+
+    // Initialize auto-updater (checks for updates after 10s delay)
+    initUpdater(mainWindow);
 
     // Phase 5: Wire native notification system
     setNotificationWindow(mainWindow);

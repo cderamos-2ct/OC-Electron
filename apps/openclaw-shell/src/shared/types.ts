@@ -299,6 +299,15 @@ export type DeepLinkAction =
   | { type: 'open-task'; taskId: string }
   | { type: 'vault-unlock' };
 
+// ─── Updater Types ───────────────────────────────────────────────
+
+export interface UpdateStatus {
+  state: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'ready' | 'error';
+  info?: unknown;
+  progress?: unknown;
+  error?: string;
+}
+
 // ─── IPC Channel Types ───────────────────────────────────────────
 
 // Main -> Renderer (events via webContents.send)
@@ -329,6 +338,7 @@ export interface MainToRendererEvents {
   'setup:status': { setupComplete: boolean };
   'ipc:rate-limited': RateLimitError;
   'deeplink:navigate': DeepLinkAction;
+  'updater:status': UpdateStatus;
 }
 
 // Renderer -> Main (invoke/handle)
@@ -410,6 +420,9 @@ export interface RendererToMainHandlers {
   'setup:complete': [config: SetupConfig];
   'telemetry:set-consent': [enabled: boolean];
   'telemetry:get-config': [];
+  'updater:check': [];
+  'updater:install-now': [];
+  'updater:status': [];
 }
 
 // ─── Shell Config ────────────────────────────────────────────────

@@ -1,8 +1,10 @@
 import React from 'react';
 import { useGateway } from '../../hooks/use-gateway';
+import { useUpdater } from '../../hooks/use-updater';
 
 export function AgentStatusBar() {
   const { connectionState } = useGateway();
+  const { status: updateStatus, installNow } = useUpdater();
 
   const dotColor =
     connectionState === 'connected'

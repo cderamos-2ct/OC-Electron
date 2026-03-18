@@ -25,6 +25,7 @@
     "@openclaw/gateway-client": "workspace:*",
     "@sentry/electron": "^7.10.0",
     "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.3",
     "openclaw-db": "workspace:*",
     "pg": "^8.13.3",
     "react": "^19.1.0",
