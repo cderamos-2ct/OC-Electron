@@ -1,6 +1,8 @@
 import { execFile } from 'child_process';
 
-const GWS_BIN = process.env.GWS_BIN ?? 'gws';
+import { resolveGwsBin } from '../provisioning/platform.js';
+
+const GWS_BIN = resolveGwsBin();
 const GWS_TIMEOUT_MS = 30_000;
 
 export class GwsError extends Error {

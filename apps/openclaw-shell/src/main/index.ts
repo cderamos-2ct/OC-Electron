@@ -37,6 +37,17 @@ import { registerHotkeys, unregisterHotkeys } from './hotkeys.js';
 import { registerIpcHandlers } from './ipc-handlers.js';
 import { GatewayProcessManager } from './gateway-process.js';
 import { GatewayClient, shellDeviceAuthProvider } from './gateway-client.js';
+import { ProvisioningManager } from './provisioning/provisioning-manager.js';
+import { PathProvisioner } from './provisioning/path-provisioner.js';
+import { PostgresProvisioner } from './provisioning/postgres-provisioner.js';
+import { VaultwardenProvisioner } from './provisioning/vaultwarden-provisioner.js';
+import { GatewayProvisioner } from './provisioning/gateway-provisioner.js';
+import { GwsProvisioner } from './provisioning/gws-provisioner.js';
+import { CredentialProvisioner } from './provisioning/credential-provisioner.js';
+import { DashboardProvisioner } from './provisioning/dashboard-provisioner.js';
+import { CodeServerProvisioner } from './provisioning/codeserver-provisioner.js';
+import { PermissionProvisioner } from './provisioning/permission-provisioner.js';
+import { ProcessSupervisor } from './provisioning/process-supervisor.js';
 import { ServiceManager } from './services/service-manager.js';
 import { TaskEngine } from './task-engine.js';
 import { WorkerManager } from './api-workers/worker-manager.js';
@@ -65,6 +76,8 @@ import { initUpdater } from './updater.js';
 const gatewayManager = new GatewayProcessManager();
 const serviceManager = new ServiceManager();
 const taskEngine = new TaskEngine();
+const provisioningManager = new ProvisioningManager();
+const processSupervisor = new ProcessSupervisor();
 const workerManager = new WorkerManager();
 workerManager.register(new GwsGmailWorker());
 workerManager.register(new GwsCalendarWorker());
@@ -171,8 +184,48 @@ if (!gotLock) {
       }
     });
 
+    // ── Provisioning: create shared provisioner instances ──────────────────
+    const pathProv = new PathProvisioner();
+    const pgProv = new PostgresProvisioner();
+    const vwProv = new VaultwardenProvisioner();
+    const gwProv = new GatewayProvisioner();
+    const gwsProv = new GwsProvisioner();
+    const credProv = new CredentialProvisioner();
+    const permProv = new PermissionProvisioner();
+    const dsProv = new DashboardProvisioner();
+    const csProv = new CodeServerProvisioner();
+
+    // Register with provisioning manager (all services in dependency order)
+    provisioningManager.register(pathProv);
+    provisioningManager.register(pgProv);
+    provisioningManager.register(vwProv);
+    provisioningManager.register(gwProv);
+    provisioningManager.register(gwsProv);
+    provisioningManager.register(credProv);
+    provisioningManager.register(permProv);
+    provisioningManager.register(dsProv);
+    provisioningManager.register(csProv);
+
+    // Register daemon services with supervisor (same instances — shared process handles)
+    processSupervisor.register(pgProv);
+    processSupervisor.register(vwProv);
+    processSupervisor.register(gwProv);
+    processSupervisor.register(dsProv);
+    processSupervisor.register(csProv);
+
     mainWindow = createWindow();
+    provisioningManager.setMainWindow(mainWindow);
     processPendingDeepLink(mainWindow);
+
+    // Start provisioned services (Postgres → Vaultwarden → Gateway → Dashboard → code-server)
+    if (provisioningManager.isComplete()) {
+      try {
+        await processSupervisor.startAll();
+        logger.info('All provisioned services started via ProcessSupervisor.');
+      } catch (err) {
+        logger.error('Failed to start provisioned services:', err);
+      }
+    }
 
     // Security: Set Content Security Policy
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -297,7 +350,7 @@ if (!gotLock) {
 
     createTray(mainWindow);
     registerHotkeys(mainWindow);
-    registerIpcHandlers(gatewayClient, serviceManager, taskEngine, workerManager, cdBridge);
+    registerIpcHandlers(gatewayClient, serviceManager, taskEngine, workerManager, cdBridge, provisioningManager);
 
     // Start API workers (graceful — workers handle missing credentials internally)
     try {
@@ -342,6 +395,9 @@ if (!gotLock) {
   app.on('before-quit', () => {
     // Mark quitting so the window close handler lets it through
     isQuiting = true;
+
+    // Stop provisioned services in reverse dependency order via supervisor
+    void processSupervisor.stopAll();
 
     // Gracefully disconnect WS client — do NOT kill the gateway process
     gatewayClient?.disconnect();

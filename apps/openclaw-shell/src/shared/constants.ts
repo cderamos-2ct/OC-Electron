@@ -38,6 +38,11 @@ export const VAULT_SYNC_INTERVAL_MS = 60_000; // 1 minute
 
 // ─── Gateway ─────────────────────────────────────────────────────
 
+export const CODE_SERVER_URL = 'http://127.0.0.1:8443';
+export const CODE_SERVER_PORT = 8443;
+export const DASHBOARD_URL = 'http://127.0.0.1:3000';
+export const DASHBOARD_PORT = 3000;
+
 export const GATEWAY_URL = 'ws://127.0.0.1:18789';
 export const GATEWAY_PORT = 18789;
 export const GATEWAY_HEALTH_INTERVAL_MS = 30_000;

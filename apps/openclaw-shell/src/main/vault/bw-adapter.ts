@@ -8,7 +8,9 @@ import { homedir } from 'os';
 import { SHELL_CONFIG_DIR_NAME, VAULT_SERVER_URL } from '../../shared/constants.js';
 
 const execFileAsync = promisify(execFile);
-const BW_BIN = process.env.BW_PATH ?? 'bw';
+import { resolveBwBin } from '../provisioning/platform.js';
+
+const BW_BIN = resolveBwBin();
 const MASTER_ENC_FILE = join(homedir(), SHELL_CONFIG_DIR_NAME, 'vault-master.enc');
 
 export interface BwItem {

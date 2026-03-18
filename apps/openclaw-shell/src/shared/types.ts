@@ -335,6 +335,7 @@ export interface MainToRendererEvents {
   'browser:tab-updated': BrowserTab;
   'browser:tab-removed': { tabId: string };
   'browser:tabs-list': BrowserTab[];
+  'provisioning:progress': { service: string; status: string; message: string; percent?: number };
   'setup:status': { setupComplete: boolean };
   'ipc:rate-limited': RateLimitError;
   'deeplink:navigate': DeepLinkAction;
@@ -416,6 +417,17 @@ export interface RendererToMainHandlers {
   'browser:pin-tab': [tabId: string];
   'browser:unpin-tab': [tabId: string];
   'browser:list-tabs': [];
+  'provisioning:get-state': [];
+  'provisioning:run-step': [serviceId: string];
+  'provisioning:run-all': [];
+  'provisioning:retry': [serviceId: string];
+  'provisioning:skip': [serviceId: string];
+  'postgres:status': [];
+  'postgres:start': [];
+  'postgres:stop': [];
+  'permissions:check-all': [];
+  'permissions:check': [permissionId: string];
+  'permissions:deep-link': [permissionId: string];
   'setup:check': [];
   'setup:complete': [config: SetupConfig];
   'telemetry:set-consent': [enabled: boolean];

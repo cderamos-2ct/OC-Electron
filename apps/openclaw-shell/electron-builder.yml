@@ -10,6 +10,9 @@ directories:
 files:
   - out/**/*
   - "!node_modules/**/*"
+asarUnpack:
+  - "node_modules/pg/**/*"
+  - "node_modules/pg-native/**/*"
 extraResources:
   - from: ../../packages/openclaw-core/dist
     to: packages/openclaw-core
@@ -17,6 +20,45 @@ extraResources:
       - "**/*"
   - from: ../../packages/openclaw-db/dist
     to: packages/openclaw-db
+    filter:
+      - "**/*"
+  # ── Bundled service binaries (Sprint 1-3) ──────────────────────────────────
+  - from: vendor/postgres/bin
+    to: postgres/bin
+    filter:
+      - initdb
+      - pg_ctl
+      - postgres
+      - pg_isready
+      - createdb
+      - createuser
+      - psql
+  - from: vendor/postgres/lib
+    to: postgres/lib
+    filter:
+      - "**/*"
+  - from: vendor/postgres/share
+    to: postgres/share
+    filter:
+      - "**/*"
+  - from: vendor/vaultwarden
+    to: vaultwarden
+    filter:
+      - "**/*"
+  - from: vendor/bw
+    to: bw
+    filter:
+      - "**/*"
+  - from: vendor/gws
+    to: gws
+    filter:
+      - "**/*"
+  - from: ../../dashboard/.next/standalone
+    to: dashboard
+    filter:
+      - "**/*"
+  - from: vendor/code-server
+    to: code-server
     filter:
       - "**/*"
 

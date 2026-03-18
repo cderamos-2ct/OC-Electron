@@ -15,6 +15,8 @@ import type { GatewayClient } from './gateway-client.js';
 import type { TaskEngine } from './task-engine.js';
 import type { CDBridge } from './cd-bridge.js';
 import type { WorkerManager } from './api-workers/worker-manager.js';
+import type { ProvisioningManager } from './provisioning/provisioning-manager.js';
+import { checkAllPermissions, checkPermission, getPermissionDeepLink } from './provisioning/macos-permissions.js';
 import type { GwsGmailWorker } from './api-workers/gws-gmail-worker.js';
 import type { GitHubWorker } from './api-workers/github-worker.js';
 import type { CalendarEventCreate } from '../shared/types.js';
@@ -43,7 +45,7 @@ function writeShellConfig(config: ShellConfig): void {
   writeFileSync(SHELL_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
 }
 
-export function registerIpcHandlers(gateway: GatewayClient, serviceManager: ServiceManager, taskEngine: TaskEngine, workerManager?: WorkerManager, cdBridge?: CDBridge): void {
+export function registerIpcHandlers(gateway: GatewayClient, serviceManager: ServiceManager, taskEngine: TaskEngine, workerManager?: WorkerManager, cdBridge?: CDBridge, provisioningManager?: ProvisioningManager): void {
   // Security: Audit log for sensitive operations
   const AUDITED_CHANNELS = ['api.gmail.send-draft', 'api.gmail.delete', 'api.gmail.batch-modify', 'api.github.merge', 'api.github.review', 'approval:decide'];
 
@@ -653,6 +655,94 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
 
   handle('browser:list-tabs', async () => {
     return Array.from(browserTabs.values());
+  });
+
+  // ── Provisioning ──────────────────────────────────────────────────────────
+  handle('provisioning:get-state', async () => {
+    if (!provisioningManager) return { error: 'Provisioning not available' };
+    return provisioningManager.getState();
+  });
+
+  handle('provisioning:run-step', async (_event, serviceId: string) => {
+    if (!provisioningManager) return { error: 'Provisioning not available' };
+    try {
+      await provisioningManager.runStep(serviceId);
+      return { ok: true };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  handle('provisioning:retry', async (_event, serviceId: string) => {
+    if (!provisioningManager) return { error: 'Provisioning not available' };
+    try {
+      await provisioningManager.retryStep(serviceId);
+      return { ok: true };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  handle('provisioning:skip', async (_event, serviceId: string) => {
+    if (!provisioningManager) return { error: 'Provisioning not available' };
+    provisioningManager.skipStep(serviceId);
+    return { ok: true };
+  });
+
+  handle('provisioning:run-all', async () => {
+    if (!provisioningManager) return { error: 'Provisioning not available' };
+    try {
+      await provisioningManager.runAll();
+      return { ok: true };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ── Postgres ─────────────────────────────────────────────────────────────
+  handle('postgres:status', async () => {
+    if (!provisioningManager) return { status: 'unknown' };
+    const step = provisioningManager.getStepState('postgres');
+    return { status: step?.status ?? 'unknown', message: step?.message ?? '' };
+  });
+
+  handle('postgres:start', async () => {
+    if (!provisioningManager) return { error: 'Provisioning not available' };
+    try {
+      await provisioningManager.runStep('postgres');
+      return { ok: true };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  handle('postgres:stop', async () => {
+    if (!provisioningManager) return { error: 'Provisioning not available' };
+    const provisioner = provisioningManager.getProvisioner('postgres');
+    if (!provisioner) return { error: 'Postgres provisioner not found' };
+    try {
+      await provisioner.stop();
+      return { ok: true };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ── Permissions ───────────────────────────────────────────────────────────
+  handle('permissions:check-all', async () => {
+    return checkAllPermissions();
+  });
+
+  handle('permissions:check', async (_event, permissionId: string) => {
+    return { granted: await checkPermission(permissionId) };
+  });
+
+  handle('permissions:deep-link', async (_event, permissionId: string) => {
+    const link = getPermissionDeepLink(permissionId);
+    if (!link) return { error: `Unknown permission: ${permissionId}` };
+    const { shell: electronShell } = await import('electron');
+    await electronShell.openExternal(link);
+    return { ok: true };
   });
 
   // ── Setup Wizard ──────────────────────────────────────────────────────────
