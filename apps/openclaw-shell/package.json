@@ -2,6 +2,7 @@
   "name": "openclaw-shell",
   "version": "0.1.0",
   "description": "OpenClaw Shell — Electron-based multi-app browser with AI agent orchestration",
+  "author": "Aegilume <dev@aegilume.com>",
   "private": true,
   "main": "out/main/index.js",
   "type": "module",

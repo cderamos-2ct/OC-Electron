@@ -6,7 +6,7 @@ export default defineConfig({
   main: {
     plugins: [
       externalizeDepsPlugin({
-        exclude: ['ws', 'pg', '@noble/ed25519', '@octokit/rest', '@googleworkspace/cli', '@openclaw/core', '@openclaw/gateway-client', 'openclaw-db', 'zustand'],
+        exclude: ['ws', 'pg', '@noble/ed25519', '@octokit/rest', '@googleworkspace/cli', '@openclaw/core', '@openclaw/gateway-client', 'openclaw-db', 'zustand', 'electron-log', 'electron-updater', '@sentry/electron'],
       }),
     ],
     resolve: {

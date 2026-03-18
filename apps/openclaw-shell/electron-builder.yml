@@ -1,6 +1,3 @@
-# Differential updates
-generateBlockmap: true
-
 appId: com.aegilume.shell
 productName: Aegilume
 protocols:
