@@ -18,7 +18,8 @@
       "@renderer/*": ["src/renderer/*"],
       "@openclaw/core": ["../../packages/openclaw-core/src/index.ts"],
       "@openclaw/core/*": ["../../packages/openclaw-core/src/*.ts"],
-      "openclaw-db": ["../../packages/openclaw-db/src/index.ts"]
+      "openclaw-db": ["../../packages/openclaw-db/src/index.ts"],
+      "@openclaw/gateway-client": ["../../packages/openclaw-gateway-client/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

@@ -27,7 +27,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build workspace dependencies
-        run: pnpm --filter "@openclaw/core" --filter "openclaw-db" --filter "@openclaw/gateway-client" build
+        run: pnpm --filter "@openclaw/core" --filter "openclaw-db" build
 
       - name: Type check
         run: cd apps/openclaw-shell && npx tsc --noEmit

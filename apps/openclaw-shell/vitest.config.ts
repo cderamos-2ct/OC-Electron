@@ -8,6 +8,7 @@ const sharedAlias = {
   '@renderer': path.resolve(__dirname, 'src/renderer'),
   '@openclaw/core': path.resolve(__dirname, '../../packages/openclaw-core/src/index.ts'),
   'openclaw-db': path.resolve(__dirname, '../../packages/openclaw-db/src/index.ts'),
+  '@openclaw/gateway-client': path.resolve(__dirname, '../../packages/openclaw-gateway-client/src/index.ts'),
 };
 
 export default defineConfig({
