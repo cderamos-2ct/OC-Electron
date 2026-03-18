@@ -48,7 +48,7 @@ import { AgentServiceBindingRegistry } from './agent-binding-registry.js';
 import { setNotificationWindow, showNativeNotification, classifyEventPriority } from './notifications.js';
 import { applyWindowState, trackWindowState } from './window-state.js';
 import { GATEWAY_URL } from '../shared/constants.js';
-import type { CDAction, EventFrame } from '../shared/types.js';
+import type { CDAction, EventFrame, GatewayConnectionState } from '../shared/types.js';
 import { BwAdapter } from './vault/bw-adapter.js';
 import { VaultAdapter } from './vault/vault-adapter.js';
 import { VaultBridge } from './vault/vault-bridge.js';
@@ -229,10 +229,10 @@ if (!gotLock) {
     gatewayClient = new GatewayClient({
       url: GATEWAY_URL,
       deviceAuth: shellDeviceAuthProvider,
-      onStateChange: (state) => {
+      onStateChange: (state: GatewayConnectionState) => {
         mainWindow?.webContents.send('gateway:state', state);
       },
-      onEvent: (evt) => {
+      onEvent: (evt: unknown) => {
         mainWindow?.webContents.send('gateway:event', evt);
 
         // Phase 5: Fire native OS notifications for important events
@@ -259,7 +259,7 @@ if (!gotLock) {
     cdBridge.setMainWindow(mainWindow);
 
     // Listen for CD action requests from the gateway
-    gatewayClient.on('cd.action.request', (payload) => {
+    gatewayClient.on('cd.action.request', (payload: unknown) => {
       const { action } = payload as { action: CDAction };
       if (action) {
         void cdBridge!.handleActionRequest(action);

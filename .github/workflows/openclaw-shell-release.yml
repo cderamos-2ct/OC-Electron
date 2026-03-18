@@ -39,6 +39,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace dependencies
+        run: pnpm --filter "@openclaw/core" --filter "openclaw-db" --filter "@openclaw/gateway-client" build
+
       - name: Build renderer + main
         run: cd apps/openclaw-shell && npx electron-vite build
 
