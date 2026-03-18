@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
 VENDOR_DIR="$APP_DIR/vendor"
 
-PG_VERSION="16.6"
+PG_VERSION="18.3"
 PGVECTOR_VERSION="0.8.0"
 ARCH="${1:-$(uname -m)}"
 
@@ -30,12 +30,12 @@ if [ "$(uname)" = "Darwin" ]; then
   echo "Extracting PostgreSQL from Homebrew bottle..."
 
   # Use Homebrew to get binaries
-  BREW_PG="$(brew --prefix postgresql@16 2>/dev/null || echo "")"
+  BREW_PG="$(brew --prefix postgresql@18 2>/dev/null || echo "")"
 
   if [ -z "$BREW_PG" ] || [ ! -d "$BREW_PG" ]; then
-    echo "Installing postgresql@16 via Homebrew (needed for binary extraction)..."
-    brew install postgresql@16
-    BREW_PG="$(brew --prefix postgresql@16)"
+    echo "Installing postgresql@18 via Homebrew (needed for binary extraction)..."
+    brew install postgresql@18
+    BREW_PG="$(brew --prefix postgresql@18)"
   fi
 
   # Copy required binaries
@@ -51,7 +51,7 @@ if [ "$(uname)" = "Darwin" ]; then
 
   # Copy required libraries
   cp -R "$BREW_PG/lib/"*.dylib "$PG_DIR/lib/" 2>/dev/null || true
-  cp -R "$BREW_PG/share/postgresql@16/" "$PG_DIR/share/" 2>/dev/null || true
+  cp -R "$BREW_PG/share/postgresql@18/" "$PG_DIR/share/" 2>/dev/null || true
 
   # pgvector extension
   echo ""
@@ -73,7 +73,7 @@ if [ "$(uname)" = "Darwin" ]; then
     echo "  Copied vector.dylib as vector.so"
   else
     # Try finding it in the Postgres extension dir
-    PG_PKGLIB="$BREW_PG/lib/postgresql@16"
+    PG_PKGLIB="$BREW_PG/lib/postgresql@18"
     if [ -f "$PG_PKGLIB/vector.so" ]; then
       cp "$PG_PKGLIB/vector.so" "$PG_DIR/lib/"
       echo "  Copied vector.so from pg extension dir"
@@ -83,7 +83,7 @@ if [ "$(uname)" = "Darwin" ]; then
   fi
 
   # Copy pgvector SQL files
-  PG_SHAREDIR="$BREW_PG/share/postgresql@16/extension"
+  PG_SHAREDIR="$BREW_PG/share/postgresql@18/extension"
   if [ -d "$PG_SHAREDIR" ]; then
     mkdir -p "$PG_DIR/share/extension"
     cp "$PG_SHAREDIR/vector"* "$PG_DIR/share/extension/" 2>/dev/null || true

@@ -26,6 +26,9 @@ data/*.sqlite
 data/*.sqlite3
 data/heartbeat_state.json
 
+# Vendor binaries (downloaded via scripts/download-vendor-binaries.sh)
+apps/openclaw-shell/vendor/
+
 # Python / Node build artifacts
 __pycache__/
 *.pyc

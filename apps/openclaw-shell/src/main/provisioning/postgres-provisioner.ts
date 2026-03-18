@@ -1,5 +1,5 @@
 // PostgreSQL provisioner — detect, install, configure, migrate
-// Bundles Postgres 16 + pgvector binaries in app extraResources
+// Bundles Postgres 18 + pgvector binaries in app extraResources
 
 import { spawn, execFile } from 'child_process';
 import { promisify } from 'util';

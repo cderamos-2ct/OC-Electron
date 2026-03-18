@@ -13,7 +13,7 @@ const execFileAsync = promisify(execFile);
 const log = createLogger('CodeServerProvisioner');
 
 const CODE_SERVER_PORT = 8443;
-const CODE_SERVER_VERSION = '4.96.4';
+const CODE_SERVER_VERSION = '4.111.0';
 
 export class CodeServerProvisioner implements Provisioner {
   readonly id = 'code-server';
