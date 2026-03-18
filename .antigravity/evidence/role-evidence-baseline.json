@@ -1,0 +1,4 @@
+{
+  "enforceFrom": "2026-03-18T11:59:59Z",
+  "notes": "Role evidence is required for tasks with roleEvidenceRequired=true"
+}

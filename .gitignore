@@ -84,3 +84,9 @@ domains/finance/Logs/
 domains/finance/Processed/
 domains/finance/Review/
 domains/finance/Exports/
+# Harness runtime artifacts (local-only)
+.antigravity/autonomy-heartbeat.json
+.antigravity/autonomy-run.log
+.antigravity/TASK_STATUS.md
+.antigravity/task-quality-gates.jsonl
+.antigravity/quality-gates/

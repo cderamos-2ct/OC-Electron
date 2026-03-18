@@ -15,7 +15,8 @@ has_pattern() {
   fi
 }
 
-DATA_DIR="${OPENCLAW_DATA_DIR:-/Volumes/Storage/OpenClaw-Data}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DATA_DIR="${OPENCLAW_DATA_DIR:-$REPO_ROOT/.antigravity}"
 
 for file in \
   "$DATA_DIR/RULES.md" \
