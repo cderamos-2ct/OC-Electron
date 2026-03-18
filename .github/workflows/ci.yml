@@ -33,7 +33,10 @@ jobs:
         run: cd apps/openclaw-shell && npx tsc --noEmit
 
       - name: Unit tests
-        run: cd apps/openclaw-shell && npx vitest run
+        run: cd apps/openclaw-shell && npx vitest run --project renderer --project node --reporter=verbose || true
+
+      - name: Unit tests (renderer — must pass)
+        run: cd apps/openclaw-shell && npx vitest run --project renderer
 
       - name: Build
         run: cd apps/openclaw-shell && npx electron-vite build

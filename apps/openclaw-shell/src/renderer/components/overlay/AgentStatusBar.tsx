@@ -55,6 +55,23 @@ export function AgentStatusBar() {
       >
         {label}
       </span>
+      {updateStatus.state === 'ready' && (
+        <button
+          onClick={installNow}
+          style={{
+            marginLeft: 'auto',
+            fontSize: '10px',
+            color: 'var(--accent, #d4a843)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0 4px',
+            letterSpacing: '0.3px',
+          }}
+        >
+          Update ready - restart to install
+        </button>
+      )}
     </div>
   );
 }

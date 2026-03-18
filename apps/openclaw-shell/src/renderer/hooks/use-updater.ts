@@ -9,7 +9,7 @@ export function useUpdater() {
 
   useEffect(() => {
     // Get current status on mount
-    invoke('updater:status').then((result) => {
+    (invoke as (channel: 'updater:status') => Promise<unknown>)('updater:status').then((result) => {
       if (result && typeof result === 'object') {
         setStatus(result as UpdateStatus);
       }
@@ -23,11 +23,11 @@ export function useUpdater() {
   }, []);
 
   const checkForUpdates = useCallback(() => {
-    invoke('updater:check').catch(() => {});
+    (invoke as (channel: 'updater:check') => Promise<unknown>)('updater:check').catch(() => {});
   }, []);
 
   const installNow = useCallback(() => {
-    invoke('updater:install-now').catch(() => {});
+    (invoke as (channel: 'updater:install-now') => Promise<unknown>)('updater:install-now').catch(() => {});
   }, []);
 
   return {
