@@ -11,18 +11,19 @@ import {
   BrowserView,
   VaultView,
 } from '../../views';
+import { ViewErrorBoundary } from '../errors/ViewErrorBoundary';
 
 function renderView(view: ViewId): React.ReactNode {
   switch (view) {
-    case 'home':         return <HomeView />;
-    case 'tasks':        return <TasksView />;
-    case 'draft-review': return <DraftReviewView />;
-    case 'agents':       return <AgentsView />;
-    case 'comms':        return <CommsView />;
-    case 'calendar':     return <CalendarView />;
-    case 'github':       return <GitHubView />;
-    case 'browser':      return <BrowserView />;
-    case 'vault':        return <VaultView />;
+    case 'home':         return <ViewErrorBoundary viewId="home"><HomeView /></ViewErrorBoundary>;
+    case 'tasks':        return <ViewErrorBoundary viewId="tasks"><TasksView /></ViewErrorBoundary>;
+    case 'draft-review': return <ViewErrorBoundary viewId="draft-review"><DraftReviewView /></ViewErrorBoundary>;
+    case 'agents':       return <ViewErrorBoundary viewId="agents"><AgentsView /></ViewErrorBoundary>;
+    case 'comms':        return <ViewErrorBoundary viewId="comms"><CommsView /></ViewErrorBoundary>;
+    case 'calendar':     return <ViewErrorBoundary viewId="calendar"><CalendarView /></ViewErrorBoundary>;
+    case 'github':       return <ViewErrorBoundary viewId="github"><GitHubView /></ViewErrorBoundary>;
+    case 'browser':      return <ViewErrorBoundary viewId="browser"><BrowserView /></ViewErrorBoundary>;
+    case 'vault':        return <ViewErrorBoundary viewId="vault"><VaultView /></ViewErrorBoundary>;
   }
 }
 

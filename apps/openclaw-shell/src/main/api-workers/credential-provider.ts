@@ -1,13 +1,15 @@
 // Credential provider interface — abstracts secret access for API workers
-// Three implementations:
+// Four implementations:
 //   VaultCredentialProvider     — Bitwarden vault via VaultBridge (primary)
 //   PostgresCredentialProvider  — Postgres vault_secrets (middle tier / offline cache)
-//   LegacyFileCredentialProvider — ~/.openclaw-shell/api-credentials.json (fallback)
+//   SecureCredentialProvider    — safeStorage-encrypted local store (offline fallback)
+//   LegacyFileCredentialProvider — ~/.openclaw-shell/api-credentials.json (legacy fallback)
 
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { SHELL_CONFIG_DIR_NAME } from '../../shared/constants.js';
+import { getCredential as safeGetCredential } from '../security/secure-credentials-store.js';
 import type { VaultBridge } from '../vault/vault-bridge.js';
 import { getVaultSecret } from '../vault/vault-db-repo.js';
 
@@ -95,6 +97,34 @@ export class PostgresCredentialProvider implements CredentialProvider {
         try { cb(); } catch { /* ignore */ }
       }
     }
+  }
+
+  dispose(): void {
+    this.rotationCallbacks.clear();
+  }
+}
+
+/**
+ * Secure local provider — reads from safeStorage-encrypted credentials blob.
+ * Used when vault is unreachable but credentials have been migrated from plaintext.
+ * Falls back gracefully if a key isn't present in the store.
+ */
+export class SecureCredentialProvider implements CredentialProvider {
+  private rotationCallbacks = new Map<string, Set<() => void>>();
+
+  async getCredential(secretName: string, agentId: string): Promise<string> {
+    const value = safeGetCredential(secretName);
+    if (!value) {
+      throw new Error(`Credential "${secretName}" not found in secure store for agent "${agentId}"`);
+    }
+    return value;
+  }
+
+  onRotated(secretName: string, callback: () => void): void {
+    if (!this.rotationCallbacks.has(secretName)) {
+      this.rotationCallbacks.set(secretName, new Set());
+    }
+    this.rotationCallbacks.get(secretName)!.add(callback);
   }
 
   dispose(): void {

@@ -1,7 +1,8 @@
 import { ipcMain, shell, BrowserWindow } from 'electron';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, appendFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { auditLogger } from './logging/logger.js';
 import type { ShellConfig, ServiceConfig, TaskPatch, QuickDecision } from '../shared/types.js';
 import { DEFAULT_SHELL_CONFIG } from '../shared/types.js';
 import { SHELL_CONFIG_DIR_NAME, SHELL_CONFIG_FILE_NAME } from '../shared/constants.js';
@@ -19,6 +20,7 @@ import type { GitHubWorker } from './api-workers/github-worker.js';
 import type { CalendarEventCreate } from '../shared/types.js';
 import type { GwsCalendarWorker } from './api-workers/gws-calendar-worker.js';
 import { readAuditLog } from './audit-log.js';
+import { wrapWithRateLimit, rateLimiter } from './security/ipc-rate-limiter.js';
 
 function readShellConfig(): ShellConfig {
   if (!existsSync(SHELL_CONFIG_FILE)) {
@@ -44,24 +46,25 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   const AUDITED_CHANNELS = ['api.gmail.send-draft', 'api.gmail.delete', 'api.gmail.batch-modify', 'api.github.merge', 'api.github.review', 'approval:decide'];
 
   function auditLog(channel: string, args: unknown[]): void {
-    const entry = {
-      timestamp: new Date().toISOString(),
-      channel,
-      args: JSON.stringify(args).slice(0, 500),
-    };
-    console.log('[Audit]', JSON.stringify(entry));
-    const logPath = join(SHELL_CONFIG_DIR, 'ipc-audit.jsonl');
-    try {
-      appendFileSync(logPath, JSON.stringify(entry) + '\n', 'utf-8');
-    } catch { /* non-fatal */ }
+    auditLogger.info('ipc-audit', { channel, args: JSON.stringify(args).slice(0, 500) });
   }
 
   void AUDITED_CHANNELS; // referenced for documentation; individual calls below
 
+  // Bootstrap phase: elevate rate limits during first-run setup
+  const isBootstrap = !existsSync(join(SHELL_CONFIG_DIR, 'setup.json'));
+  if (isBootstrap) rateLimiter.setBootstrapMode(true);
+
+  /** Rate-limited ipcMain.handle wrapper. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function handle(channel: string, listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => any): void {
+    ipcMain.handle(channel, wrapWithRateLimit(channel, listener));
+  }
+
   const bindingRegistry = AgentServiceBindingRegistry.fromConfig();
 
   // ── Gateway ──────────────────────────────────────────────────────────────
-  ipcMain.handle('gateway:rpc', async (_event, method: string, params?: unknown) => {
+  handle('gateway:rpc', async (_event, method: string, params?: unknown) => {
     if (!gateway.isConnected) {
       return { error: 'not connected' };
     }
@@ -72,7 +75,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('gateway:agent-rpc', async (_event, agentId: string, method: string, params?: unknown) => {
+  handle('gateway:agent-rpc', async (_event, agentId: string, method: string, params?: unknown) => {
     if (!gateway.isConnected) {
       return { error: 'not connected' };
     }
@@ -84,40 +87,40 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   });
 
   // ── Tasks ─────────────────────────────────────────────────────────────────
-  ipcMain.handle('task:list', async () => {
+  handle('task:list', async () => {
     return taskEngine.listTasks();
   });
 
-  ipcMain.handle('task:get', async (_event, taskId: string) => {
+  handle('task:get', async (_event, taskId: string) => {
     return taskEngine.getTask(taskId);
   });
 
-  ipcMain.handle('task:mutate', async (_event, taskId: string, patch: TaskPatch) => {
+  handle('task:mutate', async (_event, taskId: string, patch: TaskPatch) => {
     return taskEngine.mutateTask(taskId, patch);
   });
 
-  ipcMain.handle('task:quick-decision', async (_event, taskId: string, decision: QuickDecision) => {
+  handle('task:quick-decision', async (_event, taskId: string, decision: QuickDecision) => {
     return taskEngine.quickDecision(taskId, decision);
   });
 
-  ipcMain.handle('task:batch-approve', async (_event, taskIds: string[]) => {
+  handle('task:batch-approve', async (_event, taskIds: string[]) => {
     return taskEngine.batchApprove(taskIds);
   });
 
   // ── Services ──────────────────────────────────────────────────────────────
-  ipcMain.handle('service:list', async () => {
+  handle('service:list', async () => {
     return serviceManager.listServices();
   });
 
-  ipcMain.handle('service:add', async (_event, config: ServiceConfig) => {
+  handle('service:add', async (_event, config: ServiceConfig) => {
     return serviceManager.loadService(config);
   });
 
-  ipcMain.handle('service:remove', async (_event, serviceId: string) => {
+  handle('service:remove', async (_event, serviceId: string) => {
     return serviceManager.destroyService(serviceId);
   });
 
-  ipcMain.handle('service:reload', async (_event, serviceId: string) => {
+  handle('service:reload', async (_event, serviceId: string) => {
     const status = serviceManager.getService(serviceId);
     if (!status) return { error: `Service not found: ${serviceId}` };
     // Renderer handles actual webview reload; main just tracks state
@@ -125,28 +128,28 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return { ok: true };
   });
 
-  ipcMain.handle('service:hibernate', async (_event, serviceId: string) => {
+  handle('service:hibernate', async (_event, serviceId: string) => {
     return serviceManager.hibernateService(serviceId);
   });
 
   // ── Shell Config ──────────────────────────────────────────────────────────
-  ipcMain.handle('shell:get-config', async () => {
+  handle('shell:get-config', async () => {
     return readShellConfig();
   });
 
-  ipcMain.handle('shell:set-config', async (_event, patch: Partial<ShellConfig>) => {
+  handle('shell:set-config', async (_event, patch: Partial<ShellConfig>) => {
     const current = readShellConfig();
     const updated: ShellConfig = { ...current, ...patch };
     writeShellConfig(updated);
     return updated;
   });
 
-  ipcMain.handle('shell:quit', async () => {
+  handle('shell:quit', async () => {
     const { app } = await import('electron');
     app.quit();
   });
 
-  ipcMain.handle('shell:open-external', async (_event, url: string) => {
+  handle('shell:open-external', async (_event, url: string) => {
     const parsed = new URL(url);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       throw new Error(`Blocked non-HTTP URL: ${url}`);
@@ -154,13 +157,59 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     await shell.openExternal(url);
   });
 
+  handle('shell:export-debug-bundle', async () => {
+    const { app, dialog } = await import('electron');
+    const { createWriteStream, existsSync: fsExists } = await import('fs');
+    const { join: pathJoin } = await import('path');
+    const os = await import('os');
+
+    const logDir = pathJoin(app.getPath('userData'), 'logs');
+    const logFile = pathJoin(logDir, 'openclaw.log');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const bundleName = `openclaw-debug-${timestamp}.txt`;
+
+    const { filePath, canceled } = await dialog.showSaveDialog({
+      title: 'Save Debug Bundle',
+      defaultPath: pathJoin(os.homedir(), 'Desktop', bundleName),
+      filters: [{ name: 'Text Files', extensions: ['txt'] }],
+    });
+
+    if (canceled || !filePath) return { ok: false, reason: 'canceled' };
+
+    try {
+      const lines: string[] = [
+        `=== OpenClaw Debug Bundle ===`,
+        `Generated: ${new Date().toISOString()}`,
+        `Platform: ${process.platform} ${os.release()}`,
+        `Electron: ${process.versions.electron}`,
+        `Node: ${process.versions.node}`,
+        `App version: ${app.getVersion()}`,
+        ``,
+        `=== Log File ===`,
+      ];
+
+      if (fsExists(logFile)) {
+        const { readFileSync } = await import('fs');
+        lines.push(readFileSync(logFile, 'utf-8'));
+      } else {
+        lines.push('(no log file found)');
+      }
+
+      const { writeFileSync } = await import('fs');
+      writeFileSync(filePath, lines.join('\n'), 'utf-8');
+      return { ok: true, filePath };
+    } catch (err) {
+      return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
   // ── Approvals (Phase 4: CD Action Bridge) ───────────────────────
-  ipcMain.handle('approval:list', async () => {
+  handle('approval:list', async () => {
     if (!cdBridge) return [];
     return cdBridge.listPendingApprovals();
   });
 
-  ipcMain.handle('approval:decide', async (_event, actionId: string, decision: 'approved' | 'denied', alwaysAllow?: boolean) => {
+  handle('approval:decide', async (_event, actionId: string, decision: 'approved' | 'denied', alwaysAllow?: boolean) => {
     auditLog('approval:decide', [actionId, decision]);
     if (!cdBridge) return { error: 'CD Bridge not available' };
     try {
@@ -170,28 +219,28 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('approval:rules', async () => {
+  handle('approval:rules', async () => {
     if (!cdBridge) return [];
     return cdBridge.getApprovalRules();
   });
 
-  ipcMain.handle('approval:revoke-rule', async (_event, ruleId: string) => {
+  handle('approval:revoke-rule', async (_event, ruleId: string) => {
     if (!cdBridge) return { error: 'CD Bridge not available' };
     const revoked = cdBridge.revokeApprovalRule(ruleId);
     return { ok: revoked };
   });
 
-  ipcMain.handle('approval:audit-log', async (_event, limit?: number) => {
+  handle('approval:audit-log', async (_event, limit?: number) => {
     return readAuditLog(limit);
   });
 
   // ── Agent Bindings ────────────────────────────────────────────────────────
-  ipcMain.handle('agent:bindings', async () => {
+  handle('agent:bindings', async () => {
     return bindingRegistry.getConfig();
   });
 
   // ── API Worker Status ─────────────────────────────────────────────────────
-  ipcMain.handle('api.workers.status', async () => {
+  handle('api.workers.status', async () => {
     if (!workerManager) return [];
     return workerManager.getAllStatuses();
   });
@@ -207,7 +256,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return worker;
   }
 
-  ipcMain.handle('api.gmail.list', async (_event, agentId: string, query?: string, maxResults?: number) => {
+  handle('api.gmail.list', async (_event, agentId: string, query?: string, maxResults?: number) => {
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -217,7 +266,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.gmail.get', async (_event, agentId: string, messageId: string) => {
+  handle('api.gmail.get', async (_event, agentId: string, messageId: string) => {
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -227,7 +276,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.gmail.archive', async (_event, agentId: string, messageId: string) => {
+  handle('api.gmail.archive', async (_event, agentId: string, messageId: string) => {
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -238,7 +287,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.gmail.label', async (_event, agentId: string, messageId: string, addLabels: string[], removeLabels?: string[]) => {
+  handle('api.gmail.label', async (_event, agentId: string, messageId: string, addLabels: string[], removeLabels?: string[]) => {
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -249,7 +298,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.gmail.draft', async (_event, agentId: string, to: string, subject: string, body: string) => {
+  handle('api.gmail.draft', async (_event, agentId: string, to: string, subject: string, body: string) => {
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -259,7 +308,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.gmail.send-draft', async (_event, agentId: string, draftId: string) => {
+  handle('api.gmail.send-draft', async (_event, agentId: string, draftId: string) => {
     auditLog('api.gmail.send-draft', [agentId, draftId]);
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
@@ -271,7 +320,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.gmail.delete', async (_event, agentId: string, messageId: string) => {
+  handle('api.gmail.delete', async (_event, agentId: string, messageId: string) => {
     auditLog('api.gmail.delete', [agentId, messageId]);
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
@@ -283,7 +332,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.gmail.batch-modify', async (_event, agentId: string, messageIds: string[], addLabels: string[], removeLabels: string[]) => {
+  handle('api.gmail.batch-modify', async (_event, agentId: string, messageIds: string[], addLabels: string[], removeLabels: string[]) => {
     auditLog('api.gmail.batch-modify', [agentId, messageIds]);
     const worker = getGmailWorker(agentId);
     if ('error' in worker) return worker;
@@ -306,7 +355,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return worker;
   }
 
-  ipcMain.handle('api.github.notifications', async (_event, agentId: string, all?: boolean) => {
+  handle('api.github.notifications', async (_event, agentId: string, all?: boolean) => {
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -316,7 +365,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.github.notification-read', async (_event, agentId: string, threadId: string) => {
+  handle('api.github.notification-read', async (_event, agentId: string, threadId: string) => {
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -327,7 +376,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.github.prs', async (_event, agentId: string, owner: string, repo: string, state?: string) => {
+  handle('api.github.prs', async (_event, agentId: string, owner: string, repo: string, state?: string) => {
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -337,7 +386,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.github.pr', async (_event, agentId: string, owner: string, repo: string, number: number) => {
+  handle('api.github.pr', async (_event, agentId: string, owner: string, repo: string, number: number) => {
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -347,7 +396,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.github.review', async (_event, agentId: string, owner: string, repo: string, number: number, body: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT') => {
+  handle('api.github.review', async (_event, agentId: string, owner: string, repo: string, number: number, body: string, event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT') => {
     auditLog('api.github.review', [agentId, owner, repo, number, event]);
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
@@ -359,7 +408,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.github.merge', async (_event, agentId: string, owner: string, repo: string, number: number, mergeMethod?: 'merge' | 'squash' | 'rebase') => {
+  handle('api.github.merge', async (_event, agentId: string, owner: string, repo: string, number: number, mergeMethod?: 'merge' | 'squash' | 'rebase') => {
     auditLog('api.github.merge', [agentId, owner, repo, number]);
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
@@ -371,7 +420,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.github.issues', async (_event, agentId: string, owner: string, repo: string, state?: string) => {
+  handle('api.github.issues', async (_event, agentId: string, owner: string, repo: string, state?: string) => {
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -381,7 +430,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.github.comment', async (_event, agentId: string, owner: string, repo: string, number: number, body: string) => {
+  handle('api.github.comment', async (_event, agentId: string, owner: string, repo: string, number: number, body: string) => {
     const worker = getGitHubWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -403,7 +452,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return worker;
   }
 
-  ipcMain.handle('api.calendar.list', async (_event, agentId: string, timeMin: string, timeMax: string, calendarId?: string) => {
+  handle('api.calendar.list', async (_event, agentId: string, timeMin: string, timeMax: string, calendarId?: string) => {
     const worker = getCalendarWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -413,7 +462,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.calendar.get', async (_event, agentId: string, eventId: string, calendarId?: string) => {
+  handle('api.calendar.get', async (_event, agentId: string, eventId: string, calendarId?: string) => {
     const worker = getCalendarWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -423,7 +472,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.calendar.create', async (_event, agentId: string, event: CalendarEventCreate, calendarId?: string) => {
+  handle('api.calendar.create', async (_event, agentId: string, event: CalendarEventCreate, calendarId?: string) => {
     const worker = getCalendarWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -433,7 +482,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.calendar.update', async (_event, agentId: string, eventId: string, event: Partial<CalendarEventCreate>, calendarId?: string) => {
+  handle('api.calendar.update', async (_event, agentId: string, eventId: string, event: Partial<CalendarEventCreate>, calendarId?: string) => {
     const worker = getCalendarWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -443,7 +492,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.calendar.accept', async (_event, agentId: string, eventId: string, calendarId?: string) => {
+  handle('api.calendar.accept', async (_event, agentId: string, eventId: string, calendarId?: string) => {
     const worker = getCalendarWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -453,7 +502,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.calendar.decline', async (_event, agentId: string, eventId: string, calendarId?: string) => {
+  handle('api.calendar.decline', async (_event, agentId: string, eventId: string, calendarId?: string) => {
     const worker = getCalendarWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -463,7 +512,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
   });
 
-  ipcMain.handle('api.calendar.free-time', async (_event, agentId: string, timeMin: string, timeMax: string, attendees?: string[]) => {
+  handle('api.calendar.free-time', async (_event, agentId: string, timeMin: string, timeMax: string, attendees?: string[]) => {
     const worker = getCalendarWorker(agentId);
     if ('error' in worker) return worker;
     try {
@@ -498,7 +547,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return (tab as (import('../shared/types.js').BrowserTab & { wcId?: number }) | undefined)?.wcId;
   }
 
-  ipcMain.handle('browser:navigate', async (_event, url: string, tabId?: string) => {
+  handle('browser:navigate', async (_event, url: string, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     const wcId = resolveWebContentsId(tabId);
     const result = await cdBridge.executeBrowserRawAction('navigate', { url }, wcId);
@@ -512,52 +561,52 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return result;
   });
 
-  ipcMain.handle('browser:click', async (_event, selector: string, tabId?: string) => {
+  handle('browser:click', async (_event, selector: string, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('click', { selector }, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:fill', async (_event, selector: string, value: string, tabId?: string) => {
+  handle('browser:fill', async (_event, selector: string, value: string, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('fill', { selector, value }, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:screenshot', async (_event, tabId?: string, fullPage?: boolean) => {
+  handle('browser:screenshot', async (_event, tabId?: string, fullPage?: boolean) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('screenshot', { fullPage: fullPage ?? false }, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:read', async (_event, tabId?: string, selector?: string) => {
+  handle('browser:read', async (_event, tabId?: string, selector?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('read', { selector }, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:scroll', async (_event, selector: string | undefined, deltaY: number, tabId?: string) => {
+  handle('browser:scroll', async (_event, selector: string | undefined, deltaY: number, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('scroll', { selector, deltaY }, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:wait', async (_event, ms: number, tabId?: string) => {
+  handle('browser:wait', async (_event, ms: number, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('wait', { ms }, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:evaluate', async (_event, expression: string, tabId?: string) => {
+  handle('browser:evaluate', async (_event, expression: string, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('evaluate', { expression }, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:network-enable', async (_event, tabId?: string) => {
+  handle('browser:network-enable', async (_event, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('network-enable', {}, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:get-document', async (_event, tabId?: string) => {
+  handle('browser:get-document', async (_event, tabId?: string) => {
     if (!cdBridge) return { error: 'CDP bridge not available' };
     return cdBridge.executeBrowserRawAction('get-document', {}, resolveWebContentsId(tabId));
   });
 
-  ipcMain.handle('browser:add-tab', async (_event, name: string, url: string, agentId?: string, autoPin?: boolean) => {
+  handle('browser:add-tab', async (_event, name: string, url: string, agentId?: string, autoPin?: boolean) => {
     const { randomUUID } = await import('node:crypto');
     const tabId = randomUUID();
     const now = new Date().toISOString();
@@ -576,13 +625,13 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return tab;
   });
 
-  ipcMain.handle('browser:close-tab', async (_event, tabId: string) => {
+  handle('browser:close-tab', async (_event, tabId: string) => {
     const existed = browserTabs.delete(tabId);
     if (existed) notifyTabRemoved(tabId);
     return { ok: existed };
   });
 
-  ipcMain.handle('browser:pin-tab', async (_event, tabId: string) => {
+  handle('browser:pin-tab', async (_event, tabId: string) => {
     const tab = browserTabs.get(tabId);
     if (!tab) return { error: `Tab not found: ${tabId}` };
     tab.isPinned = true;
@@ -591,7 +640,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return tab;
   });
 
-  ipcMain.handle('browser:unpin-tab', async (_event, tabId: string) => {
+  handle('browser:unpin-tab', async (_event, tabId: string) => {
     const tab = browserTabs.get(tabId);
     if (!tab) return { error: `Tab not found: ${tabId}` };
     tab.isPinned = false;
@@ -600,14 +649,14 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return tab;
   });
 
-  ipcMain.handle('browser:list-tabs', async () => {
+  handle('browser:list-tabs', async () => {
     return Array.from(browserTabs.values());
   });
 
   // ── Setup Wizard ──────────────────────────────────────────────────────────
   const SETUP_FILE = join(SHELL_CONFIG_DIR, 'setup.json');
 
-  ipcMain.handle('setup:check', async () => {
+  handle('setup:check', async () => {
     try {
       if (existsSync(SETUP_FILE)) {
         const raw = readFileSync(SETUP_FILE, 'utf-8');
@@ -618,7 +667,7 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     return { setupComplete: false, config: null };
   });
 
-  ipcMain.handle('setup:complete', async (_event, config: unknown) => {
+  handle('setup:complete', async (_event, config: unknown) => {
     if (!existsSync(SHELL_CONFIG_DIR)) {
       mkdirSync(SHELL_CONFIG_DIR, { recursive: true });
     }

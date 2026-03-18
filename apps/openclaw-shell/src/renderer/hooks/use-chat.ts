@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { invoke, on } from '../lib/ipc-client';
+import { createRendererLogger } from '../lib/logger';
 import type { ChatEvent } from '../../shared/types';
+
+const log = createRendererLogger('use-chat');
 
 export interface ChatMessage {
   id: string;
@@ -42,7 +45,7 @@ export function useChat() {
       })
       .catch((err) => {
         if (cancelled) return;
-        console.warn('[use-chat] Failed to load history:', err);
+        log.warn('Failed to load history:', err);
         // Non-fatal — start with empty messages
       });
     return () => {

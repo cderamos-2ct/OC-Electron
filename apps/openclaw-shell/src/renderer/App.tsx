@@ -11,6 +11,7 @@ import { useSetupStore } from './stores/setup-store';
 import { SetupWizard } from './views/setup/SetupWizard';
 import type { SetupResult } from './views/setup/SetupWizard';
 import { BootstrapOverlay } from './views/setup/BootstrapOverlay';
+import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
 
 export function App() {
   const services = useShellStore((s) => s.services);
@@ -93,7 +94,7 @@ export function App() {
   const isBrowserView = activeView === 'browser';
 
   return (
-    <>
+    <AppErrorBoundary>
       {/* Setup wizard overlay */}
       {!setupLoading && !setupComplete && !bootstrapping && (
         <SetupWizard onComplete={handleSetupComplete} />
@@ -233,6 +234,6 @@ export function App() {
         <ChatRail />
       </div>
     </div>
-    </>
+    </AppErrorBoundary>
   );
 }

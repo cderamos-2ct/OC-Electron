@@ -4,6 +4,9 @@ import { homedir } from 'os';
 import { SHELL_CONFIG_DIR_NAME } from '../../shared/constants.js';
 import type { APIWorkerStatus } from '../../shared/types.js';
 import type { CredentialProvider } from './credential-provider.js';
+import { createLogger } from '../logging/logger.js';
+
+const log = createLogger('WorkerManager');
 
 const CREDENTIALS_FILE = join(homedir(), SHELL_CONFIG_DIR_NAME, 'api-credentials.json');
 
@@ -49,14 +52,14 @@ export class WorkerManager {
       const raw = readFileSync(CREDENTIALS_FILE, 'utf-8');
       return JSON.parse(raw) as APICredentials;
     } catch (err) {
-      console.warn('[WorkerManager] Failed to load credentials file:', err);
+      log.warn('Failed to load credentials file:', err);
       return {};
     }
   }
 
   register(worker: APIWorker): void {
     if (this.workers.has(worker.name)) {
-      console.warn(`[WorkerManager] Worker "${worker.name}" already registered, skipping.`);
+      log.warn(`Worker "${worker.name}" already registered, skipping.`);
       return;
     }
     this.workers.set(worker.name, {
@@ -74,9 +77,9 @@ export class WorkerManager {
       try {
         entry.worker.start();
         entry.isRunning = true;
-        console.log(`[WorkerManager] Started worker: ${name}`);
+        log.info(`Started worker: ${name}`);
       } catch (err) {
-        console.error(`[WorkerManager] Failed to start worker "${name}":`, err);
+        log.error(`Failed to start worker "${name}":`, err);
         entry.errorCount++;
         entry.consecutiveErrors++;
       }
@@ -88,9 +91,9 @@ export class WorkerManager {
       try {
         entry.worker.stop();
         entry.isRunning = false;
-        console.log(`[WorkerManager] Stopped worker: ${name}`);
+        log.info(`Stopped worker: ${name}`);
       } catch (err) {
-        console.error(`[WorkerManager] Failed to stop worker "${name}":`, err);
+        log.error(`Failed to stop worker "${name}":`, err);
       }
     }
   }
@@ -100,9 +103,9 @@ export class WorkerManager {
       if (entry.worker.refreshCredentials) {
         try {
           await entry.worker.refreshCredentials();
-          console.log(`[WorkerManager] Refreshed credentials for: ${name}`);
+          log.info(`Refreshed credentials for: ${name}`);
         } catch (err) {
-          console.error(`[WorkerManager] Failed to refresh credentials for "${name}":`, err);
+          log.error(`Failed to refresh credentials for "${name}":`, err);
         }
       }
     }

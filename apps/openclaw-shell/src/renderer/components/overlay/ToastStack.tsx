@@ -40,9 +40,19 @@ export function ToastStack() {
       });
     });
 
+    const unsubRateLimit = on('ipc:rate-limited', (data) => {
+      const retryS = Math.ceil(data.retryAfter / 1000);
+      addToast({
+        title: 'Rate limit reached',
+        body: `Channel "${data.channel}" is throttled. Retry in ${retryS}s.`,
+        priority: 'attention',
+      });
+    });
+
     return () => {
       unsubNotification();
       unsubAgentMessage();
+      unsubRateLimit();
     };
   }, [addToast]);
 

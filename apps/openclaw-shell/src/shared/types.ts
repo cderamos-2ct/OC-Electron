@@ -285,6 +285,14 @@ export interface SetupConfig {
   completedAt: string;
 }
 
+// ─── IPC Rate Limit Error ────────────────────────────────────────
+
+export interface RateLimitError {
+  error: 'rate_limited';
+  channel: string;
+  retryAfter: number; // ms until caller may retry
+}
+
 // ─── IPC Channel Types ───────────────────────────────────────────
 
 // Main -> Renderer (events via webContents.send)
@@ -313,6 +321,7 @@ export interface MainToRendererEvents {
   'browser:tab-removed': { tabId: string };
   'browser:tabs-list': BrowserTab[];
   'setup:status': { setupComplete: boolean };
+  'ipc:rate-limited': RateLimitError;
 }
 
 // Renderer -> Main (invoke/handle)
@@ -372,6 +381,8 @@ export interface RendererToMainHandlers {
   'vault:revoke-all': [];
   'vault:pending-approvals': [];
   'vault:decide-approval': [approvalId: string, decision: 'approved' | 'denied'];
+  'credentials:test-connection': [serviceId: string];
+  'shell:export-debug-bundle': [];
   // Browser / CDP actions
   'browser:navigate': [url: string, tabId?: string];
   'browser:click': [selector: string, tabId?: string];

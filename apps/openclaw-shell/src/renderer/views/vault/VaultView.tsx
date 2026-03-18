@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { invoke, on } from '../../lib/ipc-client';
+import { createRendererLogger } from '../../lib/logger';
 import type {
   VaultStatus,
   VaultSecretMeta,
@@ -7,6 +8,8 @@ import type {
   PendingVaultApproval,
   VaultConnectionState,
 } from '../../../shared/types';
+
+const log = createRendererLogger('VaultView');
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -392,6 +395,22 @@ function VaultStatusBar({ status }: { status: VaultStatus | null }) {
         <button
           style={{
             padding: '5px 12px', fontSize: 11, fontWeight: 600,
+            border: `1px solid ${C.border}`, borderRadius: 6,
+            background: 'transparent', color: C.text2, cursor: 'pointer',
+          }}
+          onClick={() => {
+            invoke('shell:export-debug-bundle').then(() => {
+              log.info('Debug bundle exported');
+            }).catch((err) => {
+              log.warn('Debug bundle export failed:', err);
+            });
+          }}
+        >
+          Export Debug Bundle
+        </button>
+        <button
+          style={{
+            padding: '5px 12px', fontSize: 11, fontWeight: 600,
             border: `1px solid rgba(231,76,60,0.4)`, borderRadius: 6,
             background: 'transparent', color: C.red, cursor: 'pointer',
           }}
@@ -440,6 +459,170 @@ function GatekeeperPrompt({ onUnlock }: { onUnlock: () => void }) {
       >
         Unlock Vault
       </button>
+    </div>
+  );
+}
+
+// ─── Service Connection Panel ────────────────────────────────────────────────
+
+type ConnectionStatus = 'unknown' | 'testing' | 'ok' | 'error';
+
+interface ServiceConnectionEntry {
+  id: string;
+  label: string;
+  secretKey: string;
+  status: ConnectionStatus;
+  message?: string;
+}
+
+const INITIAL_SERVICES: Omit<ServiceConnectionEntry, 'status' | 'message'>[] = [
+  { id: 'github',    label: 'GitHub',    secretKey: 'openclaw/api-keys/github-pat' },
+  { id: 'fireflies', label: 'Fireflies', secretKey: 'openclaw/api-keys/fireflies' },
+];
+
+function statusColor(status: ConnectionStatus): string {
+  switch (status) {
+    case 'ok':      return C.green;
+    case 'error':   return C.red;
+    case 'testing': return C.yellow;
+    default:        return C.muted;
+  }
+}
+
+function statusLabel(status: ConnectionStatus): string {
+  switch (status) {
+    case 'ok':      return 'Connected';
+    case 'error':   return 'Failed';
+    case 'testing': return 'Testing...';
+    default:        return 'Unknown';
+  }
+}
+
+function ServiceConnectionPanel() {
+  const [services, setServices] = useState<ServiceConnectionEntry[]>(() =>
+    INITIAL_SERVICES.map(s => ({ ...s, status: 'unknown' as ConnectionStatus }))
+  );
+
+  const testConnection = useCallback(async (serviceId: string) => {
+    setServices(prev =>
+      prev.map(s => s.id === serviceId ? { ...s, status: 'testing', message: undefined } : s)
+    );
+
+    try {
+      const result = await invoke('credentials:test-connection', serviceId) as { ok: boolean; message?: string };
+      setServices(prev =>
+        prev.map(s =>
+          s.id === serviceId
+            ? { ...s, status: result.ok ? 'ok' : 'error', message: result.message }
+            : s
+        )
+      );
+    } catch (err) {
+      setServices(prev =>
+        prev.map(s =>
+          s.id === serviceId
+            ? { ...s, status: 'error', message: err instanceof Error ? err.message : 'Connection failed' }
+            : s
+        )
+      );
+    }
+  }, []);
+
+  const testAll = useCallback(() => {
+    for (const s of services) {
+      void testConnection(s.id);
+    }
+  }, [services, testConnection]);
+
+  return (
+    <div
+      style={{
+        background: C.bgCard,
+        border: `1px solid ${C.border}`,
+        borderRadius: 12,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 18px',
+          borderBottom: `1px solid ${C.border2}`,
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Service Connections</span>
+        <button
+          onClick={testAll}
+          style={{
+            padding: '4px 12px', fontSize: 11, fontWeight: 600,
+            border: `1px solid ${C.border}`, borderRadius: 6,
+            background: 'transparent', color: C.text2, cursor: 'pointer',
+          }}
+        >
+          Test All
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {services.map((svc, i) => (
+          <div
+            key={svc.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 18px',
+              borderTop: i === 0 ? 'none' : `1px solid ${C.border2}`,
+            }}
+          >
+            {/* Status dot */}
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: statusColor(svc.status),
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+
+            {/* Label */}
+            <span style={{ fontSize: 13, color: C.text, flex: 1 }}>{svc.label}</span>
+
+            {/* Status text */}
+            <span style={{ fontSize: 11, color: statusColor(svc.status), minWidth: 72, textAlign: 'right' as const }}>
+              {statusLabel(svc.status)}
+              {svc.message && (
+                <span
+                  style={{ display: 'block', fontSize: 10, color: C.muted, marginTop: 2, fontStyle: 'italic' as const }}
+                  title={svc.message}
+                >
+                  {svc.message.length > 40 ? svc.message.slice(0, 40) + '…' : svc.message}
+                </span>
+              )}
+            </span>
+
+            {/* Test button */}
+            <button
+              onClick={() => void testConnection(svc.id)}
+              disabled={svc.status === 'testing'}
+              style={{
+                padding: '4px 10px', fontSize: 11, fontWeight: 600,
+                border: `1px solid ${C.border}`, borderRadius: 5,
+                background: 'transparent',
+                color: svc.status === 'testing' ? C.muted : C.text2,
+                cursor: svc.status === 'testing' ? 'not-allowed' : 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              Test
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -744,6 +927,9 @@ export function VaultView() {
                 </div>
               )}
             </div>
+
+            {/* Service connection status */}
+            <ServiceConnectionPanel />
 
             {/* Audit log */}
             <AuditLogTable entries={auditLog} />

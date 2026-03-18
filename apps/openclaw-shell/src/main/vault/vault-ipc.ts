@@ -4,6 +4,11 @@
 import { ipcMain } from 'electron';
 import type { VaultBridge } from './vault-bridge.js';
 import type { VaultPolicy } from '../../shared/types.js';
+import { getCredential } from '../security/secure-credentials-store.js';
+import {
+  CREDENTIAL_KEYS,
+  SERVICE_CREDENTIAL_MAP,
+} from '../../shared/constants.js';
 
 export function registerVaultIpcHandlers(vaultBridge: VaultBridge): void {
   ipcMain.handle('vault:status', async () => {
@@ -88,6 +93,24 @@ export function registerVaultIpcHandlers(vaultBridge: VaultBridge): void {
       return { ok: decided };
     } catch (err) {
       return { error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // Test whether a named service credential is present in the secure store.
+  // Does NOT make a live network call — verifies the credential key exists and is non-empty.
+  ipcMain.handle('credentials:test-connection', async (_event, serviceId: string) => {
+    try {
+      const credKey = SERVICE_CREDENTIAL_MAP[serviceId];
+      if (!credKey) {
+        return { ok: false, message: `Unknown service "${serviceId}"` };
+      }
+      const value = getCredential(credKey);
+      if (!value) {
+        return { ok: false, message: 'Credential not found in secure store' };
+      }
+      return { ok: true, message: 'Credential present' };
+    } catch (err) {
+      return { ok: false, message: err instanceof Error ? err.message : String(err) };
     }
   });
 }

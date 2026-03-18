@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+import { logger } from './logging/logger.js';
 import { createTray } from './tray.js';
 import { registerHotkeys, unregisterHotkeys } from './hotkeys.js';
 import { registerIpcHandlers } from './ipc-handlers.js';
@@ -24,8 +25,10 @@ import type { CDAction, EventFrame } from '../shared/types.js';
 import { BwAdapter } from './vault/bw-adapter.js';
 import { VaultAdapter } from './vault/vault-adapter.js';
 import { VaultBridge } from './vault/vault-bridge.js';
-import { VaultCredentialProvider, LegacyFileCredentialProvider } from './api-workers/credential-provider.js';
+import { VaultCredentialProvider, SecureCredentialProvider, LegacyFileCredentialProvider } from './api-workers/credential-provider.js';
 import { registerVaultIpcHandlers } from './vault/vault-ipc.js';
+import { assertEnvironment } from './config/env.js';
+import { runCredentialMigration } from './config/credentials-migration.js';
 
 // NOTE: All instances are created inside app.whenReady() or at worst after
 // app.requestSingleInstanceLock(). Do NOT call Electron window/screen/tray
@@ -112,6 +115,20 @@ if (!gotLock) {
   // ── App Lifecycle ───────────────────────────────────────────────────────
 
   app.whenReady().then(async () => {
+    // ── Startup: Env validation + credential migration ───────────────────────
+    try {
+      assertEnvironment();
+    } catch (err) {
+      logger.error('Startup env validation failed:', err);
+    }
+    void runCredentialMigration().then((result) => {
+      if (result.migrated) {
+        logger.info(`Credential migration complete: ${result.keysWritten.join(', ')}`);
+      } else if (result.error) {
+        logger.warn('Credential migration error:', result.error);
+      }
+    });
+
     mainWindow = createWindow();
 
     // Security: Set Content Security Policy
@@ -151,7 +168,7 @@ if (!gotLock) {
       const parsedUrl = new URL(url);
       if (parsedUrl.origin !== 'http://localhost:5173' && !url.startsWith('file://')) {
         event.preventDefault();
-        console.warn('[Security] Blocked navigation to:', url);
+        logger.warn('Blocked navigation to:', url);
       }
     });
 
@@ -219,17 +236,17 @@ if (!gotLock) {
 
       // Initialize vault in background (don't block app startup)
       void vaultAdapter.initialize().then(() => {
-        console.log('[App] Vault adapter initialized.');
+        logger.info('Vault adapter initialized.');
       }).catch((err) => {
-        console.warn('[App] Vault initialization failed, using legacy credentials:', err);
-        // Fall back to legacy file-based credentials
-        const legacyProvider = new LegacyFileCredentialProvider();
-        workerManager.setCredentialProvider(legacyProvider);
+        logger.warn('Vault initialization failed, using secure local credentials:', err);
+        // Prefer safeStorage-encrypted store; legacy plaintext is last resort
+        const secureProvider = new SecureCredentialProvider();
+        workerManager.setCredentialProvider(secureProvider);
       });
     } catch (err) {
-      console.warn('[App] Vault setup failed, using legacy credentials:', err);
-      const legacyProvider = new LegacyFileCredentialProvider();
-      workerManager.setCredentialProvider(legacyProvider);
+      logger.warn('Vault setup failed, using secure local credentials:', err);
+      const secureProvider = new SecureCredentialProvider();
+      workerManager.setCredentialProvider(secureProvider);
     }
 
     createTray(mainWindow);
@@ -240,7 +257,7 @@ if (!gotLock) {
     try {
       workerManager.startAll();
     } catch (err) {
-      console.error('[App] Failed to start API workers:', err);
+      logger.error('Failed to start API workers:', err);
     }
 
     // Broadcast external task file changes to all renderer windows

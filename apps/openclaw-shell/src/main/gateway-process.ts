@@ -10,6 +10,9 @@ import {
   GATEWAY_HEALTH_INTERVAL_MS,
   RUNTIME_DIR,
 } from '../shared/constants.js';
+import { createLogger } from './logging/logger.js';
+
+const log = createLogger('GatewayProcessManager');
 
 const BACKOFF_INITIAL_MS = 1_000;
 const BACKOFF_CEILING_MS = 15_000;
@@ -46,13 +49,13 @@ export class GatewayProcessManager {
   async start(): Promise<void> {
     const alive = await this.probe();
     if (alive) {
-      console.log('[GatewayProcessManager] Gateway already running, connecting to existing.');
+      log.info('Gateway already running, connecting to existing.');
       this.weStartedIt = false;
       this.startHealthCheck();
       return;
     }
 
-    console.log('[GatewayProcessManager] Gateway not found, starting child process.');
+    log.info('Gateway not found, starting child process.');
     this.weStartedIt = true;
     this.spawnGateway();
     this.startHealthCheck();
@@ -73,7 +76,7 @@ export class GatewayProcessManager {
     } else if (app.isPackaged) {
       // Packaged: no gateway to spawn — gateway must be run externally.
       // Log a warning and bail out gracefully; the app will show "offline".
-      console.warn('[GatewayProcessManager] Running packaged — no bundled gateway to spawn. Connect to an external gateway or set GATEWAY_BIN.');
+      log.warn('Running packaged — no bundled gateway to spawn. Connect to an external gateway or set GATEWAY_BIN.');
       this.weStartedIt = false;
       return;
     } else {
@@ -91,7 +94,7 @@ export class GatewayProcessManager {
         env: { ...process.env },
       });
     } catch (err) {
-      console.warn('[GatewayProcessManager] Failed to spawn gateway — app will run in offline mode:', err);
+      log.warn('Failed to spawn gateway — app will run in offline mode:', err);
       this.gatewayProcess = null;
       this.weStartedIt = false;
       return;
@@ -102,26 +105,26 @@ export class GatewayProcessManager {
     }
 
     this.gatewayProcess.stdout?.on('data', (data: Buffer) => {
-      console.log('[gateway]', data.toString().trimEnd());
+      log.info('[gateway]', data.toString().trimEnd());
     });
 
     this.gatewayProcess.stderr?.on('data', (data: Buffer) => {
-      console.error('[gateway:err]', data.toString().trimEnd());
+      log.error('[gateway:err]', data.toString().trimEnd());
     });
 
     this.gatewayProcess.on('error', (err) => {
       // Catches ENOENT / EACCES at the OS level after spawn() returns
-      console.warn('[GatewayProcessManager] Gateway process error — running in offline mode:', err.message);
+      log.warn('Gateway process error — running in offline mode:', err.message);
       this.gatewayProcess = null;
       this.weStartedIt = false;
     });
 
     this.gatewayProcess.on('exit', (code, signal) => {
-      console.warn(`[GatewayProcessManager] Gateway exited (code=${code}, signal=${signal})`);
+      log.warn(`Gateway exited (code=${code}, signal=${signal})`);
       this.gatewayProcess = null;
 
       if (!this.stopping && this.weStartedIt) {
-        console.log(`[GatewayProcessManager] Restarting in ${this.backoffMs}ms...`);
+        log.info(`Restarting in ${this.backoffMs}ms...`);
         setTimeout(() => {
           this.backoffMs = Math.min(this.backoffMs * 2, BACKOFF_CEILING_MS);
           this.spawnGateway();
@@ -142,7 +145,7 @@ export class GatewayProcessManager {
       }
       writeFileSync(GATEWAY_PID_FILE, String(pid), 'utf-8');
     } catch (err) {
-      console.error('[GatewayProcessManager] Failed to write PID file:', err);
+      log.error('Failed to write PID file:', err);
     }
   }
 
@@ -152,7 +155,7 @@ export class GatewayProcessManager {
     this.healthTimer = setInterval(async () => {
       const alive = await this.probe();
       if (!alive && this.weStartedIt && !this.gatewayProcess && !this.stopping) {
-        console.warn('[GatewayProcessManager] Health check failed, restarting gateway.');
+        log.warn('Health check failed, restarting gateway.');
         this.spawnGateway();
       }
     }, GATEWAY_HEALTH_INTERVAL_MS);
@@ -175,7 +178,7 @@ export class GatewayProcessManager {
       this.gatewayProcess = null;
     }
 
-    console.log('[GatewayProcessManager] Disconnected from gateway (process left running).');
+    log.info('Disconnected from gateway (process left running).');
   }
 
   async healthCheck(): Promise<boolean> {

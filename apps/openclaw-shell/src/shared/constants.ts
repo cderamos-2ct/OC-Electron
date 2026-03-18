@@ -145,3 +145,28 @@ export const NEXT_NOTIFICATION_HOTKEY = 'CommandOrControl+Shift+N';
 // ─── Self-Write Tracking ─────────────────────────────────────────
 
 export const SELF_WRITE_TTL_MS = 300;
+
+// ─── Credential Config Schema ─────────────────────────────────────
+// Canonical safeStorage key names for each service credential.
+
+export const CREDENTIAL_KEYS = {
+  GITHUB_PAT:  'openclaw/api-keys/github-pat',
+  FIREFLIES:   'openclaw/api-keys/fireflies',
+} as const;
+
+export type CredentialKey = typeof CREDENTIAL_KEYS[keyof typeof CREDENTIAL_KEYS];
+
+/** Maps service IDs (as used in VaultView) to their credential store keys. */
+export const SERVICE_CREDENTIAL_MAP: Record<string, string> = {
+  github:    CREDENTIAL_KEYS.GITHUB_PAT,
+  fireflies: CREDENTIAL_KEYS.FIREFLIES,
+};
+
+/** Required env vars. Currently none are strictly required at startup — listed for documentation. */
+export const REQUIRED_ENV_VARS: string[] = [];
+
+/** Optional env vars that enable additional features when set. */
+export const OPTIONAL_ENV_VARS = [
+  'OPENCLAW_ROOT',
+  'OPENCLAW_DATA_DIR',
+] as const;

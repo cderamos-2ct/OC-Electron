@@ -5,7 +5,10 @@
 import { BrowserWindow } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'events';
+import { createLogger } from '../logging/logger.js';
 import { VaultAdapter } from './vault-adapter.js';
+
+const log = createLogger('VaultBridge');
 import { VaultPolicyStore } from './vault-policy.js';
 import { LeaseCache } from './lease-cache.js';
 import { appendVaultAuditEntry, readVaultAuditLog } from './vault-audit.js';
@@ -68,12 +71,12 @@ export class VaultBridge extends EventEmitter {
 
       // Restore persisted pending approvals from Postgres
       void this.restoreApprovalQueue().catch((err) => {
-        console.warn('[VaultBridge] Failed to restore approval queue (non-fatal):', err);
+        log.warn('Failed to restore approval queue (non-fatal):', err);
       });
 
       // Sync Bitwarden secrets to Postgres on unlock
       void this.syncSecretsToDb().catch((err) => {
-        console.warn('[VaultBridge] Initial DB sync failed (non-fatal):', err);
+        log.warn('Initial DB sync failed (non-fatal):', err);
       });
 
       // Start periodic sync
@@ -81,7 +84,7 @@ export class VaultBridge extends EventEmitter {
         void this.vault.sync()
           .then(() => this.syncSecretsToDb())
           .catch((err) => {
-            console.error('[VaultBridge] Sync error:', err);
+            log.error('Sync error:', err);
           });
       }, VAULT_SYNC_INTERVAL_MS);
     } catch (err) {
@@ -121,11 +124,11 @@ export class VaultBridge extends EventEmitter {
 
       const { upserted, errors } = await syncVaultSecretsFromBitwarden(entries, 'vesta');
       if (errors.length > 0) {
-        console.warn('[VaultBridge] DB sync partial errors:', errors);
+        log.warn('DB sync partial errors:', errors);
       }
-      console.log(`[VaultBridge] Synced ${upserted} secrets to Postgres`);
+      log.info(`Synced ${upserted} secrets to Postgres`);
     } catch (err) {
-      console.warn('[VaultBridge] syncSecretsToDb error:', err);
+      log.warn('syncSecretsToDb error:', err);
     }
   }
 
@@ -158,7 +161,7 @@ export class VaultBridge extends EventEmitter {
       }
     }
     if (rows.length > 0) {
-      console.log(`[VaultBridge] Restored ${rows.length} pending approvals from Postgres`);
+      log.info(`Restored ${rows.length} pending approvals from Postgres`);
     }
   }
 
@@ -208,7 +211,7 @@ export class VaultBridge extends EventEmitter {
         const row = await getVaultSecret(secretName);
         if (row && row.value !== 'PLACEHOLDER') {
           value = row.value;
-          console.log(`[VaultBridge] Using Postgres fallback for secret: ${secretName}`);
+          log.info(`Using Postgres fallback for secret: ${secretName}`);
         }
       }
 
@@ -247,7 +250,7 @@ export class VaultBridge extends EventEmitter {
 
     // Persist approval to Postgres so it survives restarts
     void createApprovalRecord({ id: approvalId, agentId, secretName, purpose }).catch((err) => {
-      console.warn('[VaultBridge] Failed to persist approval record:', err);
+      log.warn('Failed to persist approval record:', err);
     });
 
     return new Promise<VaultLease | null>((resolve) => {
@@ -262,7 +265,7 @@ export class VaultBridge extends EventEmitter {
 
           // Update Postgres approval record
           void resolveApprovalRecord(approvalId, decision).catch((err) => {
-            console.warn('[VaultBridge] Failed to resolve approval record in Postgres:', err);
+            log.warn('Failed to resolve approval record in Postgres:', err);
           });
 
           if (decision === 'approved') {
@@ -427,7 +430,7 @@ export class VaultBridge extends EventEmitter {
       purpose,
       error,
     }).catch((err) => {
-      console.warn('[VaultBridge] Postgres audit write failed (non-fatal):', err);
+      log.warn('Postgres audit write failed (non-fatal):', err);
     });
   }
 
