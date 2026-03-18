@@ -293,6 +293,12 @@ export interface RateLimitError {
   retryAfter: number; // ms until caller may retry
 }
 
+// ─── Deep Link Types ──────────────────────────────────────────────────────────
+export type DeepLinkAction =
+  | { type: 'navigate-view'; viewId: ViewId }
+  | { type: 'open-task'; taskId: string }
+  | { type: 'vault-unlock' };
+
 // ─── IPC Channel Types ───────────────────────────────────────────
 
 // Main -> Renderer (events via webContents.send)
@@ -322,6 +328,7 @@ export interface MainToRendererEvents {
   'browser:tabs-list': BrowserTab[];
   'setup:status': { setupComplete: boolean };
   'ipc:rate-limited': RateLimitError;
+  'deeplink:navigate': DeepLinkAction;
 }
 
 // Renderer -> Main (invoke/handle)

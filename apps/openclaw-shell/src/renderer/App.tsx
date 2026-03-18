@@ -1,11 +1,11 @@
 import React, { useEffect, useCallback } from 'react';
 import { useShellStore } from './stores/shell-store';
-import { on } from './lib/ipc-client';
+import { on, onDeepLink } from './lib/ipc-client';
 import { TabBar } from './components/shell/TabBar';
 import { ViewContainer } from './components/shell/ViewContainer';
 import { ServiceWebview } from './components/services/ServiceWebview';
 import { ChatRail } from './components/rail/ChatRail';
-import { AgentStatusBar, ToastStack, ActionPanel } from './components/overlay';
+import { AgentStatusBar, ToastStack, ActionPanel, OfflineBanner } from './components/overlay';
 import { useViewStore } from './stores/view-store';
 import { useSetupStore } from './stores/setup-store';
 import { SetupWizard } from './views/setup/SetupWizard';
@@ -57,6 +57,13 @@ export function App() {
   const handleBootstrapComplete = useCallback(() => {
     useSetupStore.getState().setBootstrapping(false);
     useSetupStore.getState().setSetupComplete(true);
+  }, []);
+
+  // Handle deep link navigation
+  useEffect(() => {
+    const navigateToDeepLink = useViewStore.getState().navigateToDeepLink;
+    const unsub = onDeepLink((action) => navigateToDeepLink(action));
+    return () => unsub();
   }, []);
 
   // Handle IPC events from the main process
@@ -194,6 +201,9 @@ export function App() {
             minWidth: 0,
           }}
         >
+          {/* Offline banner (top of content area) */}
+          <OfflineBanner />
+
           {/* View router -- shown for all non-browser views */}
           <div
             style={{

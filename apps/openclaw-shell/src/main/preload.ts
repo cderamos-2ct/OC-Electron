@@ -111,6 +111,7 @@ const EVENT_CHANNELS: MainToRendererChannel[] = [
   'browser:tab-removed',
   'browser:tabs-list',
   'setup:status',
+  'deeplink:navigate',
 ];
 
 const electronAPI = {

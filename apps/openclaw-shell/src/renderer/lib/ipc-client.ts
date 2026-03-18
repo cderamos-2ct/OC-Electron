@@ -12,6 +12,7 @@ import type {
   AutoApproveRule,
   AuditLogEntry,
   SetupConfig,
+  DeepLinkAction,
 } from '../../shared/types';
 import type { ElectronAPI } from '../../main/preload';
 
@@ -197,4 +198,9 @@ export function setupCheck(): Promise<{ setupComplete: boolean; config: unknown 
 
 export function setupComplete(config: SetupConfig): Promise<{ ok: boolean }> {
   return window.electronAPI.setupComplete(config) as Promise<{ ok: boolean }>;
+}
+
+// ─── Deep Linking ──────────────────────────────────────────────────────────────
+export function onDeepLink(callback: (action: DeepLinkAction) => void): Unsubscribe {
+  return on('deeplink:navigate', callback);
 }

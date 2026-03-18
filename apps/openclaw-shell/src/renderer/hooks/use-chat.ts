@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { invoke, on } from '../lib/ipc-client';
 import { createRendererLogger } from '../lib/logger';
+import { enqueueAction } from '../../shared/offline-queue';
+import { useGateway } from './use-gateway';
 import type { ChatEvent } from '../../shared/types';
 
 const log = createRendererLogger('use-chat');
@@ -11,6 +13,7 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   pending?: boolean;
+  queued?: boolean;
 }
 
 // Session key for the main CD chat session
@@ -32,6 +35,7 @@ export function useChat() {
   const [error, setError] = useState<string | null>(null);
   // Track in-progress streaming message by runId
   const streamingRunId = useRef<string | null>(null);
+  const { isConnected } = useGateway();
 
   // Load history on mount
   useEffect(() => {
@@ -141,8 +145,21 @@ export function useChat() {
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, optimistic]);
-    setLoading(true);
     setError(null);
+
+    // When disconnected, enqueue the message for replay on reconnect
+    if (!isConnected) {
+      enqueueAction('chat.send', {
+        sessionKey: MAIN_SESSION_KEY,
+        content: text.trim(),
+      });
+      setMessages((prev) =>
+        prev.map((m) => (m.id === optimisticId ? { ...m, queued: true } : m)),
+      );
+      return;
+    }
+
+    setLoading(true);
 
     try {
       await invoke('gateway:rpc', 'chat.send', {
@@ -153,7 +170,7 @@ export function useChat() {
       setLoading(false);
       setError(err instanceof Error ? err.message : 'Failed to send message');
     }
-  }, []);
+  }, [isConnected]);
 
   return { messages, loading, error, sendMessage };
 }

@@ -1,5 +1,9 @@
 appId: com.aegilume.shell
 productName: Aegilume
+protocols:
+  - name: Aegilume
+    schemes:
+      - aegilume
 directories:
   buildResources: assets
   output: release

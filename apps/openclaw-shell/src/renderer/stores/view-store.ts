@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ViewId } from '@shared/types';
+import type { ViewId, DeepLinkAction } from '@shared/types';
 
 export type { ViewId };
 
@@ -8,6 +8,7 @@ interface ViewStore {
   viewHistory: ViewId[];
   setActiveView: (view: ViewId) => void;
   goBack: () => void;
+  navigateToDeepLink: (action: DeepLinkAction) => void;
 }
 
 export const useViewStore = create<ViewStore>((set, get) => ({
@@ -31,5 +32,19 @@ export const useViewStore = create<ViewStore>((set, get) => ({
       activeView: prev,
       viewHistory: viewHistory.slice(0, -1),
     });
+  },
+
+  navigateToDeepLink: (action) => {
+    switch (action.type) {
+      case 'navigate-view':
+        get().setActiveView(action.viewId);
+        break;
+      case 'open-task':
+        get().setActiveView('tasks');
+        break;
+      case 'vault-unlock':
+        get().setActiveView('vault');
+        break;
+    }
   },
 }));

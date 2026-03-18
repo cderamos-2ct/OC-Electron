@@ -29,6 +29,7 @@ import { VaultCredentialProvider, SecureCredentialProvider, LegacyFileCredential
 import { registerVaultIpcHandlers } from './vault/vault-ipc.js';
 import { assertEnvironment } from './config/env.js';
 import { runCredentialMigration } from './config/credentials-migration.js';
+import { registerDeepLinkProtocol, handleDeepLink, processPendingDeepLink } from './deep-link.js';
 
 // NOTE: All instances are created inside app.whenReady() or at worst after
 // app.requestSingleInstanceLock(). Do NOT call Electron window/screen/tray
@@ -99,12 +100,25 @@ function createWindow(): BrowserWindow {
 
 // ── Single Instance Lock ────────────────────────────────────────────────────
 
+registerDeepLinkProtocol();
+
+// macOS: handle aegilume:// URLs when app is already running
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url, mainWindow);
+});
+
 const gotLock = app.requestSingleInstanceLock();
 
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_event, argv) => {
+    // Windows/Linux: deep link arrives as a command-line argument
+    const url = argv.find((arg) => arg.startsWith('aegilume://'));
+    if (url) {
+      handleDeepLink(url, mainWindow);
+    }
     if (mainWindow) {
       if (!mainWindow.isVisible()) mainWindow.show();
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -130,6 +144,7 @@ if (!gotLock) {
     });
 
     mainWindow = createWindow();
+    processPendingDeepLink(mainWindow);
 
     // Security: Set Content Security Policy
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
