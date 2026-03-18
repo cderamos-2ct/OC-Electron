@@ -5,6 +5,33 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { logger } from './logging/logger.js';
+import { initTelemetry } from './telemetry/crash-reporter.js';
+
+// ── Telemetry: init VERY early, before any other subsystem ───────────────────
+{
+  let consent = false;
+  try {
+    const { readFileSync: _readSetup, existsSync: _existsSetup } = await import('node:fs');
+    const { join: _joinSetup } = await import('node:path');
+    const { homedir: _homedirSetup } = await import('node:os');
+    const { SHELL_CONFIG_DIR_NAME } = await import('../shared/constants.js');
+    const setupFile = _joinSetup(_homedirSetup(), SHELL_CONFIG_DIR_NAME, 'setup.json');
+    if (_existsSetup(setupFile)) {
+      const raw = _readSetup(setupFile, 'utf-8');
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      consent = parsed['telemetryConsent'] === true;
+    }
+  } catch {
+    // setup.json absent or unreadable — default to no consent
+  }
+  initTelemetry({
+    dsn: 'https://placeholder@o0.ingest.sentry.io/0',
+    appVersion: app.getVersion(),
+    environment: app.isPackaged ? 'production' : 'development',
+    consent,
+  });
+}
+
 import { createTray } from './tray.js';
 import { registerHotkeys, unregisterHotkeys } from './hotkeys.js';
 import { registerIpcHandlers } from './ipc-handlers.js';

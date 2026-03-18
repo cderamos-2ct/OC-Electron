@@ -408,6 +408,8 @@ export interface RendererToMainHandlers {
   'browser:list-tabs': [];
   'setup:check': [];
   'setup:complete': [config: SetupConfig];
+  'telemetry:set-consent': [enabled: boolean];
+  'telemetry:get-config': [];
 }
 
 // ─── Shell Config ────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import React from 'react';
+import { captureRendererException } from '../../lib/telemetry';
 
 interface Props {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Log to console in dev; in production avoid exposing raw stack traces
     console.error('[AppErrorBoundary]', error, info.componentStack);
+    captureRendererException(error, { componentStack: info.componentStack ?? undefined });
   }
 
   handleReload = () => {

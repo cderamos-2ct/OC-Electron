@@ -21,6 +21,7 @@ import type { CalendarEventCreate } from '../shared/types.js';
 import type { GwsCalendarWorker } from './api-workers/gws-calendar-worker.js';
 import { readAuditLog } from './audit-log.js';
 import { wrapWithRateLimit, rateLimiter } from './security/ipc-rate-limiter.js';
+import { setTelemetryConsent, getTelemetryConfig } from './telemetry/crash-reporter.js';
 
 function readShellConfig(): ShellConfig {
   if (!existsSync(SHELL_CONFIG_FILE)) {
@@ -673,6 +674,16 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
     }
     writeFileSync(SETUP_FILE, JSON.stringify(config, null, 2), 'utf-8');
     return { ok: true };
+  });
+
+  // ── Telemetry ─────────────────────────────────────────────────────────────
+  handle('telemetry:set-consent', async (_event, enabled: boolean) => {
+    setTelemetryConsent(enabled);
+    return { ok: true };
+  });
+
+  handle('telemetry:get-config', async () => {
+    return getTelemetryConfig();
   });
 
 }

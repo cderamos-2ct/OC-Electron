@@ -23,6 +23,7 @@
     "@octokit/rest": "^21.0.2",
     "@openclaw/core": "workspace:*",
     "@openclaw/gateway-client": "workspace:*",
+    "@sentry/electron": "^7.10.0",
     "electron-log": "^5.4.3",
     "openclaw-db": "workspace:*",
     "pg": "^8.13.3",

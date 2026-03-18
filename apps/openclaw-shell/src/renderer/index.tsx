@@ -1,8 +1,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+import { initRendererTelemetry } from './lib/telemetry';
 import { App } from './App';
 import { AppErrorBoundary } from './components/errors/AppErrorBoundary';
+
+initRendererTelemetry();
 
 const container = document.getElementById('root');
 if (!container) {

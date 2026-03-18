@@ -77,6 +77,8 @@ const INVOKE_CHANNELS: RendererToMainChannel[] = [
   'browser:list-tabs',
   'setup:check',
   'setup:complete',
+  'telemetry:set-consent',
+  'telemetry:get-config',
   'vault:status',
   'vault:list-secrets',
   'vault:list-policies',
