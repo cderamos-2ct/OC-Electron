@@ -84,12 +84,27 @@ install_node_dependencies
 
 "$harness_bin" validate "$REPO_ROOT"
 
-# lint-stack may not exist in all harness-core versions
-if "$harness_bin" help 2>&1 | grep -q "lint-stack" || "$harness_bin" lint-stack --help >/dev/null 2>&1; then
-  "$harness_bin" lint-stack "$REPO_ROOT"
-else
-  echo "[skip] lint-stack not available in this harness-core version"
-fi
+# Cache available commands from harness-core
+HARNESS_HELP="$("$harness_bin" help 2>&1 || true)"
+
+harness_has_cmd() {
+  echo "$HARNESS_HELP" | grep -q "$1"
+}
+
+# Optional harness commands — skip gracefully when unavailable
+for cmd in lint-stack; do
+  if harness_has_cmd "$cmd"; then
+    "$harness_bin" "$cmd" "$REPO_ROOT"
+  else
+    echo "[skip] $cmd not available in this harness-core version"
+  fi
+done
 
 (cd "$REPO_ROOT" && bash scripts/verify-harness-model-routing.sh)
-(cd "$REPO_ROOT" && bash scripts/verify-harness-role-evidence.sh)
+
+# Role evidence requires verify-role-evidence command in harness
+if harness_has_cmd "verify-role-evidence"; then
+  (cd "$REPO_ROOT" && bash scripts/verify-harness-role-evidence.sh)
+else
+  echo "[skip] verify-role-evidence not available in this harness-core version"
+fi
