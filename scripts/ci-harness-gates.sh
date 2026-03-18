@@ -47,8 +47,9 @@ resolve_harness_bin() {
   rm -rf "$HARNESS_CI_CORE_DIR"
 
   if [ -n "${HARNESS_CORE_REPO_TOKEN:-}" ]; then
-    git -c "http.extraheader=AUTHORIZATION: bearer ${HARNESS_CORE_REPO_TOKEN}" \
-      clone --depth 1 --branch "$HARNESS_CORE_REF" "$HARNESS_CORE_REPO" "$HARNESS_CI_CORE_DIR"
+    # Inject token into URL (works with PATs, OAuth tokens, and installation tokens)
+    AUTH_URL="$(echo "$HARNESS_CORE_REPO" | sed "s|https://github.com|https://x-access-token:${HARNESS_CORE_REPO_TOKEN}@github.com|")"
+    git clone --depth 1 --branch "$HARNESS_CORE_REF" "$AUTH_URL" "$HARNESS_CI_CORE_DIR"
   else
     git clone --depth 1 --branch "$HARNESS_CORE_REF" "$HARNESS_CORE_REPO" "$HARNESS_CI_CORE_DIR"
   fi
