@@ -1004,7 +1004,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
         </div>
 
         {/* Step pane container */}
-        <div style={{ position: 'relative', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ position: 'relative', flex: 1, overflow: 'hidden', minHeight: 420 }}>
           <StepPane active={step === 0}>
             <WelcomeStep
               userName={userName}

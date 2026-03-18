@@ -20,6 +20,19 @@
   --accent-orange: #f97316;
   --accent-red: #ef4444;
   --accent-green: #22c55e;
+
+  /* Semantic aliases (used by SetupWizard, shell chrome, overlays) */
+  --bg: #0f172a;
+  --bg-card: #131d33;
+  --bg-mid: #131d33;
+  --border: rgba(241, 245, 249, 0.14);
+  --text: #f1f5f9;
+  --text-2: #cbd5e1;
+  --text-3: #94a3b8;
+  --muted: #94a3b8;
+  --dimmer: #64748b;
+  --accent: #a3862a;
+  --accent-bg: rgba(163, 134, 42, 0.15);
 }
 
 * {
