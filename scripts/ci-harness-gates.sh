@@ -83,6 +83,13 @@ harness_bin="$(resolve_harness_bin)"
 install_node_dependencies
 
 "$harness_bin" validate "$REPO_ROOT"
-"$harness_bin" lint-stack "$REPO_ROOT"
+
+# lint-stack may not exist in all harness-core versions
+if "$harness_bin" help 2>&1 | grep -q "lint-stack" || "$harness_bin" lint-stack --help >/dev/null 2>&1; then
+  "$harness_bin" lint-stack "$REPO_ROOT"
+else
+  echo "[skip] lint-stack not available in this harness-core version"
+fi
+
 (cd "$REPO_ROOT" && bash scripts/verify-harness-model-routing.sh)
 (cd "$REPO_ROOT" && bash scripts/verify-harness-role-evidence.sh)
