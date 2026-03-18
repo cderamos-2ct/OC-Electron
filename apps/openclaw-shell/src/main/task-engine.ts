@@ -5,6 +5,8 @@
 
 import { EventEmitter } from 'events';
 import {
+  existsSync,
+  mkdirSync,
   readdirSync,
   readFileSync,
   writeFileSync,
@@ -46,6 +48,9 @@ export class TaskEngine extends EventEmitter {
   constructor(tasksDir: string = TASKS_DIR) {
     super();
     this.tasksDir = tasksDir;
+    if (!existsSync(this.tasksDir)) {
+      mkdirSync(this.tasksDir, { recursive: true });
+    }
     this.startWatcher();
   }
 
