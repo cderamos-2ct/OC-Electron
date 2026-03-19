@@ -112,5 +112,5 @@ linux:
 # ── Publish (GitHub Releases) ─────────────────────────────────────────────────
 publish:
   provider: github
-  owner: aegilume
-  repo: shell
+  owner: cderamos-2ct
+  repo: OC-Electron

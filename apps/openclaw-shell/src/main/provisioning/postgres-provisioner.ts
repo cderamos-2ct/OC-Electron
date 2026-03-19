@@ -24,7 +24,7 @@ const PG_USER = 'openclaw';
 
 export class PostgresProvisioner implements Provisioner {
   readonly id = 'postgres';
-  readonly name = 'PostgreSQL 16 + pgvector';
+  readonly name = 'PostgreSQL 18 + pgvector';
 
   private dataDir: string;
   private port: number;
