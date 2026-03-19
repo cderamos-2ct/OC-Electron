@@ -42,24 +42,6 @@ export function resolvePgVectorLib(): string {
   return resolveResourcePath('postgres', 'lib', 'vector.so');
 }
 
-/** Resolve the Vaultwarden binary */
-export function resolveVaultwardenBin(): string {
-  const resourcePath = resolveResourcePath('vaultwarden', 'vaultwarden');
-  if (existsSync(resourcePath)) {
-    return resourcePath;
-  }
-  return 'vaultwarden';
-}
-
-/** Resolve the Bitwarden CLI binary */
-export function resolveBwBin(): string {
-  const resourcePath = resolveResourcePath('bw', 'bw');
-  if (existsSync(resourcePath)) {
-    return resourcePath;
-  }
-  return process.env.BW_PATH ?? 'bw';
-}
-
 /** Resolve the GWS CLI binary */
 export function resolveGwsBin(): string {
   const resourcePath = resolveResourcePath('gws', 'gws');
@@ -72,10 +54,6 @@ export function resolveGwsBin(): string {
 /** Service data directories */
 export function getPostgresDataDir(): string {
   return join(getDataDir(), 'postgres', 'data');
-}
-
-export function getVaultwardenDataDir(): string {
-  return join(getDataDir(), 'vaultwarden');
 }
 
 export function getGatewayDir(): string {

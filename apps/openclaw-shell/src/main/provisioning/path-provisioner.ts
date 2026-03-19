@@ -7,7 +7,6 @@ import { ProvisioningStatus } from './types.js';
 import {
   getDataDir,
   getPostgresDataDir,
-  getVaultwardenDataDir,
   getGatewayDir,
   getCodeServerDir,
   getPathsConfigPath,
@@ -16,7 +15,6 @@ import {
 export interface PathsConfig {
   dataDir: string;
   postgresData: string;
-  vaultwardenData: string;
   gatewayDir: string;
   codeServerDir: string;
 }
@@ -32,7 +30,6 @@ export class PathProvisioner implements Provisioner {
     this.paths = {
       dataDir,
       postgresData: customDataDir ? join(dataDir, 'postgres', 'data') : getPostgresDataDir(),
-      vaultwardenData: customDataDir ? join(dataDir, 'vaultwarden') : getVaultwardenDataDir(),
       gatewayDir: customDataDir ? join(dataDir, 'gateway') : getGatewayDir(),
       codeServerDir: customDataDir ? join(dataDir, 'code-server') : getCodeServerDir(),
     };
@@ -42,7 +39,6 @@ export class PathProvisioner implements Provisioner {
     return (
       existsSync(this.paths.dataDir) &&
       existsSync(this.paths.postgresData) &&
-      existsSync(this.paths.vaultwardenData) &&
       existsSync(this.paths.gatewayDir) &&
       existsSync(this.paths.codeServerDir)
     );
@@ -52,7 +48,6 @@ export class PathProvisioner implements Provisioner {
     const dirs = [
       this.paths.dataDir,
       this.paths.postgresData,
-      this.paths.vaultwardenData,
       this.paths.gatewayDir,
       this.paths.codeServerDir,
       join(this.paths.dataDir, 'runtime'),

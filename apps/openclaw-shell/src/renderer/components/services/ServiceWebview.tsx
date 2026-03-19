@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ServiceConfig } from '../../../shared/types';
 import { useShellStore } from '../../stores/shell-store';
+import { invoke } from '../../lib/ipc-client';
 
 // Electron's <webview> tag requires a type declaration
 declare global {
@@ -49,6 +50,7 @@ export function ServiceWebview({ service }: ServiceWebviewProps) {
       addEventListener: (event: string, handler: (e: Event) => void) => void;
       removeEventListener: (event: string, handler: (e: Event) => void) => void;
       reload: () => void;
+      send: (channel: string, ...args: unknown[]) => void;
     } | null;
 
     if (!wv) return;
@@ -88,12 +90,32 @@ export function ServiceWebview({ service }: ServiceWebviewProps) {
       }
     };
 
+    // Auto-fill: relay vault queries between webview preload and main process
+    const handleIpcMessage = (e: Event) => {
+      const ipcEvent = e as Event & { channel?: string; args?: unknown[] };
+      const channel = ipcEvent.channel;
+      const args = ipcEvent.args ?? [];
+
+      if (channel === 'vault:autofill-query') {
+        void invoke('vault:autofill-query', args[0] as { url: string }).then((result) => {
+          wv?.send('vault:autofill-response', result);
+        }).catch(() => {
+          wv?.send('vault:autofill-response', null);
+        });
+      } else if (channel === 'vault:autofill-used') {
+        void invoke('vault:autofill-used', args[0] as { secretName: string; url: string }).catch(() => {});
+      } else if (channel === 'vault:autofill-offer-save') {
+        void invoke('vault:autofill-offer-save', args[0] as { url: string; username: string; password: string }).catch(() => {});
+      }
+    };
+
     wv.addEventListener('did-finish-load', handleFinishLoad);
     wv.addEventListener('did-fail-load', handleFailLoad);
     wv.addEventListener('crashed', handleCrashed);
     wv.addEventListener('page-title-updated', handleTitleUpdated);
     wv.addEventListener('page-favicon-updated', handleFaviconUpdated);
     wv.addEventListener('new-window', handleNewWindow);
+    wv.addEventListener('ipc-message', handleIpcMessage);
 
     return () => {
       wv.removeEventListener('did-finish-load', handleFinishLoad);
@@ -102,6 +124,7 @@ export function ServiceWebview({ service }: ServiceWebviewProps) {
       wv.removeEventListener('page-title-updated', handleTitleUpdated);
       wv.removeEventListener('page-favicon-updated', handleFaviconUpdated);
       wv.removeEventListener('new-window', handleNewWindow);
+      wv.removeEventListener('ipc-message', handleIpcMessage);
     };
   }, [service.id, updateBadge, updateServiceState]);
 

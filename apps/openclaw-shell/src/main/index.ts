@@ -40,7 +40,6 @@ import { GatewayClient, shellDeviceAuthProvider } from './gateway-client.js';
 import { ProvisioningManager } from './provisioning/provisioning-manager.js';
 import { PathProvisioner } from './provisioning/path-provisioner.js';
 import { PostgresProvisioner } from './provisioning/postgres-provisioner.js';
-import { VaultwardenProvisioner } from './provisioning/vaultwarden-provisioner.js';
 import { GatewayProvisioner } from './provisioning/gateway-provisioner.js';
 import { GwsProvisioner } from './provisioning/gws-provisioner.js';
 import { CredentialProvisioner } from './provisioning/credential-provisioner.js';
@@ -60,8 +59,8 @@ import { setNotificationWindow, showNativeNotification, classifyEventPriority } 
 import { applyWindowState, trackWindowState } from './window-state.js';
 import { GATEWAY_URL } from '../shared/constants.js';
 import type { CDAction, EventFrame, GatewayConnectionState } from '../shared/types.js';
-import { BwAdapter } from './vault/bw-adapter.js';
-import { VaultAdapter } from './vault/vault-adapter.js';
+import { initMasterKey } from './vault/vault-master-key.js';
+import { PostgresVaultAdapter } from './vault/postgres-vault-adapter.js';
 import { VaultBridge } from './vault/vault-bridge.js';
 import { VaultCredentialProvider, SecureCredentialProvider, LegacyFileCredentialProvider } from './api-workers/credential-provider.js';
 import { registerVaultIpcHandlers } from './vault/vault-ipc.js';
@@ -187,7 +186,6 @@ if (!gotLock) {
     // ── Provisioning: create shared provisioner instances ──────────────────
     const pathProv = new PathProvisioner();
     const pgProv = new PostgresProvisioner();
-    const vwProv = new VaultwardenProvisioner();
     const gwProv = new GatewayProvisioner();
     const gwsProv = new GwsProvisioner();
     const credProv = new CredentialProvisioner();
@@ -198,7 +196,6 @@ if (!gotLock) {
     // Register with provisioning manager (all services in dependency order)
     provisioningManager.register(pathProv);
     provisioningManager.register(pgProv);
-    provisioningManager.register(vwProv);
     provisioningManager.register(gwProv);
     provisioningManager.register(gwsProv);
     provisioningManager.register(credProv);
@@ -208,7 +205,6 @@ if (!gotLock) {
 
     // Register daemon services with supervisor (same instances — shared process handles)
     processSupervisor.register(pgProv);
-    processSupervisor.register(vwProv);
     processSupervisor.register(gwProv);
     processSupervisor.register(dsProv);
     processSupervisor.register(csProv);
@@ -321,8 +317,8 @@ if (!gotLock) {
 
     // ── Vault Integration ─────────────────────────────────────────────
     try {
-      const bwAdapter = new BwAdapter();
-      const vaultAdapter = new VaultAdapter(bwAdapter);
+      initMasterKey();
+      const vaultAdapter = new PostgresVaultAdapter();
       vaultBridge = new VaultBridge(vaultAdapter);
       vaultBridge.setMainWindow(mainWindow);
 
@@ -336,7 +332,7 @@ if (!gotLock) {
       // Initialize vault in background (don't block app startup)
       void vaultAdapter.initialize().then(() => {
         logger.info('Vault adapter initialized.');
-      }).catch((err) => {
+      }).catch((err: unknown) => {
         logger.warn('Vault initialization failed, using secure local credentials:', err);
         // Prefer safeStorage-encrypted store; legacy plaintext is last resort
         const secureProvider = new SecureCredentialProvider();

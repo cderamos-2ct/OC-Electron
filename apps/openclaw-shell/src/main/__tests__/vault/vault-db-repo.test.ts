@@ -152,6 +152,7 @@ describe('upsertVaultSecret', () => {
       [
         'openclaw/api-keys/github-pat',
         'ghp_secret123',
+        'openclaw/api-keys',           // folder derived from name
         'GitHub PAT',
         'build',
         JSON.stringify(['build', 'karoline']),
@@ -167,8 +168,9 @@ describe('upsertVaultSecret', () => {
     await upsertVaultSecret({ name: 'sec', value: 'val' });
 
     const callArgs = mockQuery.mock.calls[0][1] as unknown[];
-    expect(callArgs[3]).toBeNull();   // ownerAgentSlug
-    expect(callArgs[4]).toBe('[]');   // acl
+    expect(callArgs[2]).toBeNull();   // folder (no slash in 'sec')
+    expect(callArgs[4]).toBeNull();   // ownerAgentSlug
+    expect(callArgs[5]).toBe('[]');   // acl
   });
 });
 

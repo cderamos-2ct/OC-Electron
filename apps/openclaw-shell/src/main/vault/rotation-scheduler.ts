@@ -4,7 +4,7 @@
 
 import { EventEmitter } from 'events';
 import { query } from 'openclaw-db';
-import type { VaultAdapter } from './vault-adapter.js';
+import type { PostgresVaultAdapter } from './postgres-vault-adapter.js';
 import type { VaultBridge } from './vault-bridge.js';
 import { appendVaultAuditEntry } from './vault-audit.js';
 import { recordRotation } from './vault-db-repo.js';
@@ -81,11 +81,11 @@ async function loadScheduleStates(): Promise<Map<string, { lastRotatedAt: string
 // ─── RotationScheduler ───────────────────────────────────────────
 
 export class RotationScheduler extends EventEmitter {
-  private vault: VaultAdapter;
+  private vault: PostgresVaultAdapter;
   private bridge: VaultBridge;
   private schedules = new Map<string, ScheduledRotation>();
 
-  constructor(vault: VaultAdapter, bridge: VaultBridge) {
+  constructor(vault: PostgresVaultAdapter, bridge: VaultBridge) {
     super();
     this.vault = vault;
     this.bridge = bridge;

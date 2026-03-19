@@ -4,7 +4,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import type { Provisioner, ProvisioningProgress } from './types.js';
 import { ProvisioningStatus } from './types.js';
-import { resolveBwBin, resolveGwsBin } from './platform.js';
+import { resolveGwsBin } from './platform.js';
 import { createLogger } from '../logging/logger.js';
 
 const execFileAsync = promisify(execFile);
@@ -13,7 +13,6 @@ const log = createLogger('CredentialProvisioner');
 export interface CredentialStatus {
   githubPat: boolean;
   gwsAuth: boolean;
-  bwSetup: boolean;
 }
 
 export class CredentialProvisioner implements Provisioner {
@@ -23,7 +22,6 @@ export class CredentialProvisioner implements Provisioner {
   private status: CredentialStatus = {
     githubPat: false,
     gwsAuth: false,
-    bwSetup: false,
   };
 
   async check(): Promise<boolean> {
@@ -43,7 +41,6 @@ export class CredentialProvisioner implements Provisioner {
     const results: string[] = [];
     if (this.status.githubPat) results.push('GitHub PAT');
     if (this.status.gwsAuth) results.push('GWS Auth');
-    if (this.status.bwSetup) results.push('Bitwarden');
 
     const message = results.length > 0
       ? `Validated: ${results.join(', ')}`
@@ -66,13 +63,12 @@ export class CredentialProvisioner implements Provisioner {
 
   private async validateAll(): Promise<void> {
     // Validate in parallel
-    const [githubPat, gwsAuth, bwSetup] = await Promise.all([
+    const [githubPat, gwsAuth] = await Promise.all([
       this.validateGitHubPat(),
       this.validateGwsAuth(),
-      this.validateBwSetup(),
     ]);
 
-    this.status = { githubPat, gwsAuth, bwSetup };
+    this.status = { githubPat, gwsAuth };
   }
 
   private async validateGitHubPat(): Promise<boolean> {
@@ -101,14 +97,4 @@ export class CredentialProvisioner implements Provisioner {
     }
   }
 
-  private async validateBwSetup(): Promise<boolean> {
-    try {
-      const bwBin = resolveBwBin();
-      const { stdout } = await execFileAsync(bwBin, ['status'], { timeout: 10_000 });
-      const status = JSON.parse(stdout);
-      return status.status !== 'unauthenticated';
-    } catch {
-      return false;
-    }
-  }
 }

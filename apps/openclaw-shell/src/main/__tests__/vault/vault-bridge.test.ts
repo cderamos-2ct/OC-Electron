@@ -17,7 +17,6 @@ vi.mock('../../vault/vault-audit.js', () => ({
 
 // ─── Mock vault-db-repo ───────────────────────────────────────────────────────
 vi.mock('../../vault/vault-db-repo.js', () => ({
-  syncVaultSecretsFromBitwarden: vi.fn().mockResolvedValue({ upserted: 0, errors: [] }),
   getVaultSecret: vi.fn(),
   countVaultSecrets: vi.fn().mockResolvedValue(5),
   appendAuditLogEntry: vi.fn().mockResolvedValue(undefined),
@@ -28,7 +27,6 @@ vi.mock('../../vault/vault-db-repo.js', () => ({
 
 // ─── Mock shared constants ────────────────────────────────────────────────────
 vi.mock('../../../shared/constants.js', () => ({
-  VAULT_SYNC_INTERVAL_MS: 999_999,
   VAULT_DEFAULT_LEASE_TTL: 3600,
   SHELL_CONFIG_DIR_NAME: '.openclaw-shell',
   VAULT_POLICIES_FILE_NAME: 'vault-policies.json',
@@ -101,14 +99,14 @@ describe('VaultBridge state', () => {
 
   it('transitions to unlocked after start()', async () => {
     const bridge = new VaultBridge(makeVaultAdapter() as any);
-    await bridge.start('password');
+    await bridge.start();
     expect(bridge.state).toBe('unlocked');
     await bridge.stop();
   });
 
   it('returns to disconnected after stop()', async () => {
     const bridge = new VaultBridge(makeVaultAdapter() as any);
-    await bridge.start('password');
+    await bridge.start();
     await bridge.stop();
     expect(bridge.state).toBe('disconnected');
   });
@@ -120,7 +118,7 @@ describe('requestSecret (auto-approve)', () => {
   it('returns a lease when vault has the secret', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const lease = await bridge.requestSecret('hermes', 'openclaw/tokens/gmail', 'send email');
 
@@ -147,7 +145,7 @@ describe('requestSecret (auto-approve)', () => {
     });
 
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const lease = await bridge.requestSecret('hermes', 'openclaw/tokens/gmail', 'send email');
     expect(lease?.value).toBe('pg-secret-value');
@@ -160,7 +158,7 @@ describe('requestSecret (auto-approve)', () => {
     mockGetVaultSecret.mockResolvedValueOnce(null);
 
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const lease = await bridge.requestSecret('hermes', 'openclaw/tokens/missing', 'purpose');
     expect(lease).toBeNull();
@@ -171,7 +169,7 @@ describe('requestSecret (auto-approve)', () => {
   it('returns existing active lease without creating a new one', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const lease1 = await bridge.requestSecret('hermes', 'openclaw/tokens/gmail', 'send');
     const lease2 = await bridge.requestSecret('hermes', 'openclaw/tokens/gmail', 'send again');
@@ -189,7 +187,7 @@ describe('requestSecret (require-approval)', () => {
   it('queues approval for prod secrets and resolves on decision', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
     // Override policy to require approval for this test
     getMockEvaluate()?.mockReturnValue({ action: 'require-approval', policy: null, maxLeaseTTL: 3600 });
 
@@ -216,7 +214,7 @@ describe('requestSecret (require-approval)', () => {
   it('resolves to null when approval is denied', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
     // Override policy to require approval for this test
     getMockEvaluate()?.mockReturnValue({ action: 'require-approval', policy: null, maxLeaseTTL: 3600 });
 
@@ -235,7 +233,7 @@ describe('requestSecret (require-approval)', () => {
   it('decideApproval returns false for unknown id', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const result = await bridge.decideApproval('nonexistent-id', 'approved');
     expect(result).toBe(false);
@@ -250,7 +248,7 @@ describe('lease management', () => {
   it('revokeLease removes the lease', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const lease = await bridge.requestSecret('hermes', 'openclaw/tokens/gmail', 'send');
     expect(lease).not.toBeNull();
@@ -264,7 +262,7 @@ describe('lease management', () => {
   it('revokeAll returns count of revoked leases', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     await bridge.requestSecret('agent-a', 'openclaw/tokens/gmail', 'op1');
 
@@ -277,7 +275,7 @@ describe('lease management', () => {
   it('revokeBySecret removes leases for that secret name', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     await bridge.requestSecret('agent-a', 'openclaw/tokens/gmail', 'op1');
     const count = bridge.revokeBySecret('openclaw/tokens/gmail');
@@ -293,7 +291,7 @@ describe('getStatus', () => {
   it('returns status with vault count when unlocked', async () => {
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const status = await bridge.getStatus();
     expect(status.state).toBe('unlocked');
@@ -307,7 +305,7 @@ describe('getStatus', () => {
     vi.mocked(countVaultSecrets).mockResolvedValueOnce(7);
 
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     const status = await bridge.getStatus();
     expect(status.secretCount).toBe(7);
@@ -345,7 +343,7 @@ describe('restoreApprovalQueue', () => {
 
     const vault = makeVaultAdapter();
     const bridge = new VaultBridge(vault as any);
-    await bridge.start('password');
+    await bridge.start();
 
     // Wait for restoreApprovalQueue to complete (async non-blocking)
     await Promise.resolve(); await Promise.resolve();

@@ -45,7 +45,6 @@ export interface ProvisioningStoreState {
 const DEFAULT_COMPONENTS: ComponentState[] = [
   { id: 'paths', name: 'Data Directories', status: 'pending', message: '' },
   { id: 'postgres', name: 'PostgreSQL + pgvector', status: 'pending', message: '' },
-  { id: 'vaultwarden', name: 'Vaultwarden', status: 'pending', message: '' },
   { id: 'gateway', name: 'OpenClaw Gateway', status: 'pending', message: '' },
   { id: 'gws', name: 'Google Workspace CLI', status: 'pending', message: '' },
   { id: 'credentials', name: 'Credentials', status: 'pending', message: '' },

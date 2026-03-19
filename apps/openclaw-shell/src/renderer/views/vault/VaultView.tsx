@@ -43,11 +43,48 @@ const AUDIT_STATUS_COLOR: Record<AuditActionStatus, string> = {
 
 // ─── SecretCard ───────────────────────────────────────────────────────────────
 
-function SecretCard({ item }: { item: VaultSecretMeta }) {
+interface SecretCardProps {
+  item: VaultSecretMeta;
+  onDeleted: () => void;
+}
+
+function SecretCard({ item, onDeleted }: SecretCardProps) {
   const isActive = item.hasActiveLease;
   const lastUpdated = item.updatedAt
     ? new Date(item.updatedAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
     : 'Never';
+
+  const [revealedValue, setRevealedValue] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleReveal = async () => {
+    if (revealedValue !== null) {
+      setRevealedValue(null);
+      return;
+    }
+    setRevealing(true);
+    try {
+      const result = await invoke('vault:reveal-secret', { name: item.name }) as { value: string };
+      setRevealedValue(result.value);
+      setTimeout(() => setRevealedValue(null), 10_000);
+    } catch {
+      // silently ignore
+    } finally {
+      setRevealing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete secret "${item.name}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await invoke('vault:delete-secret', { name: item.name });
+      onDeleted();
+    } catch {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div
@@ -92,7 +129,7 @@ function SecretCard({ item }: { item: VaultSecretMeta }) {
         </div>
       )}
 
-      {/* Value placeholder */}
+      {/* Value display */}
       <div
         style={{
           display: 'flex',
@@ -100,18 +137,19 @@ function SecretCard({ item }: { item: VaultSecretMeta }) {
           gap: 6,
           fontSize: 12,
           fontFamily: "'SF Mono', 'Menlo', 'Consolas', monospace",
-          color: C.muted,
+          color: revealedValue !== null ? C.text : C.muted,
           background: C.bg,
           borderRadius: 6,
           padding: '6px 10px',
           minHeight: 28,
-          letterSpacing: 2,
+          letterSpacing: revealedValue !== null ? 0 : 2,
+          wordBreak: 'break-all' as const,
         }}
       >
-        ••••••••••••••••
+        {revealedValue !== null ? revealedValue : '••••••••••••••••'}
       </div>
 
-      {/* Last updated */}
+      {/* Last updated + actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: C.muted }}>
         <span
           style={{
@@ -123,7 +161,45 @@ function SecretCard({ item }: { item: VaultSecretMeta }) {
             flexShrink: 0,
           }}
         />
-        <span>Updated: {lastUpdated}</span>
+        <span style={{ flex: 1 }}>Updated: {lastUpdated}</span>
+
+        {/* Reveal button */}
+        <button
+          onClick={() => void handleReveal()}
+          disabled={revealing}
+          style={{
+            padding: '3px 9px',
+            fontSize: 10,
+            fontWeight: 600,
+            border: `1px solid ${C.border}`,
+            borderRadius: 5,
+            background: revealedValue !== null ? C.accentBg : 'transparent',
+            color: revealedValue !== null ? C.yellow : C.muted,
+            cursor: revealing ? 'not-allowed' : 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          {revealing ? '...' : revealedValue !== null ? 'Hide' : 'Reveal'}
+        </button>
+
+        {/* Delete button */}
+        <button
+          onClick={() => void handleDelete()}
+          disabled={deleting}
+          style={{
+            padding: '3px 9px',
+            fontSize: 10,
+            fontWeight: 600,
+            border: `1px solid rgba(231,76,60,0.35)`,
+            borderRadius: 5,
+            background: 'transparent',
+            color: C.red,
+            cursor: deleting ? 'not-allowed' : 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          {deleting ? '...' : 'Delete'}
+        </button>
       </div>
     </div>
   );
@@ -627,6 +703,222 @@ function ServiceConnectionPanel() {
   );
 }
 
+// ─── AddSecretModal ───────────────────────────────────────────────────────────
+
+const FOLDER_OPTIONS = [
+  'openclaw/api-keys',
+  'openclaw/oauth',
+  'openclaw/tokens',
+  'openclaw/device-auth',
+];
+
+interface AddSecretModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function AddSecretModal({ onClose, onSuccess }: AddSecretModalProps) {
+  const [name, setName] = useState('');
+  const [value, setValue] = useState('');
+  const [folder, setFolder] = useState(FOLDER_OPTIONS[0]);
+  const [description, setDescription] = useState('');
+  const [showValue, setShowValue] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !value.trim()) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await invoke('vault:add-secret', {
+        name: name.trim(),
+        value: value.trim(),
+        folder,
+        description: description.trim() || undefined,
+      });
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add secret');
+      setSubmitting(false);
+    }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 12px',
+    fontSize: 13,
+    background: C.bg,
+    border: `1px solid ${C.border}`,
+    borderRadius: 7,
+    color: C.text,
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.55)',
+      }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: C.bgMid,
+          border: `1px solid ${C.border}`,
+          borderRadius: 14,
+          padding: '24px 28px',
+          width: 420,
+          maxWidth: 'calc(100vw - 40px)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+        }}
+      >
+        {/* Modal header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.text, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>🔑</span>
+            <span>Add Secret</span>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 4px' }}
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={e => void handleSubmit(e)} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Name */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. github-pat"
+              required
+              autoFocus
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Value */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Value
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showValue ? 'text' : 'password'}
+                value={value}
+                onChange={e => setValue(e.target.value)}
+                placeholder="Secret value"
+                required
+                style={{ ...inputStyle, paddingRight: 44 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowValue(v => !v)}
+                style={{
+                  position: 'absolute',
+                  right: 10,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: C.muted,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  padding: 0,
+                }}
+              >
+                {showValue ? '🙈' : '👁'}
+              </button>
+            </div>
+          </div>
+
+          {/* Folder */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Folder
+            </label>
+            <select
+              value={folder}
+              onChange={e => setFolder(e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              {FOLDER_OPTIONS.map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Description <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="What is this secret used for?"
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical' as const, fontFamily: 'inherit' }}
+            />
+          </div>
+
+          {error && (
+            <div style={{ fontSize: 12, color: C.red, background: 'rgba(231,76,60,0.1)', border: `1px solid rgba(231,76,60,0.3)`, borderRadius: 6, padding: '8px 12px' }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '8px 18px', fontSize: 12, fontWeight: 600,
+                border: `1px solid ${C.border}`, borderRadius: 7,
+                background: 'transparent', color: C.text2, cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !name.trim() || !value.trim()}
+              style={{
+                padding: '8px 18px', fontSize: 12, fontWeight: 700,
+                border: 'none', borderRadius: 7,
+                background: submitting || !name.trim() || !value.trim() ? 'rgba(163,134,42,0.4)' : C.accent,
+                color: '#fff',
+                cursor: submitting || !name.trim() || !value.trim() ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {submitting ? 'Adding...' : 'Add Secret'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── Filter pills config ──────────────────────────────────────────────────────
 
 const FILTER_PILLS: { id: FilterId; label: string }[] = [
@@ -646,6 +938,7 @@ export function VaultView() {
   const [activeFilter, setActiveFilter] = useState<FilterId>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dismissedApprovals, setDismissedApprovals] = useState<Set<string>>(new Set());
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const loadVaultData = useCallback(async () => {
     try {
@@ -794,6 +1087,7 @@ export function VaultView() {
         </div>
 
         <button
+          onClick={() => setShowAddModal(true)}
           style={{
             padding: '6px 14px',
             fontSize: 12,
@@ -822,7 +1116,7 @@ export function VaultView() {
           />
           <span>
             {vaultStatus
-              ? `${vaultStatus.state.charAt(0).toUpperCase() + vaultStatus.state.slice(1)} · ${vaultStatus.serverUrl || 'vault.local'}`
+              ? `${vaultStatus.state.charAt(0).toUpperCase() + vaultStatus.state.slice(1)} · ${vaultStatus.serverUrl === 'postgres://local' ? 'Local Vault' : vaultStatus.serverUrl || 'Local Vault'}`
               : 'Disconnected'}
           </span>
         </div>
@@ -859,7 +1153,7 @@ export function VaultView() {
             <div style={{ fontSize: 40 }}>🔌</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: C.text2 }}>Vault Disconnected</div>
             <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', maxWidth: 280 }}>
-              Unable to connect to Vaultwarden. Check your vault configuration.
+              Vault unavailable — check PostgreSQL connection.
             </div>
             <button
               onClick={loadVaultData}
@@ -922,7 +1216,7 @@ export function VaultView() {
                   }}
                 >
                   {filteredSecrets.map(item => (
-                    <SecretCard key={item.id} item={item} />
+                    <SecretCard key={item.id} item={item} onDeleted={loadVaultData} />
                   ))}
                 </div>
               )}
@@ -939,6 +1233,14 @@ export function VaultView() {
 
       {/* ── AGENT TOOLBAR (fixed bottom) ── */}
       <VaultStatusBar status={vaultStatus} />
+
+      {/* ── ADD SECRET MODAL ── */}
+      {showAddModal && (
+        <AddSecretModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={loadVaultData}
+        />
+      )}
     </div>
   );
 }

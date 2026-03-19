@@ -32,9 +32,7 @@ export const AUDIT_LOG_FILE = 'cd-actions.jsonl';
 export const VAULT_POLICIES_FILE_NAME = 'vault-policies.json';
 export const VAULT_AUDIT_LOG_FILE = 'vault-audit.jsonl';
 export const VAULT_MASTER_ENC_FILE = 'vault-master.enc';
-export const VAULT_SERVER_URL = 'http://127.0.0.1:8222';
 export const VAULT_DEFAULT_LEASE_TTL = 3600; // 1 hour in seconds
-export const VAULT_SYNC_INTERVAL_MS = 60_000; // 1 minute
 
 // ─── Gateway ─────────────────────────────────────────────────────
 

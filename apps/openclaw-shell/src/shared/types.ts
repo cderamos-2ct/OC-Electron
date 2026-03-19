@@ -399,6 +399,23 @@ export interface RendererToMainHandlers {
   'vault:revoke-all': [];
   'vault:pending-approvals': [];
   'vault:decide-approval': [approvalId: string, decision: 'approved' | 'denied'];
+  'vault:add-secret': [{ name: string; value: string; folder?: string; description?: string }];
+  'vault:update-secret': [{ name: string; value: string }];
+  'vault:delete-secret': [{ name: string }];
+  'vault:reveal-secret': [{ name: string }];
+  'vault:autofill-query': [{ url: string }];
+  'vault:autofill-used': [{ secretName: string; url: string }];
+  'vault:autofill-offer-save': [{ url: string; username: string; password: string }];
+  'vault:add-credential-url': [{ secretName: string; urlPattern: string; username?: string }];
+  'vault:remove-credential-url': [{ id: string }];
+  'vault:list-credential-urls': [{ secretName: string }];
+  'vault:import-bitwarden': [{ filePath: string }];
+  'vault:export': [{ format: 'json' | 'csv'; filePath: string }];
+  'vault:create-backup': [];
+  'vault:restore-backup': [{ filePath: string }];
+  'vault:last-backup-info': [];
+  'vault:get-totp': [{ secretName: string }];
+  'vault:generate-password': [options?: Record<string, unknown>];
   'credentials:test-connection': [serviceId: string];
   'shell:export-debug-bundle': [];
   // Browser / CDP actions

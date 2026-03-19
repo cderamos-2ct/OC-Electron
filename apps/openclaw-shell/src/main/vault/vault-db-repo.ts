@@ -16,6 +16,7 @@ export interface VaultSecretRow {
   id: string;
   name: string;
   value: string;
+  folder?: string | null;
   description: string | null;
   owner_agent: string | null;
   acl: string[];
@@ -27,6 +28,7 @@ export interface VaultSecretRow {
 export interface UpsertVaultSecretInput {
   name: string;
   value: string;
+  folder?: string;
   description?: string;
   ownerAgentSlug?: string;
   acl?: string[];
@@ -58,7 +60,7 @@ export async function getVaultSecret(name: string): Promise<VaultSecretRow | nul
                  THEN vault_decrypt(encrypted_value, $2)
                  ELSE value
             END AS value,
-            description, owner_agent, acl, rotated_at, created_at, updated_at
+            folder, description, owner_agent, acl, rotated_at, created_at, updated_at
      FROM vault_secrets
      WHERE name = $1`,
     [name, key],
@@ -79,7 +81,7 @@ export async function listVaultSecrets(): Promise<VaultSecretRow[]> {
                  THEN vault_decrypt(encrypted_value, $1)
                  ELSE value
             END AS value,
-            description, owner_agent, acl, rotated_at, created_at, updated_at
+            folder, description, owner_agent, acl, rotated_at, created_at, updated_at
      FROM vault_secrets
      ORDER BY name ASC`,
     [key],
@@ -95,7 +97,7 @@ export async function getVaultSecretsByAgent(agentSlug: string): Promise<VaultSe
                  THEN vault_decrypt(vs.encrypted_value, $2)
                  ELSE vs.value
             END AS value,
-            vs.description, vs.owner_agent, vs.acl, vs.rotated_at, vs.created_at, vs.updated_at
+            vs.folder, vs.description, vs.owner_agent, vs.acl, vs.rotated_at, vs.created_at, vs.updated_at
      FROM vault_secrets vs
      LEFT JOIN agents a ON a.id = vs.owner_agent
      WHERE a.slug = $1 OR vs.acl ? $1
@@ -110,24 +112,26 @@ export async function getVaultSecretsByAgent(agentSlug: string): Promise<VaultSe
 export async function upsertVaultSecret(input: UpsertVaultSecretInput): Promise<VaultSecretRow> {
   const aclJson = JSON.stringify(input.acl ?? []);
   const key = getVaultMasterKey();
+  const folder = input.folder ?? (input.name.includes('/') ? input.name.substring(0, input.name.lastIndexOf('/')) : null);
 
   const result = await query<VaultSecretRow>(
-    `INSERT INTO vault_secrets (name, value, encrypted_value, description, owner_agent, acl)
+    `INSERT INTO vault_secrets (name, value, encrypted_value, folder, description, owner_agent, acl)
      VALUES (
-       $1, '', vault_encrypt($2, $6), $3,
-       (SELECT id FROM agents WHERE slug = $4 LIMIT 1),
-       $5::jsonb
+       $1, '', vault_encrypt($2, $7), $3, $4,
+       (SELECT id FROM agents WHERE slug = $5 LIMIT 1),
+       $6::jsonb
      )
      ON CONFLICT (name) DO UPDATE SET
-       encrypted_value = vault_encrypt($2, $6),
+       encrypted_value = vault_encrypt($2, $7),
+       folder          = COALESCE(EXCLUDED.folder, vault_secrets.folder),
        description     = COALESCE(EXCLUDED.description, vault_secrets.description),
        owner_agent     = COALESCE(EXCLUDED.owner_agent, vault_secrets.owner_agent),
        acl             = EXCLUDED.acl,
        updated_at      = NOW()
      RETURNING id, name,
-               vault_decrypt(encrypted_value, $6) AS value,
-               description, owner_agent, acl, rotated_at, created_at, updated_at`,
-    [input.name, input.value, input.description ?? null, input.ownerAgentSlug ?? null, aclJson, key],
+               vault_decrypt(encrypted_value, $7) AS value,
+               folder, description, owner_agent, acl, rotated_at, created_at, updated_at`,
+    [input.name, input.value, folder, input.description ?? null, input.ownerAgentSlug ?? null, aclJson, key],
   );
   return result.rows[0];
 }
@@ -185,13 +189,15 @@ export async function syncVaultSecretsFromBitwarden(
   await withTransaction(async (client) => {
     for (const entry of entries) {
       try {
+        const entryFolder = entry.name.includes('/') ? entry.name.substring(0, entry.name.lastIndexOf('/')) : null;
         await client.query(
-          `INSERT INTO vault_secrets (name, value, encrypted_value, description, owner_agent)
-           VALUES ($1, '', vault_encrypt($2, $5), $3, (SELECT id FROM agents WHERE slug = $4 LIMIT 1))
+          `INSERT INTO vault_secrets (name, value, encrypted_value, folder, description, owner_agent)
+           VALUES ($1, '', vault_encrypt($2, $6), $3, $4, (SELECT id FROM agents WHERE slug = $5 LIMIT 1))
            ON CONFLICT (name) DO UPDATE SET
-             encrypted_value = vault_encrypt($2, $5),
+             encrypted_value = vault_encrypt($2, $6),
+             folder          = COALESCE(EXCLUDED.folder, vault_secrets.folder),
              updated_at      = NOW()`,
-          [entry.name, entry.value, entry.description ?? null, ownerAgentSlug ?? null, key],
+          [entry.name, entry.value, entryFolder, entry.description ?? null, ownerAgentSlug ?? null, key],
         );
         upserted++;
       } catch (err) {

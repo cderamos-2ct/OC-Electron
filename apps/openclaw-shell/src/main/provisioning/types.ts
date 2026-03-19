@@ -30,7 +30,7 @@ export interface ProvisioningState {
 }
 
 export interface Provisioner {
-  /** Unique service identifier (e.g., 'postgres', 'vaultwarden') */
+  /** Unique service identifier (e.g., 'postgres', 'gateway') */
   readonly id: string;
 
   /** Human-readable name */
@@ -52,7 +52,6 @@ export interface Provisioner {
 export interface ProvisioningConfig {
   dataDir: string;
   postgresPort: number;
-  vaultwardenPort: number;
   dashboardPort: number;
   codeServerPort: number;
   useExternalPostgres: boolean;
@@ -62,7 +61,6 @@ export interface ProvisioningConfig {
 export const DEFAULT_PROVISIONING_CONFIG: ProvisioningConfig = {
   dataDir: '', // resolved at runtime via platform.ts
   postgresPort: 5432,
-  vaultwardenPort: 8222,
   dashboardPort: 3000,
   codeServerPort: 8443,
   useExternalPostgres: false,

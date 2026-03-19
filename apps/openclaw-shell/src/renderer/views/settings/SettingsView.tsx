@@ -105,7 +105,7 @@ function PermissionsTab() {
 }
 
 function ServicesTab() {
-  const services = ['postgres', 'vaultwarden', 'gateway', 'dashboard', 'code-server', 'gws'];
+  const services = ['postgres', 'gateway', 'dashboard', 'code-server', 'gws'];
 
   const handleReProvision = useCallback(async (serviceId: string) => {
     try {

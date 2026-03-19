@@ -1,27 +1,24 @@
 // Vault Bridge — orchestrates secret access with policy enforcement
 // Follows the CDBridge pattern: request → evaluate → approve/deny → lease
-// Postgres backing: vault_secrets (sync), audit_log (dual-write), vault_approvals (persisted queue)
+// Postgres-native: vault_secrets is the source of truth, no external sync
 
 import { BrowserWindow } from 'electron';
 import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'events';
 import { createLogger } from '../logging/logger.js';
-import { VaultAdapter } from './vault-adapter.js';
+import type { PostgresVaultAdapter } from './postgres-vault-adapter.js';
 
 const log = createLogger('VaultBridge');
 import { VaultPolicyStore } from './vault-policy.js';
 import { LeaseCache } from './lease-cache.js';
 import { appendVaultAuditEntry, readVaultAuditLog } from './vault-audit.js';
 import {
-  syncVaultSecretsFromBitwarden,
-  getVaultSecret,
   countVaultSecrets,
   appendAuditLogEntry,
   createApprovalRecord,
   resolveApprovalRecord,
   listPendingApprovalRecords,
 } from './vault-db-repo.js';
-import { VAULT_SYNC_INTERVAL_MS } from '../../shared/constants.js';
 import type {
   VaultLease,
   VaultPolicy,
@@ -33,15 +30,14 @@ import type {
 } from '../../shared/types.js';
 
 export class VaultBridge extends EventEmitter {
-  private vault: VaultAdapter;
+  private vault: PostgresVaultAdapter;
   private policyStore: VaultPolicyStore;
   private leaseCache: LeaseCache;
   private pendingApprovals = new Map<string, PendingVaultApproval & { resolve: (decision: 'approved' | 'denied') => void }>();
   private mainWindow: BrowserWindow | null = null;
-  private syncHandle: ReturnType<typeof setInterval> | null = null;
   private _state: VaultConnectionState = 'disconnected';
 
-  constructor(vault: VaultAdapter) {
+  constructor(vault: PostgresVaultAdapter) {
     super();
     this.vault = vault;
     this.policyStore = new VaultPolicyStore();
@@ -58,14 +54,12 @@ export class VaultBridge extends EventEmitter {
 
   // ─── Lifecycle ──────────────────────────────────────────────────
 
-  async start(password: string, email?: string): Promise<void> {
+  async start(): Promise<void> {
     try {
       this._state = 'locked';
       this.notifyRenderer('vault:state', this._state);
 
-      // The vault adapter handles login/unlock
-      // The BwAdapter inside vault handles the bw CLI calls
-      // For now we assume the vault is already configured and we just need to unlock
+      // Postgres-native: master key is already loaded, adapter is ready
       this._state = 'unlocked';
       this.notifyRenderer('vault:state', this._state);
 
@@ -74,19 +68,7 @@ export class VaultBridge extends EventEmitter {
         log.warn('Failed to restore approval queue (non-fatal):', err);
       });
 
-      // Sync Bitwarden secrets to Postgres on unlock
-      void this.syncSecretsToDb().catch((err) => {
-        log.warn('Initial DB sync failed (non-fatal):', err);
-      });
-
-      // Start periodic sync
-      this.syncHandle = setInterval(() => {
-        void this.vault.sync()
-          .then(() => this.syncSecretsToDb())
-          .catch((err) => {
-            log.error('Sync error:', err);
-          });
-      }, VAULT_SYNC_INTERVAL_MS);
+      log.info('Vault bridge started (Postgres-native mode)');
     } catch (err) {
       this._state = 'error';
       this.notifyRenderer('vault:state', this._state);
@@ -95,41 +77,9 @@ export class VaultBridge extends EventEmitter {
   }
 
   async stop(): Promise<void> {
-    if (this.syncHandle) {
-      clearInterval(this.syncHandle);
-      this.syncHandle = null;
-    }
     this.leaseCache.dispose();
     this._state = 'disconnected';
     this.notifyRenderer('vault:state', this._state);
-  }
-
-  // ─── DB Sync ────────────────────────────────────────────────────
-
-  private async syncSecretsToDb(): Promise<void> {
-    try {
-      const secrets = await this.vault.listSecrets();
-      const entries: Array<{ name: string; value: string; description?: string }> = [];
-
-      for (const meta of secrets) {
-        const value = await this.vault.getSecret(meta.name);
-        if (value !== null) {
-          entries.push({
-            name: meta.name,
-            value,
-            description: `Synced from Bitwarden — folder: ${meta.folder}`,
-          });
-        }
-      }
-
-      const { upserted, errors } = await syncVaultSecretsFromBitwarden(entries, 'vesta');
-      if (errors.length > 0) {
-        log.warn('DB sync partial errors:', errors);
-      }
-      log.info(`Synced ${upserted} secrets to Postgres`);
-    } catch (err) {
-      log.warn('syncSecretsToDb error:', err);
-    }
   }
 
   // ─── Approval Queue Persistence ─────────────────────────────────
@@ -198,22 +148,8 @@ export class VaultBridge extends EventEmitter {
     policyId?: string,
   ): Promise<VaultLease | null> {
     try {
-      // Primary: try Bitwarden via VaultAdapter
-      let value: string | null = null;
-      try {
-        value = await this.vault.getSecret(secretName);
-      } catch {
-        // Bitwarden unavailable — fall through to Postgres
-      }
-
-      // Fallback: read from Postgres vault_secrets
-      if (value === null) {
-        const row = await getVaultSecret(secretName);
-        if (row && row.value !== 'PLACEHOLDER') {
-          value = row.value;
-          log.info(`Using Postgres fallback for secret: ${secretName}`);
-        }
-      }
+      // Read directly from Postgres (the source of truth)
+      const value = await this.vault.getSecret(secretName);
 
       if (value === null) {
         this.logAudit(agentId, secretName, 'access', 'error', policyId, undefined, purpose, `Secret not found: ${secretName}`);
@@ -328,21 +264,15 @@ export class VaultBridge extends EventEmitter {
   async getStatus(): Promise<VaultStatus> {
     let secretCount = 0;
 
-    if (this._state === 'unlocked') {
-      try {
-        secretCount = await this.vault.getSecretCount();
-      } catch {
-        // Bitwarden unavailable — fall back to Postgres count
-        secretCount = await countVaultSecrets().catch(() => 0);
-      }
-    } else {
-      // When locked, report count from Postgres (metadata only, no values exposed)
+    try {
+      secretCount = await this.vault.getSecretCount();
+    } catch {
       secretCount = await countVaultSecrets().catch(() => 0);
     }
 
     return {
       state: this._state,
-      serverUrl: 'http://127.0.0.1:8222',
+      serverUrl: 'postgres://local',
       secretCount,
       activeLeases: this.leaseCache.getActiveCount(),
       pendingApprovals: this.pendingApprovals.size,
