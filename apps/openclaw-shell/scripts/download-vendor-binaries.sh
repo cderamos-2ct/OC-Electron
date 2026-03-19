@@ -15,67 +15,7 @@ echo ""
 # ── 1. PostgreSQL + pgvector ──────────────────────────────────────────────
 bash "$SCRIPT_DIR/download-postgres.sh"
 
-# ── 2. Vaultwarden ───────────────────────────────────────────────────────
-VW_DIR="$VENDOR_DIR/vaultwarden"
-VW_VERSION="1.32.7"
-mkdir -p "$VW_DIR"
-
-if [ -f "$VW_DIR/vaultwarden" ]; then
-  echo "Vaultwarden already present, skipping."
-else
-  echo ""
-  echo "=== Downloading Vaultwarden $VW_VERSION ==="
-  ARCH="$(uname -m)"
-  if [ "$ARCH" = "arm64" ]; then
-    VW_ARCH="aarch64"
-  else
-    VW_ARCH="x86_64"
-  fi
-
-  VW_URL="https://github.com/dani-garcia/vaultwarden/releases/download/${VW_VERSION}/vaultwarden-${VW_VERSION}-${VW_ARCH}-apple-darwin.tar.gz"
-  echo "Downloading from: $VW_URL"
-
-  curl -fsSL "$VW_URL" -o "$VW_DIR/vaultwarden.tar.gz" || {
-    echo "WARNING: Vaultwarden download failed. You may need to build from source."
-    echo "See: https://github.com/dani-garcia/vaultwarden/wiki/Building-binary"
-  }
-
-  if [ -f "$VW_DIR/vaultwarden.tar.gz" ]; then
-    tar xzf "$VW_DIR/vaultwarden.tar.gz" -C "$VW_DIR/"
-    rm -f "$VW_DIR/vaultwarden.tar.gz"
-    chmod +x "$VW_DIR/vaultwarden"
-    echo "  Vaultwarden extracted."
-  fi
-fi
-
-# ── 3. Bitwarden CLI ────────────────────────────────────────────────────
-BW_DIR="$VENDOR_DIR/bw"
-BW_VERSION="2025.1.0"
-mkdir -p "$BW_DIR"
-
-if [ -f "$BW_DIR/bw" ]; then
-  echo "Bitwarden CLI already present, skipping."
-else
-  echo ""
-  echo "=== Downloading Bitwarden CLI $BW_VERSION ==="
-
-  BW_URL="https://github.com/bitwarden/clients/releases/download/cli-v${BW_VERSION}/bw-macos-${BW_VERSION}.zip"
-  echo "Downloading from: $BW_URL"
-
-  curl -fsSL "$BW_URL" -o "$BW_DIR/bw.zip" || {
-    echo "WARNING: Bitwarden CLI download failed."
-    echo "Install manually: npm install -g @bitwarden/cli"
-  }
-
-  if [ -f "$BW_DIR/bw.zip" ]; then
-    unzip -qo "$BW_DIR/bw.zip" -d "$BW_DIR/"
-    rm -f "$BW_DIR/bw.zip"
-    chmod +x "$BW_DIR/bw"
-    echo "  Bitwarden CLI extracted."
-  fi
-fi
-
-# ── 4. GWS CLI ──────────────────────────────────────────────────────────
+# ── 2. GWS CLI ──────────────────────────────────────────────────────────
 GWS_DIR="$VENDOR_DIR/gws"
 mkdir -p "$GWS_DIR"
 
@@ -99,7 +39,7 @@ else
   fi
 fi
 
-# ── 5. code-server ──────────────────────────────────────────────────────
+# ── 3. code-server ──────────────────────────────────────────────────────
 CS_DIR="$VENDOR_DIR/code-server"
 CS_VERSION="4.111.0"
 mkdir -p "$CS_DIR"
@@ -137,7 +77,7 @@ fi
 echo ""
 echo "=== Vendor binaries summary ==="
 echo ""
-for dir in postgres vaultwarden bw gws code-server; do
+for dir in postgres gws code-server; do
   if [ -d "$VENDOR_DIR/$dir" ]; then
     SIZE=$(du -sh "$VENDOR_DIR/$dir" 2>/dev/null | cut -f1)
     echo "  $dir: $SIZE"

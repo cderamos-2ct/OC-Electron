@@ -41,14 +41,6 @@ extraResources:
     to: postgres/share
     filter:
       - "**/*"
-  - from: vendor/vaultwarden
-    to: vaultwarden
-    filter:
-      - "**/*"
-  - from: vendor/bw
-    to: bw
-    filter:
-      - "**/*"
   - from: vendor/gws
     to: gws
     filter:
