@@ -8,6 +8,7 @@ directories:
   buildResources: assets
   output: release
 npmRebuild: false
+afterPack: scripts/afterPack.mjs
 files:
   - out/**/*
   - "!node_modules/**/*"
