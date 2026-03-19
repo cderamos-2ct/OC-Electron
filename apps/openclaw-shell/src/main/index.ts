@@ -213,14 +213,16 @@ if (!gotLock) {
     provisioningManager.setMainWindow(mainWindow);
     processPendingDeepLink(mainWindow);
 
-    // Start provisioned services (Postgres → Vaultwarden → Gateway → Dashboard → code-server)
-    if (provisioningManager.isComplete()) {
-      try {
-        await processSupervisor.startAll();
-        logger.info('All provisioned services started via ProcessSupervisor.');
-      } catch (err) {
-        logger.error('Failed to start provisioned services:', err);
+    // Provision and start services — run provisioning if not yet complete
+    try {
+      if (!provisioningManager.isComplete()) {
+        logger.info('Provisioning not complete — running provisioners...');
+        await provisioningManager.runAll();
       }
+      await processSupervisor.startAll();
+      logger.info('All provisioned services started via ProcessSupervisor.');
+    } catch (err) {
+      logger.error('Failed to provision/start services:', err);
     }
 
     // Security: Set Content Security Policy

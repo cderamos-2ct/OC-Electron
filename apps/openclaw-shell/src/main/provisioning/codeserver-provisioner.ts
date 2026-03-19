@@ -6,7 +6,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import type { Provisioner, ProvisioningProgress } from './types.js';
 import { ProvisioningStatus } from './types.js';
-import { getCodeServerDir } from './platform.js';
+import { getCodeServerDir, resolveResourcePath } from './platform.js';
 import { createLogger } from '../logging/logger.js';
 
 const execFileAsync = promisify(execFile);
@@ -27,6 +27,9 @@ export class CodeServerProvisioner implements Provisioner {
   }
 
   private get binPath(): string {
+    // Prefer bundled code-server from extraResources (runs in place with node_modules.asar)
+    const bundled = resolveResourcePath('code-server', 'bin', 'code-server');
+    if (existsSync(bundled)) return bundled;
     return join(this.installDir, 'bin', 'code-server');
   }
 
@@ -50,7 +53,7 @@ export class CodeServerProvisioner implements Provisioner {
     progress('Creating install directory...', 5);
     mkdirSync(this.installDir, { recursive: true });
 
-    // Step 2: Download and install code-server
+    // Step 2: Download code-server if not bundled and not already installed
     if (!existsSync(this.binPath)) {
       progress('Downloading code-server...', 10);
       await this.downloadAndInstall(onProgress);

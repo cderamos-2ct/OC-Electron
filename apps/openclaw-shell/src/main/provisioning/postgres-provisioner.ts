@@ -124,6 +124,8 @@ export class PostgresProvisioner implements Provisioner {
         timeout: 30_000,
         env: {
           ...process.env,
+          // Prevent PG18 "postmaster became multithreaded" on macOS
+          LC_ALL: 'C',
           // Ensure pgvector can be found
           ...(existsSync(resolvePgVectorLib()) ? {
             LD_LIBRARY_PATH: join(resolvePgVectorLib(), '..'),
@@ -165,8 +167,16 @@ export class PostgresProvisioner implements Provisioner {
       '--locale', 'C',
       '--auth', 'trust',
       '--username', 'postgres',
-      ...(libDir ? ['--lib-dir', libDir] : []),
-    ], { timeout: 60_000 });
+    ], {
+      timeout: 60_000,
+      env: {
+        ...process.env,
+        ...(libDir ? {
+          LD_LIBRARY_PATH: libDir,
+          DYLD_LIBRARY_PATH: libDir,
+        } : {}),
+      },
+    });
 
     log.info('initdb complete.');
   }

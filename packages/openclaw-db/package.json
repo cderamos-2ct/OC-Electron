@@ -25,7 +25,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp src/migrations/*.sql dist/migrations/",
     "typecheck": "tsc --noEmit",
     "migrate": "node --loader ts-node/esm src/migrate.ts",
     "seed": "node --loader ts-node/esm src/seed.ts",

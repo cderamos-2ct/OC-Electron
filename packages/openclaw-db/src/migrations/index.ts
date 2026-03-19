@@ -4,7 +4,11 @@ import { fileURLToPath } from 'node:url';
 import { query, withTransaction } from '../pool.js';
 import type { PoolClient } from 'pg';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// In packaged Electron app, __dirname resolves inside the asar bundle
+// which doesn't contain SQL files. Use process.resourcesPath to find them.
+const __dirname = typeof process !== 'undefined' && 'resourcesPath' in process
+  ? join((process as { resourcesPath: string }).resourcesPath, 'packages', 'openclaw-db', 'migrations')
+  : dirname(fileURLToPath(import.meta.url));
 
 async function ensureMigrationsTable(client: PoolClient): Promise<void> {
   await client.query(`
