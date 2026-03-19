@@ -20,7 +20,7 @@ export class DashboardProvisioner implements Provisioner {
 
   /** Path to the bundled standalone Next.js server */
   private get serverPath(): string {
-    return resolveResourcePath('dashboard', 'server.js');
+    return resolveResourcePath('dashboard', 'server.cjs');
   }
 
   /** Path to the bundled dashboard public dir */

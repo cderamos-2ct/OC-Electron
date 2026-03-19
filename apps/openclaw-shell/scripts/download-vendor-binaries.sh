@@ -74,6 +74,21 @@ else
   fi
 fi
 
+# ── Fix symlinks (electron-builder fails with EISDIR on symlinks) ────
+echo ""
+echo "=== Dereferencing symlinks in vendor/ ==="
+find "$VENDOR_DIR" -type l | while read link; do
+  target=$(realpath "$link" 2>/dev/null)
+  if [ -d "$target" ]; then
+    rm "$link" && cp -r "$target" "$link"
+  elif [ -f "$target" ]; then
+    rm "$link" && cp "$target" "$link"
+  else
+    rm "$link"
+  fi
+done
+echo "  Done."
+
 echo ""
 echo "=== Vendor binaries summary ==="
 echo ""

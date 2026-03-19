@@ -42,6 +42,16 @@ jobs:
       - name: Build workspace dependencies
         run: pnpm --filter "@openclaw/core" --filter "openclaw-db" build
 
+      - name: Build dashboard (standalone)
+        run: cd apps/openclaw-shell && bash scripts/build-dashboard.sh
+
+      - name: Download vendor binaries
+        if: matrix.platform == 'mac'
+        run: cd apps/openclaw-shell && bash scripts/download-vendor-binaries.sh
+
+      - name: Validate build resources
+        run: cd apps/openclaw-shell && bash scripts/validate-build.sh
+
       - name: Build renderer + main
         run: cd apps/openclaw-shell && npx electron-vite build
 

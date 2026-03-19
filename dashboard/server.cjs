@@ -372,15 +372,17 @@ function startDashboardApp() {
   }
 
   clearDashboardRestartTimer();
-  const nextCli = require.resolve("next/dist/bin/next");
-  const args = [
-    nextCli,
-    dev ? "dev" : "start",
-    "--hostname",
-    APP_HOST,
-    "--port",
-    String(APP_PORT),
-  ];
+
+  let args;
+  if (dev) {
+    const nextCli = require.resolve("next/dist/bin/next");
+    args = [nextCli, "dev", "--hostname", APP_HOST, "--port", String(APP_PORT)];
+  } else {
+    // Standalone mode — server.js is the self-contained Next.js server
+    const path = require("path");
+    const standaloneServer = path.join(__dirname, "server.js");
+    args = [standaloneServer];
+  }
 
   const child = spawn(process.execPath, args, {
     cwd: __dirname,

@@ -7,12 +7,10 @@ protocols:
 directories:
   buildResources: assets
   output: release
+npmRebuild: false
 files:
   - out/**/*
   - "!node_modules/**/*"
-asarUnpack:
-  - "node_modules/pg/**/*"
-  - "node_modules/pg-native/**/*"
 extraResources:
   - from: ../../packages/openclaw-core/dist
     to: packages/openclaw-core
@@ -45,7 +43,7 @@ extraResources:
     to: gws
     filter:
       - "**/*"
-  - from: ../../dashboard/.next/standalone
+  - from: ../../dashboard/.next/standalone/dashboard
     to: dashboard
     filter:
       - "**/*"

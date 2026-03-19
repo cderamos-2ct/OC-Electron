@@ -4,11 +4,15 @@ on:
   pull_request:
     paths:
       - 'apps/openclaw-shell/**'
+      - 'dashboard/**'
+      - 'packages/**'
   push:
     branches:
       - main
     paths:
       - 'apps/openclaw-shell/**'
+      - 'dashboard/**'
+      - 'packages/**'
 
 jobs:
   validate:
@@ -28,6 +32,9 @@ jobs:
 
       - name: Build workspace dependencies
         run: pnpm --filter "@openclaw/core" --filter "openclaw-db" build
+
+      - name: Build dashboard
+        run: cd dashboard && npx next build
 
       - name: Type check
         run: cd apps/openclaw-shell && npx tsc --noEmit
