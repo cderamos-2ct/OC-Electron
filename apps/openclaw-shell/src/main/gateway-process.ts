@@ -1,5 +1,5 @@
 import { spawn, execSync, ChildProcess } from 'child_process';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { app } from 'electron';
@@ -59,6 +59,9 @@ export class GatewayProcessManager {
       this.startHealthCheck();
       return;
     }
+
+    // Kill stale gateway from previous session
+    this.cleanupStaleGateway();
 
     log.info('Gateway not found, starting child process.');
     this.weStartedIt = true;
@@ -200,6 +203,32 @@ export class GatewayProcessManager {
     setTimeout(() => {
       this.backoffMs = BACKOFF_INITIAL_MS;
     }, 5_000);
+  }
+
+  private cleanupStaleGateway(): void {
+    try {
+      // Kill process from PID file
+      if (existsSync(GATEWAY_PID_FILE)) {
+        const stalePid = parseInt(readFileSync(GATEWAY_PID_FILE, 'utf-8').trim(), 10);
+        if (stalePid > 0) {
+          try {
+            process.kill(stalePid, 'SIGTERM');
+            log.info(`Killed stale gateway (PID ${stalePid})`);
+          } catch {
+            // Already dead — fine
+          }
+        }
+        unlinkSync(GATEWAY_PID_FILE);
+      }
+      // Also kill any orphaned openclaw-gateway processes
+      try {
+        execSync('pkill -f openclaw-gateway 2>/dev/null', { timeout: 3_000 });
+      } catch {
+        // None found — fine
+      }
+    } catch (err) {
+      log.warn('Stale gateway cleanup failed (non-fatal):', err);
+    }
   }
 
   private writePidFile(pid: number): void {
