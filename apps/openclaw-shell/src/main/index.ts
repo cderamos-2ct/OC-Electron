@@ -4,6 +4,13 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Suppress EPIPE errors from console.log when stdout pipe disconnects
+// (happens when launched from terminal and pipe is closed)
+process.on('uncaughtException', (err) => {
+  if ((err as NodeJS.ErrnoException).code === 'EPIPE') return;
+  throw err;
+});
 import { logger } from './logging/logger.js';
 import { initTelemetry } from './telemetry/crash-reporter.js';
 
