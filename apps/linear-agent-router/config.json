@@ -19,6 +19,12 @@
     }
   },
 
+  "reviewerFor": {
+    "Claude": "Codex",
+    "Codex": "Gemini",
+    "Gemini": "Claude"
+  },
+
   "projects": {
     "VIS": {
       "name": "OpenClaw / Aegilume",
@@ -37,7 +43,7 @@
       "3. Implement the fix in {repo}",
       "4. Run npx tsc --noEmit in apps/openclaw-shell",
       "5. Commit with {id} in the message",
-      "6. Move the issue to In Review, switch AI-lane label to the reviewer",
+      "6. In Linear: move the issue state to 'In Review', remove the '{lane}' label, add the '{reviewer}' label",
       "7. Leave a Linear comment describing what was done",
       "",
       "URL: {url}",
@@ -47,10 +53,11 @@
       "Review Linear issue {id}: \"{title}\"",
       "",
       "1. Read the issue and all comments",
-      "2. Find the branch, review diffs",
+      "2. Find the branch ({branchPrefix}/{id_lower}-fix), review diffs",
       "3. Check acceptance criteria",
-      "4. Leave a structured review comment",
-      "5. Move to Done (approved) or back to In Progress with feedback",
+      "4. Leave a structured review comment on the Linear issue",
+      "5. If approved: move issue state to 'Done', remove the '{lane}' label",
+      "   If changes needed: move issue state to 'In Progress', remove the '{lane}' label, add the '{reviewer}' label, describe required changes in your comment",
       "",
       "URL: {url}",
       "You are the REVIEWER. Do not re-implement unless there is a real defect."

@@ -64,9 +64,10 @@ function deepMerge(base, override) {
 
 const config = loadConfig();
 
-const PORT     = parseInt(process.env.PORT ?? config.port ?? "9786", 10);
+const PORT        = parseInt(process.env.PORT ?? config.port ?? "9786", 10);
 const MAX_PER_LANE = config.maxPerLane ?? 2;
 const AI_LANES    = config.aiLanes ?? {};
+const REVIEWER_FOR = config.reviewerFor ?? {};
 const PROJECTS    = config.projects ?? {};
 const PROMPTS     = config.prompts ?? {};
 
@@ -142,6 +143,8 @@ function dispatch(lane, actionType, issueId, title, url, priority, project) {
     return;
   }
 
+  const reviewer = REVIEWER_FOR[lane] ?? Object.keys(AI_LANES).find((l) => l !== lane) ?? lane;
+
   const vars = {
     id:           issueId,
     id_lower:     issueId.toLowerCase(),
@@ -151,6 +154,8 @@ function dispatch(lane, actionType, issueId, title, url, priority, project) {
     repo:         project.repo ?? __dirname,
     branchPrefix: project.branchPrefix ?? "crd",
     projectName:  project.name ?? issueId.split("-")[0],
+    lane,
+    reviewer,
   };
 
   const prompt = buildPrompt(actionType, vars);
