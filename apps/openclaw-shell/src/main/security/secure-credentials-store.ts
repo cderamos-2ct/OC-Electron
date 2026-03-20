@@ -20,6 +20,11 @@ function ensureConfigDir(): void {
 }
 
 function isEncryptionAvailable(): boolean {
+  // Skip safeStorage when ad-hoc signed — macOS prompts for keychain
+  // access on every launch because the signature hash changes per build.
+  // Re-enable once the app is signed with a stable developer certificate.
+  if (process.env.AEGILUME_SKIP_SAFE_STORAGE === '1') return false;
+  if (!process.env.CSC_LINK && !process.env.CSC_NAME) return false;
   try {
     return safeStorage.isEncryptionAvailable();
   } catch {
