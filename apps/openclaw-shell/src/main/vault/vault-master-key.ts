@@ -23,6 +23,8 @@ function ensureConfigDir(): void {
 }
 
 function isEncryptionAvailable(): boolean {
+  // Skip safeStorage when ad-hoc signed — triggers keychain prompt every launch
+  if (!process.env.CSC_LINK && !process.env.CSC_NAME) return false;
   try {
     return safeStorage.isEncryptionAvailable();
   } catch {

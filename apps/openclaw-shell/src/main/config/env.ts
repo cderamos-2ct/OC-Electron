@@ -60,7 +60,10 @@ export function validateEnvironment(): EnvValidationResult {
   }
 
   // Check for safeStorage availability (Electron-only)
-  try {
+  // Skip when ad-hoc signed — triggers keychain prompt every launch
+  if (!process.env.CSC_LINK && !process.env.CSC_NAME) {
+    warnings.push('Running outside Electron — safeStorage unavailable. Credential encryption disabled.');
+  } else try {
     // Dynamic import to avoid crashing in non-Electron environments
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { safeStorage } = require('electron');

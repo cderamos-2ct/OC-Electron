@@ -911,7 +911,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
   const [step, setStep] = useState(0);
   const [userName, setUserName] = useState('');
   const [selectedServices, setSelectedServices] = useState<Set<string>>(
-    new Set(['gmail', 'google-calendar', 'github'])
+    new Set(AVAILABLE_SERVICES.map(s => s.id))
   );
   const [agents, setAgents] = useState<SetupAgentConfig[]>(
     DEFAULT_AGENTS.map(a => ({
@@ -919,7 +919,7 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
       displayName: a.defaultName,
       emoji: a.emoji,
       role: a.role,
-      enabled: a.deployed,
+      enabled: true,
     }))
   );
 
