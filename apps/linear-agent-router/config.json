@@ -1,0 +1,59 @@
+{
+  "_comment": "Universal Linear Agent Router — multi-project, multi-model config. Copy this to config.local.json to override without touching version control.",
+
+  "port": 9786,
+  "maxPerLane": 2,
+
+  "aiLanes": {
+    "Claude": {
+      "cmd": "claude",
+      "args": ["-p", "{prompt}", "--allowedTools", "Edit,Write,Bash,Read,Glob,Grep,Agent"]
+    },
+    "Codex": {
+      "cmd": "codex",
+      "args": ["{prompt}"]
+    },
+    "Gemini": {
+      "cmd": "gemini",
+      "args": ["{prompt}"]
+    }
+  },
+
+  "projects": {
+    "VIS": {
+      "name": "OpenClaw / Aegilume",
+      "repo": "/Volumes/Storage/OpenClaw",
+      "branchPrefix": "crd",
+      "webhookSecret": ""
+    }
+  },
+
+  "prompts": {
+    "implement": [
+      "Pick up Linear issue {id}: \"{title}\"",
+      "",
+      "1. Read the full issue from Linear ({id})",
+      "2. Create branch: {branchPrefix}/{id_lower}-fix",
+      "3. Implement the fix in {repo}",
+      "4. Run npx tsc --noEmit in apps/openclaw-shell",
+      "5. Commit with {id} in the message",
+      "6. Move the issue to In Review, switch AI-lane label to the reviewer",
+      "7. Leave a Linear comment describing what was done",
+      "",
+      "URL: {url}",
+      "Priority: {priority}"
+    ],
+    "review": [
+      "Review Linear issue {id}: \"{title}\"",
+      "",
+      "1. Read the issue and all comments",
+      "2. Find the branch, review diffs",
+      "3. Check acceptance criteria",
+      "4. Leave a structured review comment",
+      "5. Move to Done (approved) or back to In Progress with feedback",
+      "",
+      "URL: {url}",
+      "You are the REVIEWER. Do not re-implement unless there is a real defect."
+    ]
+  }
+}
