@@ -2,11 +2,17 @@
 
 import { ChildProcess, spawn } from 'child_process';
 import { existsSync } from 'fs';
-import { join } from 'path';
 import type { Provisioner, ProvisioningProgress } from './types.js';
 import { ProvisioningStatus } from './types.js';
 import { resolveResourcePath } from './platform.js';
 import { createLogger } from '../logging/logger.js';
+import {
+  cleanupStalePidFile,
+  isPidRunning,
+  removePidFile,
+  writePidFile,
+} from '../process-pid.js';
+import { DASHBOARD_PID_FILE } from '../../shared/constants.js';
 
 const log = createLogger('DashboardProvisioner');
 
@@ -17,6 +23,7 @@ export class DashboardProvisioner implements Provisioner {
   readonly name = 'OpenClaw Dashboard';
 
   private process: ChildProcess | null = null;
+  private managedPid: number | null = null;
 
   /** Path to the bundled standalone Next.js server */
   private get serverPath(): string {
@@ -67,6 +74,16 @@ export class DashboardProvisioner implements Provisioner {
   }
 
   async start(): Promise<void> {
+    if (isPidRunning(this.managedPid)) {
+      log.info('Dashboard already started by current session.');
+      return;
+    }
+
+    this.process = null;
+    this.managedPid = null;
+
+    await cleanupStalePidFile(DASHBOARD_PID_FILE, 'dashboard', log);
+
     // Check if already running
     try {
       const response = await fetch(`http://127.0.0.1:${DASHBOARD_PORT}/`);
@@ -94,6 +111,11 @@ export class DashboardProvisioner implements Provisioner {
       },
     });
 
+    if (this.process.pid !== undefined) {
+      this.managedPid = this.process.pid;
+      writePidFile(DASHBOARD_PID_FILE, this.process.pid, log);
+    }
+
     this.process.stdout?.on('data', (data: Buffer) => {
       log.info('[dashboard]', data.toString().trimEnd());
     });
@@ -104,12 +126,12 @@ export class DashboardProvisioner implements Provisioner {
 
     this.process.on('error', (err) => {
       log.error('Dashboard process error:', err.message);
-      this.process = null;
+      this.clearManagedProcess();
     });
 
     this.process.on('exit', (code, signal) => {
       log.warn(`Dashboard exited (code=${code}, signal=${signal})`);
-      this.process = null;
+      this.clearManagedProcess();
     });
 
     log.info('Dashboard spawned.');
@@ -128,9 +150,15 @@ export class DashboardProvisioner implements Provisioner {
           resolve();
         });
       });
-      this.process = null;
+      this.clearManagedProcess();
       log.info('Dashboard stopped.');
     }
+  }
+
+  private clearManagedProcess(): void {
+    this.process = null;
+    this.managedPid = null;
+    removePidFile(DASHBOARD_PID_FILE, 'dashboard', log);
   }
 
   private async waitForReady(maxRetries: number): Promise<void> {

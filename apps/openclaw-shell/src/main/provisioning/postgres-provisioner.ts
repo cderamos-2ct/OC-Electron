@@ -1,9 +1,9 @@
 // PostgreSQL provisioner — detect, install, configure, migrate
 // Bundles Postgres 18 + pgvector binaries in app extraResources
 
-import { spawn, execFile } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { existsSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import type { Provisioner, ProvisioningProgress } from './types.js';
 import { ProvisioningStatus } from './types.js';
@@ -14,6 +14,7 @@ import {
   getDataDir,
 } from './platform.js';
 import { createLogger } from '../logging/logger.js';
+import { cleanupStalePidFile, isPidRunning } from '../process-pid.js';
 
 const execFileAsync = promisify(execFile);
 const log = createLogger('PostgresProvisioner');
@@ -28,6 +29,7 @@ export class PostgresProvisioner implements Provisioner {
 
   private dataDir: string;
   private port: number;
+  private managedPid: number | null = null;
 
   constructor(dataDir?: string, port?: number) {
     this.dataDir = dataDir ?? getPostgresDataDir();
@@ -96,6 +98,14 @@ export class PostgresProvisioner implements Provisioner {
   }
 
   async start(): Promise<void> {
+    if (isPidRunning(this.managedPid)) {
+      log.info('PostgreSQL already started by current session.');
+      return;
+    }
+
+    this.managedPid = null;
+    await cleanupStalePidFile(this.getPostmasterPidPath(), 'PostgreSQL', log);
+
     // Check if already running
     try {
       const pgIsReady = resolvePostgresBin('pg_isready');
@@ -133,6 +143,7 @@ export class PostgresProvisioner implements Provisioner {
           } : {}),
         },
       });
+      this.captureManagedPid();
       log.info('PostgreSQL started.');
     } catch (err) {
       log.error('Failed to start PostgreSQL:', err);
@@ -150,8 +161,12 @@ export class PostgresProvisioner implements Provisioner {
         '-w',
       ], { timeout: 15_000 });
       log.info('PostgreSQL stopped.');
+      this.managedPid = null;
     } catch (err) {
       log.warn('Failed to stop PostgreSQL (may not be running):', err);
+      if (!isPidRunning(this.managedPid)) {
+        this.managedPid = null;
+      }
     }
   }
 
@@ -339,5 +354,25 @@ export class PostgresProvisioner implements Provisioner {
       log.error('Health check failed:', err);
       return false;
     }
+  }
+
+  private captureManagedPid(): void {
+    const postmasterPidPath = this.getPostmasterPidPath();
+    try {
+      const [firstLine] = readFileSync(postmasterPidPath, 'utf-8').split(/\r?\n/, 1);
+      const pid = Number.parseInt(firstLine ?? '', 10);
+      if (!Number.isInteger(pid) || pid <= 0) {
+        log.warn('PostgreSQL started but postmaster.pid did not contain a valid PID.');
+        return;
+      }
+
+      this.managedPid = pid;
+    } catch (err) {
+      log.warn('PostgreSQL started but failed to capture postmaster PID:', err);
+    }
+  }
+
+  private getPostmasterPidPath(): string {
+    return join(this.dataDir, 'postmaster.pid');
   }
 }

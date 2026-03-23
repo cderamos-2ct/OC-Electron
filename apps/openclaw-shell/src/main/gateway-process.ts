@@ -1,5 +1,5 @@
-import { spawn, ChildProcess } from 'child_process';
-import { writeFileSync, readFileSync, mkdirSync, existsSync, unlinkSync } from 'fs';
+import { spawn, execSync, ChildProcess } from 'child_process';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { app } from 'electron';
@@ -9,9 +9,14 @@ import {
   GATEWAY_PID_FILE,
   GATEWAY_PROBE_TIMEOUT_MS,
   GATEWAY_HEALTH_INTERVAL_MS,
-  RUNTIME_DIR,
 } from '../shared/constants.js';
 import { createLogger } from './logging/logger.js';
+import {
+  cleanupStalePidFile,
+  isPidRunning,
+  removePidFile,
+  writePidFile,
+} from './process-pid.js';
 
 const log = createLogger('GatewayProcessManager');
 
@@ -28,6 +33,7 @@ export class GatewayProcessManager {
   private weStartedIt = false;
   private backoffMs = BACKOFF_INITIAL_MS;
   private stopping = false;
+  private managedPid: number | null = null;
 
   async probe(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -52,6 +58,13 @@ export class GatewayProcessManager {
   }
 
   async start(): Promise<void> {
+    if (isPidRunning(this.managedPid)) {
+      this.startHealthCheck();
+      return;
+    }
+
+    await cleanupStalePidFile(GATEWAY_PID_FILE, 'gateway', log);
+
     const alive = await this.probe();
     if (alive) {
       log.info('Gateway already running, connecting to existing.');
@@ -59,9 +72,6 @@ export class GatewayProcessManager {
       this.startHealthCheck();
       return;
     }
-
-    // Kill stale gateway from previous session
-    this.cleanupStaleGateway();
 
     log.info('Gateway not found, starting child process.');
     this.weStartedIt = true;
@@ -169,7 +179,8 @@ export class GatewayProcessManager {
     }
 
     if (this.gatewayProcess.pid !== undefined) {
-      this.writePidFile(this.gatewayProcess.pid);
+      this.managedPid = this.gatewayProcess.pid;
+      writePidFile(GATEWAY_PID_FILE, this.gatewayProcess.pid, log);
     }
 
     this.gatewayProcess.stdout?.on('data', (data: Buffer) => {
@@ -182,15 +193,15 @@ export class GatewayProcessManager {
 
     this.gatewayProcess.on('error', (err) => {
       log.warn('Gateway process error — running in offline mode:', err.message);
-      this.gatewayProcess = null;
-      this.weStartedIt = false;
+      this.clearManagedGateway(false);
     });
 
     this.gatewayProcess.on('exit', (code, signal) => {
       log.warn(`Gateway exited (code=${code}, signal=${signal})`);
-      this.gatewayProcess = null;
+      const shouldRestart = !this.stopping && this.weStartedIt;
+      this.clearManagedGateway(true);
 
-      if (!this.stopping && this.weStartedIt) {
+      if (shouldRestart) {
         log.info(`Restarting in ${this.backoffMs}ms...`);
         setTimeout(() => {
           this.backoffMs = Math.min(this.backoffMs * 2, BACKOFF_CEILING_MS);
@@ -203,35 +214,6 @@ export class GatewayProcessManager {
     setTimeout(() => {
       this.backoffMs = BACKOFF_INITIAL_MS;
     }, 5_000);
-  }
-
-  private cleanupStaleGateway(): void {
-    try {
-      if (!existsSync(GATEWAY_PID_FILE)) return;
-      const stalePid = parseInt(readFileSync(GATEWAY_PID_FILE, 'utf-8').trim(), 10);
-      if (stalePid > 0) {
-        try {
-          process.kill(stalePid, 'SIGTERM');
-          log.info(`Killed stale gateway (PID ${stalePid})`);
-        } catch {
-          // Already dead — fine
-        }
-      }
-      unlinkSync(GATEWAY_PID_FILE);
-    } catch (err) {
-      log.warn('Stale gateway cleanup failed (non-fatal):', err);
-    }
-  }
-
-  private writePidFile(pid: number): void {
-    try {
-      if (!existsSync(RUNTIME_DIR)) {
-        mkdirSync(RUNTIME_DIR, { recursive: true });
-      }
-      writeFileSync(GATEWAY_PID_FILE, String(pid), 'utf-8');
-    } catch (err) {
-      log.error('Failed to write PID file:', err);
-    }
   }
 
   private startHealthCheck(): void {
@@ -248,6 +230,7 @@ export class GatewayProcessManager {
 
   stop(): void {
     this.stopping = true;
+    const ownsGatewayPidFile = this.weStartedIt || this.managedPid !== null;
 
     if (this.healthTimer) {
       clearInterval(this.healthTimer);
@@ -255,15 +238,29 @@ export class GatewayProcessManager {
     }
 
     if (this.gatewayProcess) {
-      this.gatewayProcess.removeAllListeners('exit');
-      this.gatewayProcess.unref();
+      this.gatewayProcess.kill('SIGTERM');
       this.gatewayProcess = null;
     }
 
-    log.info('Disconnected from gateway (process left running).');
+    if (ownsGatewayPidFile) {
+      removePidFile(GATEWAY_PID_FILE, 'gateway', log);
+    }
+    this.managedPid = null;
+    this.weStartedIt = false;
+
+    log.info('Gateway stopped.');
   }
 
   async healthCheck(): Promise<boolean> {
     return this.probe();
+  }
+
+  private clearManagedGateway(removePid: boolean): void {
+    this.gatewayProcess = null;
+    this.managedPid = null;
+    this.weStartedIt = false;
+    if (removePid) {
+      removePidFile(GATEWAY_PID_FILE, 'gateway', log);
+    }
   }
 }

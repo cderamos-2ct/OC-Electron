@@ -8,6 +8,13 @@ import type { Provisioner, ProvisioningProgress } from './types.js';
 import { ProvisioningStatus } from './types.js';
 import { getCodeServerDir, resolveResourcePath } from './platform.js';
 import { createLogger } from '../logging/logger.js';
+import {
+  cleanupStalePidFile,
+  isPidRunning,
+  removePidFile,
+  writePidFile,
+} from '../process-pid.js';
+import { CODE_SERVER_PID_FILE } from '../../shared/constants.js';
 
 const execFileAsync = promisify(execFile);
 const log = createLogger('CodeServerProvisioner');
@@ -21,6 +28,7 @@ export class CodeServerProvisioner implements Provisioner {
 
   private process: ChildProcess | null = null;
   private installDir: string;
+  private managedPid: number | null = null;
 
   constructor(installDir?: string) {
     this.installDir = installDir ?? getCodeServerDir();
@@ -77,6 +85,16 @@ export class CodeServerProvisioner implements Provisioner {
   }
 
   async start(): Promise<void> {
+    if (isPidRunning(this.managedPid)) {
+      log.info('code-server already started by current session.');
+      return;
+    }
+
+    this.process = null;
+    this.managedPid = null;
+
+    await cleanupStalePidFile(CODE_SERVER_PID_FILE, 'code-server', log);
+
     // Check if already running
     try {
       const response = await fetch(`http://127.0.0.1:${CODE_SERVER_PORT}/healthz`);
@@ -104,6 +122,11 @@ export class CodeServerProvisioner implements Provisioner {
       env: { ...process.env },
     });
 
+    if (this.process.pid !== undefined) {
+      this.managedPid = this.process.pid;
+      writePidFile(CODE_SERVER_PID_FILE, this.process.pid, log);
+    }
+
     this.process.stdout?.on('data', (data: Buffer) => {
       log.info('[code-server]', data.toString().trimEnd());
     });
@@ -114,12 +137,12 @@ export class CodeServerProvisioner implements Provisioner {
 
     this.process.on('error', (err) => {
       log.error('code-server process error:', err.message);
-      this.process = null;
+      this.clearManagedProcess();
     });
 
     this.process.on('exit', (code, signal) => {
       log.warn(`code-server exited (code=${code}, signal=${signal})`);
-      this.process = null;
+      this.clearManagedProcess();
     });
 
     log.info('code-server spawned.');
@@ -138,9 +161,15 @@ export class CodeServerProvisioner implements Provisioner {
           resolve();
         });
       });
-      this.process = null;
+      this.clearManagedProcess();
       log.info('code-server stopped.');
     }
+  }
+
+  private clearManagedProcess(): void {
+    this.process = null;
+    this.managedPid = null;
+    removePidFile(CODE_SERVER_PID_FILE, 'code-server', log);
   }
 
   private async downloadAndInstall(

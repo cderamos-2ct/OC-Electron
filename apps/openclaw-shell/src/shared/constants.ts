@@ -19,6 +19,8 @@ export const TASKS_DIR = `${OPENCLAW_DATA_DIR}/tasks/items`;
 export const AGENTS_DIR = `${OPENCLAW_DATA_DIR}/agents`;
 export const RUNTIME_DIR = `${OPENCLAW_DATA_DIR}/runtime`;
 export const GATEWAY_PID_FILE = `${RUNTIME_DIR}/gateway.pid`;
+export const DASHBOARD_PID_FILE = `${RUNTIME_DIR}/dashboard.pid`;
+export const CODE_SERVER_PID_FILE = `${RUNTIME_DIR}/code-server.pid`;
 
 // ─── Shell Config ────────────────────────────────────────────────
 
