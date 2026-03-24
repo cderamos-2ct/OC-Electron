@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { on, gatewayRpc } from '../lib/ipc-client';
+import { on, gatewayGetState, gatewayRpc } from '../lib/ipc-client';
 import { flushQueue } from '../../shared/offline-queue';
 import type { GatewayConnectionState } from '../../shared/types';
 
@@ -8,6 +8,21 @@ export function useGateway() {
   const prevStateRef = useRef<GatewayConnectionState>('disconnected');
 
   useEffect(() => {
+    void gatewayGetState()
+      .then((state) => {
+        prevStateRef.current = state;
+        setConnectionState(state);
+
+        if (state === 'connected') {
+          void flushQueue(gatewayRpc).catch(() => {
+            // Flush errors are non-fatal; items stay in queue for next reconnect
+          });
+        }
+      })
+      .catch(() => {
+        // Keep default disconnected state until live updates arrive.
+      });
+
     const handler = (state: GatewayConnectionState) => {
       const prev = prevStateRef.current;
       prevStateRef.current = state;

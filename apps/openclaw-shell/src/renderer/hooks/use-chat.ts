@@ -19,11 +19,33 @@ export interface ChatMessage {
 // Session key for the main CD chat session
 const MAIN_SESSION_KEY = 'main';
 
+function extractMessageText(message: unknown): string {
+  if (typeof message === 'string') return message;
+  if (!message || typeof message !== 'object') return '';
+
+  const record = message as Record<string, unknown>;
+  const content = record.content;
+
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (!part || typeof part !== 'object') return '';
+        const obj = part as Record<string, unknown>;
+        return obj.type === 'text' && typeof obj.text === 'string' ? obj.text : '';
+      })
+      .filter(Boolean)
+      .join('');
+  }
+
+  return '';
+}
+
 function formatHistoryItem(item: unknown): ChatMessage | null {
   if (!item || typeof item !== 'object') return null;
   const obj = item as Record<string, unknown>;
   const role = obj.role === 'user' ? 'user' : 'cd';
-  const content = typeof obj.content === 'string' ? obj.content : '';
+  const content = extractMessageText(obj);
   const ts = typeof obj.timestamp === 'number' ? obj.timestamp : Date.now();
   const id = typeof obj.id === 'string' ? obj.id : `hist-${ts}-${Math.random()}`;
   return { id, role, content, timestamp: ts };
@@ -43,7 +65,12 @@ export function useChat() {
     invoke('gateway:rpc', 'chat.history', { sessionKey: MAIN_SESSION_KEY, limit: 50 })
       .then((result) => {
         if (cancelled) return;
-        const history = Array.isArray(result) ? result : [];
+        const history =
+          result && typeof result === 'object' && Array.isArray((result as { messages?: unknown[] }).messages)
+            ? (result as { messages: unknown[] }).messages
+            : Array.isArray(result)
+            ? result
+            : [];
         const parsed = history.map(formatHistoryItem).filter(Boolean) as ChatMessage[];
         setMessages(parsed);
       })
@@ -68,13 +95,7 @@ export function useChat() {
       const { runId, state, message } = chatEvent;
 
       if (state === 'delta') {
-        // Extract text delta
-        const delta =
-          message &&
-          typeof message === 'object' &&
-          'content' in (message as object)
-            ? String((message as Record<string, unknown>).content ?? '')
-            : '';
+        const delta = extractMessageText(message);
 
         if (streamingRunId.current !== runId) {
           // New streaming message from CD
@@ -101,13 +122,7 @@ export function useChat() {
       } else if (state === 'final') {
         streamingRunId.current = null;
         setLoading(false);
-        // Finalize the message content if provided
-        const finalContent =
-          message &&
-          typeof message === 'object' &&
-          'content' in (message as object)
-            ? String((message as Record<string, unknown>).content ?? '')
-            : null;
+        const finalContent = extractMessageText(message);
         if (finalContent !== null) {
           setMessages((prev) =>
             prev.map((m) =>
@@ -151,7 +166,8 @@ export function useChat() {
     if (!isConnected) {
       enqueueAction('chat.send', {
         sessionKey: MAIN_SESSION_KEY,
-        content: text.trim(),
+        idempotencyKey: crypto.randomUUID(),
+        message: text.trim(),
       });
       setMessages((prev) =>
         prev.map((m) => (m.id === optimisticId ? { ...m, queued: true } : m)),
@@ -164,7 +180,8 @@ export function useChat() {
     try {
       await invoke('gateway:rpc', 'chat.send', {
         sessionKey: MAIN_SESSION_KEY,
-        content: text.trim(),
+        idempotencyKey: crypto.randomUUID(),
+        message: text.trim(),
       });
     } catch (err) {
       setLoading(false);

@@ -344,6 +344,7 @@ export interface MainToRendererEvents {
 
 // Renderer -> Main (invoke/handle)
 export interface RendererToMainHandlers {
+  'gateway:get-state': [];
   'gateway:rpc': [method: string, params?: unknown];
   'gateway:agent-rpc': [agentId: string, method: string, params?: unknown];
   'task:list': [];

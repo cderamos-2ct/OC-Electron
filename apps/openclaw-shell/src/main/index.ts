@@ -44,6 +44,8 @@ import { registerHotkeys, unregisterHotkeys } from './hotkeys.js';
 import { registerIpcHandlers } from './ipc-handlers.js';
 import { GatewayProcessManager } from './gateway-process.js';
 import { GatewayClient, shellDeviceAuthProvider } from './gateway-client.js';
+import { loadDeviceAuthToken } from './device-auth.js';
+import { loadOrCreateDeviceIdentity } from './device-identity.js';
 import { ProvisioningManager } from './provisioning/provisioning-manager.js';
 import { PathProvisioner } from './provisioning/path-provisioner.js';
 import { PostgresProvisioner } from './provisioning/postgres-provisioner.js';
@@ -190,6 +192,17 @@ if (!gotLock) {
       }
     });
 
+    // Import any existing paired OpenClaw shell identity/token before the gateway client connects.
+    try {
+      const identity = await loadOrCreateDeviceIdentity();
+      const token = loadDeviceAuthToken({ deviceId: identity.deviceId, role: 'operator' });
+      if (token) {
+        logger.info('Loaded shell gateway device auth token.');
+      }
+    } catch (err) {
+      logger.warn('Failed to prepare shell gateway identity/token:', err);
+    }
+
     // ── Provisioning: create shared provisioner instances ──────────────────
     const pathProv = new PathProvisioner();
     const pgProv = new PostgresProvisioner();
@@ -216,9 +229,98 @@ if (!gotLock) {
     processSupervisor.register(dsProv);
     processSupervisor.register(csProv);
 
+    // Instantiate gateway client with forwarding callbacks that reference mainWindow
+    gatewayClient = new GatewayClient({
+      url: GATEWAY_URL,
+      deviceAuth: shellDeviceAuthProvider,
+      onStateChange: (state: GatewayConnectionState) => {
+        logger.info(`Gateway client state: ${state}`);
+        mainWindow?.webContents.send('gateway:state', state);
+      },
+      onHello: (hello) => {
+        logger.info(`Gateway hello received (protocol=${hello.protocol}, connId=${hello.server.connId})`);
+      },
+      onError: (error) => {
+        logger.warn('Gateway client error:', error);
+      },
+      onEvent: (evt: unknown) => {
+        mainWindow?.webContents.send('gateway:event', evt);
+
+        // Phase 5: Fire native OS notifications for important events
+        const frame = evt as EventFrame;
+        if (frame?.event) {
+          const priority = classifyEventPriority(frame.event, frame.payload);
+          if (priority !== 'info') {
+            const payload = frame.payload as Record<string, unknown> | undefined;
+            showNativeNotification({
+              title: String(payload?.title ?? frame.event),
+              body: String(payload?.body ?? payload?.description ?? payload?.message ?? ''),
+              priority,
+              serviceId: payload?.serviceId as string | undefined,
+              actionId: payload?.actionId as string | undefined,
+            });
+          }
+        }
+      },
+    });
+
+    // Instantiate CD Action Bridge (Phase 4)
+    const bindingRegistry = AgentServiceBindingRegistry.fromConfig();
+    cdBridge = new CDBridge(gatewayClient, serviceManager, bindingRegistry);
+
+    // Listen for CD action requests from the gateway
+    gatewayClient.on('cd.action.request', (payload: unknown) => {
+      const { action } = payload as { action: CDAction };
+      if (action) {
+        void cdBridge!.handleActionRequest(action);
+      }
+    });
+
+    // ── Vault Integration ─────────────────────────────────────────────
+    try {
+      initMasterKey();
+      const vaultAdapter = new PostgresVaultAdapter();
+      vaultBridge = new VaultBridge(vaultAdapter);
+
+      // Set up credential provider — vault-backed with legacy fallback
+      const vaultCredentialProvider = new VaultCredentialProvider(vaultBridge);
+      workerManager.setCredentialProvider(vaultCredentialProvider);
+
+      // Register vault IPC handlers
+      registerVaultIpcHandlers(vaultBridge);
+
+      // Initialize vault in background (don't block app startup)
+      void vaultAdapter.initialize().then(() => {
+        logger.info('Vault adapter initialized.');
+      }).catch((err: unknown) => {
+        logger.warn('Vault initialization failed, using secure local credentials:', err);
+        // Prefer safeStorage-encrypted store; legacy plaintext is last resort
+        const secureProvider = new SecureCredentialProvider();
+        workerManager.setCredentialProvider(secureProvider);
+      });
+    } catch (err) {
+      logger.warn('Vault setup failed, using secure local credentials:', err);
+      const secureProvider = new SecureCredentialProvider();
+      workerManager.setCredentialProvider(secureProvider);
+    }
+
+    registerIpcHandlers(gatewayClient, serviceManager, taskEngine, workerManager, cdBridge, provisioningManager);
+
     mainWindow = createWindow();
     provisioningManager.setMainWindow(mainWindow);
+    cdBridge.setMainWindow(mainWindow);
+    vaultBridge?.setMainWindow(mainWindow);
     processPendingDeepLink(mainWindow);
+
+    // Start/connect the gateway client before the rest of the service bootstrap,
+    // so renderer IPC and chat surfaces do not stay offline when unrelated
+    // packaged services (for example Postgres/code-server) fail to boot.
+    try {
+      await gatewayManager.start();
+      gatewayClient.connect();
+    } catch (err) {
+      logger.error('Failed to start/connect gateway client:', err);
+    }
 
     // Provision and start services — run provisioning if not yet complete
     try {
@@ -283,79 +385,8 @@ if (!gotLock) {
     // Phase 5: Wire native notification system
     setNotificationWindow(mainWindow);
 
-    // Instantiate gateway client with forwarding callbacks that reference mainWindow
-    gatewayClient = new GatewayClient({
-      url: GATEWAY_URL,
-      deviceAuth: shellDeviceAuthProvider,
-      onStateChange: (state: GatewayConnectionState) => {
-        mainWindow?.webContents.send('gateway:state', state);
-      },
-      onEvent: (evt: unknown) => {
-        mainWindow?.webContents.send('gateway:event', evt);
-
-        // Phase 5: Fire native OS notifications for important events
-        const frame = evt as EventFrame;
-        if (frame?.event) {
-          const priority = classifyEventPriority(frame.event, frame.payload);
-          if (priority !== 'info') {
-            const payload = frame.payload as Record<string, unknown> | undefined;
-            showNativeNotification({
-              title: String(payload?.title ?? frame.event),
-              body: String(payload?.body ?? payload?.description ?? payload?.message ?? ''),
-              priority,
-              serviceId: payload?.serviceId as string | undefined,
-              actionId: payload?.actionId as string | undefined,
-            });
-          }
-        }
-      },
-    });
-
-    // Instantiate CD Action Bridge (Phase 4)
-    const bindingRegistry = AgentServiceBindingRegistry.fromConfig();
-    cdBridge = new CDBridge(gatewayClient, serviceManager, bindingRegistry);
-    cdBridge.setMainWindow(mainWindow);
-
-    // Listen for CD action requests from the gateway
-    gatewayClient.on('cd.action.request', (payload: unknown) => {
-      const { action } = payload as { action: CDAction };
-      if (action) {
-        void cdBridge!.handleActionRequest(action);
-      }
-    });
-
-    // ── Vault Integration ─────────────────────────────────────────────
-    try {
-      initMasterKey();
-      const vaultAdapter = new PostgresVaultAdapter();
-      vaultBridge = new VaultBridge(vaultAdapter);
-      vaultBridge.setMainWindow(mainWindow);
-
-      // Set up credential provider — vault-backed with legacy fallback
-      const vaultCredentialProvider = new VaultCredentialProvider(vaultBridge);
-      workerManager.setCredentialProvider(vaultCredentialProvider);
-
-      // Register vault IPC handlers
-      registerVaultIpcHandlers(vaultBridge);
-
-      // Initialize vault in background (don't block app startup)
-      void vaultAdapter.initialize().then(() => {
-        logger.info('Vault adapter initialized.');
-      }).catch((err: unknown) => {
-        logger.warn('Vault initialization failed, using secure local credentials:', err);
-        // Prefer safeStorage-encrypted store; legacy plaintext is last resort
-        const secureProvider = new SecureCredentialProvider();
-        workerManager.setCredentialProvider(secureProvider);
-      });
-    } catch (err) {
-      logger.warn('Vault setup failed, using secure local credentials:', err);
-      const secureProvider = new SecureCredentialProvider();
-      workerManager.setCredentialProvider(secureProvider);
-    }
-
     createTray(mainWindow);
     registerHotkeys(mainWindow);
-    registerIpcHandlers(gatewayClient, serviceManager, taskEngine, workerManager, cdBridge, provisioningManager);
 
     // Start API workers (graceful — workers handle missing credentials internally)
     try {
@@ -371,11 +402,6 @@ if (!gotLock) {
       }
     });
 
-    // Start gateway process (probe-first: connect if running, spawn if not)
-    await gatewayManager.start();
-
-    // Connect the WS client after the process is confirmed up
-    gatewayClient.connect();
   });
 
   app.on('window-all-closed', () => {

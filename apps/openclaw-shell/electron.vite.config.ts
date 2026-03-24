@@ -4,9 +4,13 @@ import { resolve } from 'path';
 
 export default defineConfig({
   main: {
+    define: {
+      'process.env.WS_NO_BUFFER_UTIL': '"1"',
+      'process.env.WS_NO_UTF_8_VALIDATE': '"1"',
+    },
     plugins: [
       externalizeDepsPlugin({
-        exclude: ['ws', 'pg', '@noble/ed25519', '@octokit/rest', '@googleworkspace/cli', '@openclaw/core', '@openclaw/gateway-client', 'openclaw-db', 'zustand', 'electron-log', 'electron-updater', '@sentry/electron'],
+        exclude: ['pg', '@noble/ed25519', '@octokit/rest', '@googleworkspace/cli', '@openclaw/core', '@openclaw/gateway-client', 'openclaw-db', 'zustand', 'electron-log', 'electron-updater', '@sentry/electron'],
       }),
     ],
     resolve: {

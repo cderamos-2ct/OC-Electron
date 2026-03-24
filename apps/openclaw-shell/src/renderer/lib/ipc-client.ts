@@ -62,6 +62,10 @@ export function gatewayRpc(method: string, params?: unknown): Promise<unknown> {
   return window.electronAPI.gatewayRpc(method, params);
 }
 
+export function gatewayGetState(): Promise<GatewayConnectionState> {
+  return window.electronAPI.gatewayGetState();
+}
+
 export function gatewayAgentRpc(agentId: string, method: string, params?: unknown): Promise<unknown> {
   return window.electronAPI.gatewayAgentRpc(agentId, method, params);
 }

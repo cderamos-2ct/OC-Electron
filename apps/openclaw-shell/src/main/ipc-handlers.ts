@@ -68,6 +68,10 @@ export function registerIpcHandlers(gateway: GatewayClient, serviceManager: Serv
   const bindingRegistry = AgentServiceBindingRegistry.fromConfig();
 
   // ── Gateway ──────────────────────────────────────────────────────────────
+  handle('gateway:get-state', async () => {
+    return gateway.state;
+  });
+
   handle('gateway:rpc', async (_event, method: string, params?: unknown) => {
     if (!gateway.isConnected) {
       return { error: 'not connected' };

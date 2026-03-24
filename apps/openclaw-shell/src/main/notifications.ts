@@ -78,8 +78,10 @@ export function classifyEventPriority(event: string, payload?: unknown): Notific
   if (p?.priority === 'needs_now' || p?.priority === 'urgent') return 'urgent';
   if (p?.priority === 'high') return 'attention';
 
-  // Heartbeat, tick, presence — info only
-  if (event === 'heartbeat' || event === 'tick' || event === 'presence') return 'info';
+  // Routine system noise should never surface as native notifications.
+  if (event === 'heartbeat' || event === 'tick' || event === 'presence' || event === 'health') {
+    return 'info';
+  }
 
   // Default: attention for unknown events with payloads
   return 'attention';

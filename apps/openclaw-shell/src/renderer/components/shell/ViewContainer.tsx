@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useViewStore, ViewId } from '../../stores/view-store';
+import { useSetupStore } from '../../stores/setup-store';
 import {
   HomeView,
   TasksView,
@@ -13,9 +14,9 @@ import {
 } from '../../views';
 import { ViewErrorBoundary } from '../errors/ViewErrorBoundary';
 
-function renderView(view: ViewId): React.ReactNode {
+function renderView(view: ViewId, userName: string): React.ReactNode {
   switch (view) {
-    case 'home':         return <ViewErrorBoundary viewId="home"><HomeView /></ViewErrorBoundary>;
+    case 'home':         return <ViewErrorBoundary viewId="home"><HomeView userName={userName || 'there'} /></ViewErrorBoundary>;
     case 'tasks':        return <ViewErrorBoundary viewId="tasks"><TasksView /></ViewErrorBoundary>;
     case 'draft-review': return <ViewErrorBoundary viewId="draft-review"><DraftReviewView /></ViewErrorBoundary>;
     case 'agents':       return <ViewErrorBoundary viewId="agents"><AgentsView /></ViewErrorBoundary>;
@@ -29,6 +30,7 @@ function renderView(view: ViewId): React.ReactNode {
 
 export function ViewContainer() {
   const activeView = useViewStore((s) => s.activeView);
+  const userName = useSetupStore((s) => s.userName);
   const [displayedView, setDisplayedView] = useState<ViewId>(activeView);
   const [animating, setAnimating] = useState(false);
   const prevView = useRef<ViewId>(activeView);
@@ -66,7 +68,7 @@ export function ViewContainer() {
           overflow: 'hidden',
         }}
       >
-        {renderView(displayedView)}
+        {renderView(displayedView, userName)}
       </div>
 
       <style>{`

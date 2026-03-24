@@ -15,6 +15,7 @@ type Unsubscribe = () => void;
 
 // Allowed channels for invoke (renderer -> main)
 const INVOKE_CHANNELS: RendererToMainChannel[] = [
+  'gateway:get-state',
   'gateway:rpc',
   'gateway:agent-rpc',
   'task:list',
@@ -162,6 +163,10 @@ const electronAPI = {
 
   gatewayRpc(method: string, params?: unknown): Promise<unknown> {
     return ipcRenderer.invoke('gateway:rpc', method, params);
+  },
+
+  gatewayGetState(): Promise<GatewayConnectionState> {
+    return ipcRenderer.invoke('gateway:get-state');
   },
 
   gatewayAgentRpc(agentId: string, method: string, params?: unknown): Promise<unknown> {

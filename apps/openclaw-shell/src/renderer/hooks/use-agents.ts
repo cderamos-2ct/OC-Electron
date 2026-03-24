@@ -2,6 +2,36 @@ import { useCallback, useEffect, useState } from 'react';
 import { invoke, on } from '../lib/ipc-client';
 import type { AgentStatus } from '../../shared/types';
 
+function normalizeAgents(result: unknown): AgentStatus[] {
+  if (Array.isArray(result)) {
+    return result as AgentStatus[];
+  }
+
+  if (!result || typeof result !== 'object') {
+    return [];
+  }
+
+  const payload = result as {
+    agents?: Array<{ id?: string; name?: string }>;
+  };
+
+  if (!Array.isArray(payload.agents)) {
+    return [];
+  }
+
+  return payload.agents
+    .map((agent) => {
+      if (!agent?.id) return null;
+      return {
+        agentId: agent.id,
+        online: true,
+        boundServices: [],
+        lastSeen: undefined,
+      } satisfies AgentStatus;
+    })
+    .filter(Boolean) as AgentStatus[];
+}
+
 export function useAgents() {
   const [agents, setAgents] = useState<AgentStatus[]>([]);
 
@@ -11,8 +41,7 @@ export function useAgents() {
     invoke('gateway:rpc', 'agents.list', undefined)
       .then((result) => {
         if (cancelled) return;
-        const list = Array.isArray(result) ? (result as AgentStatus[]) : [];
-        setAgents(list);
+        setAgents(normalizeAgents(result));
       })
       .catch((err) => {
         if (cancelled) return;

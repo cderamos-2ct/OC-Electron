@@ -15,6 +15,7 @@ import {
 
 const CONFIG_DIR = join(homedir(), '.openclaw-shell');
 const AUTH_FILE = join(CONFIG_DIR, 'device-auth.json');
+const LEGACY_AUTH_FILE = join(homedir(), '.openclaw', 'identity', 'device-auth.json');
 
 function ensureConfigDir() {
   mkdirSync(CONFIG_DIR, { recursive: true });
@@ -23,6 +24,24 @@ function ensureConfigDir() {
 function readStore(): DeviceAuthStore | null {
   try {
     const raw = readFileSync(AUTH_FILE, 'utf-8');
+    const parsed = JSON.parse(raw) as DeviceAuthStore;
+    if (
+      !parsed ||
+      parsed.version !== 1 ||
+      typeof parsed.deviceId !== 'string' ||
+      typeof parsed.tokens !== 'object'
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function readLegacyStore(): DeviceAuthStore | null {
+  try {
+    const raw = readFileSync(LEGACY_AUTH_FILE, 'utf-8');
     const parsed = JSON.parse(raw) as DeviceAuthStore;
     if (
       !parsed ||
@@ -49,11 +68,25 @@ export function loadDeviceAuthToken(params: {
   deviceId: string;
   role: string;
 }): DeviceAuthEntry | null {
-  return loadDeviceAuthTokenFromStore({
+  const local = loadDeviceAuthTokenFromStore({
     adapter,
     deviceId: params.deviceId,
     role: params.role,
   });
+  if (local) {
+    return local;
+  }
+
+  const legacy = readLegacyStore();
+  if (!legacy || legacy.deviceId !== params.deviceId) {
+    return null;
+  }
+
+  const entry = legacy.tokens[params.role] ?? null;
+  if (entry) {
+    writeStore(legacy);
+  }
+  return entry;
 }
 
 export function storeDeviceAuthToken(params: {

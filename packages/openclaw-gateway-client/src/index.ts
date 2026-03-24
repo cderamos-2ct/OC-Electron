@@ -16,6 +16,9 @@ import type {
   RPCResult,
 } from '@openclaw/core/gateway';
 
+process.env.WS_NO_BUFFER_UTIL ??= '1';
+process.env.WS_NO_UTF_8_VALIDATE ??= '1';
+
 export type {
   GatewayConnectionState,
   GatewayEventName,
@@ -61,7 +64,7 @@ export type DeviceAuthProvider = {
   /** Remove a stored device auth token. */
   clearDeviceAuthToken(params: { deviceId: string; role: string }): void;
   /** Return platform info for the connect frame. */
-  getPlatformInfo(): { platform: string; userAgent: string };
+  getPlatformInfo(): { platform: string; userAgent: string; deviceFamily?: string };
 };
 
 // ─── Internal Types ──────────────────────────────────────────────────────────
@@ -98,9 +101,18 @@ export type GatewayClientOptions = {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const CONNECT_FAILED_CODE = 4008;
-const CLIENT_ID = 'openclaw-shell';
-const CLIENT_MODE = 'shell';
-const CONNECT_SCOPES = ['operator.admin', 'operator.approvals', 'operator.pairing'];
+const CONNECT_CHALLENGE_TIMEOUT_MS = 1_500;
+// Reuse the local CLI-compatible identity shape so the shell can attach to the
+// already-paired local OpenClaw gateway without forcing a second manual pairing.
+const CLIENT_ID = 'cli';
+const CLIENT_MODE = 'cli';
+const CONNECT_SCOPES = [
+  'operator.admin',
+  'operator.approvals',
+  'operator.pairing',
+  'operator.read',
+  'operator.write',
+];
 
 // ─── Error ───────────────────────────────────────────────────────────────────
 
@@ -118,6 +130,10 @@ export class GatewayRequestError extends Error {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function normalizeDeviceMetadataForAuth(value?: string | null): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
 function buildDeviceAuthPayload(params: {
   deviceId: string;
   clientId: string;
@@ -127,9 +143,13 @@ function buildDeviceAuthPayload(params: {
   signedAtMs: number;
   token?: string | null;
   nonce: string;
+  platform?: string | null;
+  deviceFamily?: string | null;
 }): string {
+  const platform = normalizeDeviceMetadataForAuth(params.platform);
+  const deviceFamily = normalizeDeviceMetadataForAuth(params.deviceFamily);
   return [
-    'v2',
+    'v3',
     params.deviceId,
     params.clientId,
     params.clientMode,
@@ -138,6 +158,8 @@ function buildDeviceAuthPayload(params: {
     String(params.signedAtMs),
     params.token ?? '',
     params.nonce,
+    platform,
+    deviceFamily,
   ].join('|');
 }
 
@@ -282,7 +304,7 @@ export class GatewayClient {
       this.queueConnect();
     });
 
-    this.ws.on('message', (data: WebSocket.Data) => {
+    this.ws.on('message', (data: unknown) => {
       this.handleMessage(String(data));
     });
 
@@ -329,12 +351,27 @@ export class GatewayClient {
     this.tokenOnlyFallbackAttempted = false;
     if (this.connectTimer) clearTimeout(this.connectTimer);
     this.connectTimer = setTimeout(() => {
+      if (!this.connectNonce?.trim()) {
+        this.error = new Error('gateway connect challenge timeout');
+        this.setState('error');
+        this.opts.onError?.(this.error);
+        this.ws?.close(CONNECT_FAILED_CODE, 'connect challenge timeout');
+        return;
+      }
       void this.sendConnect();
-    }, 750);
+    }, CONNECT_CHALLENGE_TIMEOUT_MS);
   }
 
   private async sendConnect(options: { forceTokenOnly?: boolean } = {}) {
     if (this.connectSent) return;
+    const nonce = this.connectNonce?.trim() ?? '';
+    if (!nonce) {
+      this.error = new Error('gateway connect challenge missing nonce');
+      this.setState('error');
+      this.opts.onError?.(this.error);
+      this.ws?.close(CONNECT_FAILED_CODE, 'connect challenge missing nonce');
+      return;
+    }
     this.connectSent = true;
     if (this.connectTimer) {
       clearTimeout(this.connectTimer);
@@ -354,6 +391,7 @@ export class GatewayClient {
       const platformInfo = deviceAuth?.getPlatformInfo() ?? {
         platform: process.platform,
         userAgent: `openclaw-gateway-client/0.1.0`,
+        deviceFamily: '',
       };
 
       const params = {
@@ -363,6 +401,7 @@ export class GatewayClient {
           id: this.opts.clientName ?? CLIENT_ID,
           version: this.opts.clientVersion ?? '1.0.0',
           platform: platformInfo.platform,
+          deviceFamily: platformInfo.deviceFamily,
           mode: CLIENT_MODE,
           instanceId: this.opts.instanceId,
         },
@@ -400,21 +439,22 @@ export class GatewayClient {
 
     // Full Ed25519 device auth flow
     const deviceIdentity = await deviceAuth.loadOrCreateDeviceIdentity();
-    const storedToken = deviceAuth.loadDeviceAuthToken({
+    const storedDeviceToken = deviceAuth.loadDeviceAuthToken({
       deviceId: deviceIdentity.deviceId,
       role,
     })?.token;
-    const hasStoredDeviceToken = Boolean(storedToken);
-    const authToken = storedToken ?? this.opts.token;
-    const canFallbackToShared = Boolean(storedToken && this.opts.token);
+    const hasStoredDeviceToken = Boolean(storedDeviceToken);
+    const sharedToken = this.opts.token;
+    const signatureToken = sharedToken ?? storedDeviceToken ?? null;
+    const canFallbackToShared = Boolean(sharedToken && !storedDeviceToken);
 
     const auth =
-      authToken || this.opts.password
-        ? { token: authToken, password: this.opts.password }
+      sharedToken || storedDeviceToken || this.opts.password
+        ? { token: sharedToken, deviceToken: storedDeviceToken, password: this.opts.password }
         : undefined;
 
+    const platformInfo = deviceAuth.getPlatformInfo();
     const signedAtMs = Date.now();
-    const nonce = this.connectNonce ?? '';
     const payload = buildDeviceAuthPayload({
       deviceId: deviceIdentity.deviceId,
       clientId: this.opts.clientName ?? CLIENT_ID,
@@ -422,8 +462,10 @@ export class GatewayClient {
       role,
       scopes: CONNECT_SCOPES,
       signedAtMs,
-      token: authToken ?? null,
+      token: signatureToken,
       nonce,
+      platform: platformInfo.platform,
+      deviceFamily: platformInfo.deviceFamily,
     });
     const signature = await deviceAuth.signDevicePayload(deviceIdentity.privateKey, payload);
     const device = {
@@ -434,8 +476,6 @@ export class GatewayClient {
       nonce,
     };
 
-    const platformInfo = deviceAuth.getPlatformInfo();
-
     const params = {
       minProtocol: 3,
       maxProtocol: 3,
@@ -443,6 +483,7 @@ export class GatewayClient {
         id: this.opts.clientName ?? CLIENT_ID,
         version: this.opts.clientVersion ?? '1.0.0',
         platform: platformInfo.platform,
+        deviceFamily: platformInfo.deviceFamily,
         mode: CLIENT_MODE,
         instanceId: this.opts.instanceId,
       },
@@ -474,7 +515,7 @@ export class GatewayClient {
         const canRetryWithoutDevice =
           !options.forceTokenOnly &&
           !this.tokenOnlyFallbackAttempted &&
-          Boolean(this.opts.token) &&
+          Boolean(sharedToken) &&
           !hasStoredDeviceToken;
 
         if (canRetryWithoutDevice) {
@@ -486,7 +527,7 @@ export class GatewayClient {
           return;
         }
 
-        if (canFallbackToShared) {
+        if (hasStoredDeviceToken && sharedToken) {
           deviceAuth.clearDeviceAuthToken({ deviceId: deviceIdentity.deviceId, role });
         }
         this.pendingConnectError =
