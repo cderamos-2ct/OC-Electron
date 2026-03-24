@@ -57,30 +57,34 @@ function StatCard({ emoji, count, label, agent, accent }: AgentStat) {
 }
 
 interface AgentStatusGridProps {
-  stats?: AgentStat[];
+  stats: AgentStat[];
 }
 
-const DEFAULT_STATS: AgentStat[] = [
-  { emoji: '\u{1F6E1}\uFE0F', count: '—', label: 'Emails triaged', agent: 'Karoline' },
-  { emoji: '\u{1F525}', count: '—', label: 'PRs merged', agent: 'Vulcan' },
-  { emoji: '\u23F3', count: '—', label: 'Invites handled', agent: 'Kronos' },
-  { emoji: '\u{1F52E}', count: '—', label: 'Recaps processed', agent: 'Ada' },
-  { emoji: '\u{1F4E1}', count: '—', label: 'Risks flagged', agent: 'Hermes' },
-];
-
 export function AgentStatusGrid({ stats }: AgentStatusGridProps) {
-  const displayStats = stats && stats.length > 0 ? stats : DEFAULT_STATS;
+  if (stats.length === 0) {
+    return (
+      <p
+        style={{
+          fontSize: '14px',
+          color: 'var(--muted)',
+          margin: '0 0 24px 0',
+        }}
+      >
+        No dashboard metrics to display.
+      </p>
+    );
+  }
 
   return (
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
+        gridTemplateColumns: `repeat(${stats.length}, 1fr)`,
         gap: '12px',
         marginBottom: '24px',
       }}
     >
-      {displayStats.map((stat) => (
+      {stats.map((stat) => (
         <StatCard key={stat.label} {...stat} />
       ))}
     </div>
