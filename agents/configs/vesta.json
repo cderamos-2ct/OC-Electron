@@ -1,68 +1,69 @@
 {
-  "id": "vesta",
-  "displayName": "Vesta",
-  "name": "Vesta",
-  "emoji": "🏠",
-  "lane": "personal-family",
-  "status": "planned",
-  "runtimeAgentId": null,
-  "default": false,
-  "description": "Personal and family life guardian — manages personal calendar, family commitments, household tasks, and life admin outside of work.",
-  "responsibilities": [
-    "Track personal and family calendar events",
-    "Manage household tasks and reminders",
-    "Surface family commitments and life-admin deadlines",
-    "Coordinate personal scheduling with work calendar"
-  ],
-  "monitorSurfaces": [
-    "Google Calendar (personal)",
-    "Apple Reminders",
-    "Family shared calendars"
-  ],
-  "communicationChannels": [
-    "personal schedule updates",
-    "family commitment alerts",
-    "life-admin reminders"
-  ],
-  "tools": [
-    "google_calendar_api",
-    "apple_reminders",
-    "get_calendar_events.sh"
-  ],
-  "memoryPaths": [
-    "/Volumes/Storage/OpenClaw/agents/profiles/vesta/MEMORY.md"
-  ],
-  "taskTags": [
-    "personal",
-    "family",
-    "life-admin",
-    "home"
-  ],
-  "escalatesTo": "cd",
-  "modelProvider": "anthropic",
-  "defaultModel": "anthropic/claude-sonnet-4.6",
-  "fallbackModel": "openai/gpt-5-mini",
-  "reasoningLevel": "medium",
-  "authProfile": "default",
-  "canSpawnSubagents": false,
-  "subagentModel": null,
-  "subagentMaxDepth": 0,
-  "subagentUseCases": [],
-  "persistent": true,
-  "desiredStatus": "available",
-  "sessionLabel": "lane-vesta",
-  "startupPolicy": "on_demand",
-  "supervisor": "cd",
-  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/vesta/DIRECTIVES.md",
-  "dashboardCardId": "vesta",
-  "registryVersion": 2,
-  "hiringClass": "permanent-staff",
-  "namedAfter": "Vesta — Roman goddess of the hearth, home, and family",
-  "runtime": {
-    "observedState": "unknown",
-    "sessionKey": null,
-    "lastSeenAt": null,
-    "currentTaskId": null,
-    "lastError": null
-  }
+    "id": "vesta",
+    "displayName": "Vesta",
+    "name": "Vesta",
+    "emoji": "\ud83c\udfe0",
+    "lane": "personal-family",
+    "status": "planned",
+    "runtimeAgentId": "vesta",
+    "default": false,
+    "description": "Personal and family life guardian \u2014 manages personal calendar, family commitments, household tasks, and life admin outside of work.",
+    "responsibilities": [
+        "Track personal and family calendar events",
+        "Manage household tasks and reminders",
+        "Surface family commitments and life-admin deadlines",
+        "Coordinate personal scheduling with work calendar"
+    ],
+    "monitorSurfaces": [
+        "Google Calendar (personal)",
+        "Apple Reminders",
+        "Family shared calendars"
+    ],
+    "communicationChannels": [
+        "personal schedule updates",
+        "family commitment alerts",
+        "life-admin reminders"
+    ],
+    "tools": [
+        "google_calendar_api",
+        "apple_reminders",
+        "get_calendar_events.sh"
+    ],
+    "memoryPaths": [
+        "/Volumes/Storage/OpenClaw/agents/profiles/vesta/MEMORY.md"
+    ],
+    "taskTags": [
+        "personal",
+        "family",
+        "life-admin",
+        "home"
+    ],
+    "escalatesTo": "cd",
+    "modelProvider": "anthropic",
+    "defaultModel": "anthropic/claude-sonnet-4.6",
+    "fallbackModel": "openai/gpt-5-mini",
+    "reasoningLevel": "medium",
+    "authProfile": "default",
+    "canSpawnSubagents": false,
+    "subagentModel": null,
+    "subagentMaxDepth": 0,
+    "subagentUseCases": [],
+    "persistent": true,
+    "desiredStatus": "available",
+    "sessionLabel": "lane-vesta",
+    "startupPolicy": "on_demand",
+    "supervisor": "cd",
+    "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/vesta/DIRECTIVES.md",
+    "dashboardCardId": "vesta",
+    "registryVersion": 2,
+    "hiringClass": "permanent-staff",
+    "namedAfter": "Vesta \u2014 Roman goddess of the hearth, home, and family",
+    "runtime": {
+        "observedState": "unknown",
+        "sessionKey": null,
+        "lastSeenAt": null,
+        "currentTaskId": null,
+        "lastError": null
+    },
+    "systemPrompt": "You are Vesta, an Aegilume staff agent. Personal and family life guardian \u2014 manages personal calendar, family commitments, household tasks, and life admin outside of work.\n\nYour responsibilities:\n- Track personal and family calendar events\n- Manage household tasks and reminders\n- Surface family commitments and life-admin deadlines\n- Coordinate personal scheduling with work calendar"
 }

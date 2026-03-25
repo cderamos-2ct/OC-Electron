@@ -1,70 +1,71 @@
 {
-  "id": "hermes",
-  "displayName": "Hermes",
-  "name": "Hermes",
-  "emoji": "🤝",
-  "lane": "people-intelligence",
-  "status": "planned",
-  "runtimeAgentId": null,
-  "default": false,
-  "description": "Relationship intelligence — maintains the people graph, tracks contacts, interaction history, and relationship context across all agents.",
-  "responsibilities": [
-    "Maintain and enrich the people graph",
-    "Track contact history and relationship context",
-    "Surface relevant relationship context to other agents",
-    "Identify follow-up opportunities and relationship gaps"
-  ],
-  "monitorSurfaces": [
-    "People graph",
-    "Gmail contact history",
-    "Calendar attendee patterns",
-    "iMessage threads"
-  ],
-  "communicationChannels": [
-    "relationship context briefs",
-    "contact enrichment updates",
-    "follow-up recommendations"
-  ],
-  "tools": [
-    "people-graph",
-    "gmail_search",
-    "contact_lookup"
-  ],
-  "memoryPaths": [
-    "/Volumes/Storage/OpenClaw/agents/profiles/hermes/MEMORY.md",
-    "/Volumes/Storage/OpenClaw/docs/context/RELATIONSHIP.md"
-  ],
-  "taskTags": [
-    "people",
-    "relationships",
-    "contacts",
-    "crm"
-  ],
-  "escalatesTo": "cd",
-  "modelProvider": "anthropic",
-  "defaultModel": "anthropic/claude-sonnet-4.6",
-  "fallbackModel": "openai/gpt-5-mini",
-  "reasoningLevel": "medium",
-  "authProfile": "default",
-  "canSpawnSubagents": false,
-  "subagentModel": null,
-  "subagentMaxDepth": 0,
-  "subagentUseCases": [],
-  "persistent": true,
-  "desiredStatus": "available",
-  "sessionLabel": "lane-hermes",
-  "startupPolicy": "on_demand",
-  "supervisor": "cd",
-  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/hermes/DIRECTIVES.md",
-  "dashboardCardId": "hermes",
-  "registryVersion": 2,
-  "hiringClass": "permanent-staff",
-  "namedAfter": "Hermes — Greek messenger god, guide of souls, patron of communication and connection",
-  "runtime": {
-    "observedState": "unknown",
-    "sessionKey": null,
-    "lastSeenAt": null,
-    "currentTaskId": null,
-    "lastError": null
-  }
+    "id": "hermes",
+    "displayName": "Hermes",
+    "name": "Hermes",
+    "emoji": "\ud83e\udd1d",
+    "lane": "people-intelligence",
+    "status": "planned",
+    "runtimeAgentId": "hermes",
+    "default": false,
+    "description": "Relationship intelligence \u2014 maintains the people graph, tracks contacts, interaction history, and relationship context across all agents.",
+    "responsibilities": [
+        "Maintain and enrich the people graph",
+        "Track contact history and relationship context",
+        "Surface relevant relationship context to other agents",
+        "Identify follow-up opportunities and relationship gaps"
+    ],
+    "monitorSurfaces": [
+        "People graph",
+        "Gmail contact history",
+        "Calendar attendee patterns",
+        "iMessage threads"
+    ],
+    "communicationChannels": [
+        "relationship context briefs",
+        "contact enrichment updates",
+        "follow-up recommendations"
+    ],
+    "tools": [
+        "people-graph",
+        "gmail_search",
+        "contact_lookup"
+    ],
+    "memoryPaths": [
+        "/Volumes/Storage/OpenClaw/agents/profiles/hermes/MEMORY.md",
+        "/Volumes/Storage/OpenClaw/docs/context/RELATIONSHIP.md"
+    ],
+    "taskTags": [
+        "people",
+        "relationships",
+        "contacts",
+        "crm"
+    ],
+    "escalatesTo": "cd",
+    "modelProvider": "anthropic",
+    "defaultModel": "anthropic/claude-sonnet-4.6",
+    "fallbackModel": "openai/gpt-5-mini",
+    "reasoningLevel": "medium",
+    "authProfile": "default",
+    "canSpawnSubagents": false,
+    "subagentModel": null,
+    "subagentMaxDepth": 0,
+    "subagentUseCases": [],
+    "persistent": true,
+    "desiredStatus": "available",
+    "sessionLabel": "lane-hermes",
+    "startupPolicy": "on_demand",
+    "supervisor": "cd",
+    "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/hermes/DIRECTIVES.md",
+    "dashboardCardId": "hermes",
+    "registryVersion": 2,
+    "hiringClass": "permanent-staff",
+    "namedAfter": "Hermes \u2014 Greek messenger god, guide of souls, patron of communication and connection",
+    "runtime": {
+        "observedState": "unknown",
+        "sessionKey": null,
+        "lastSeenAt": null,
+        "currentTaskId": null,
+        "lastError": null
+    },
+    "systemPrompt": "You are Hermes, an Aegilume staff agent. Relationship intelligence \u2014 maintains the people graph, tracks contacts, interaction history, and relationship context across all agents.\n\nYour responsibilities:\n- Maintain and enrich the people graph\n- Track contact history and relationship context\n- Surface relevant relationship context to other agents\n- Identify follow-up opportunities and relationship gaps"
 }

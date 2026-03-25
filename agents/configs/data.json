@@ -1,77 +1,78 @@
 {
-  "id": "data",
-  "displayName": "Pythia",
-  "name": "Pythia",
-  "emoji": "📊",
-  "lane": "data",
-  "status": "active",
-  "runtimeAgentId": null,
-  "default": false,
-  "description": "Data and spreadsheet specialist — CSVs, xlsx, transforms, reports, data cleanup. Named for the Oracle at Delphi.",
-  "responsibilities": [
-    "Wrangle spreadsheets, CSVs, and structured data",
-    "Build reports and financial models",
-    "Clean and validate data from any source",
-    "Serve as cross-lane data backbone for all agents"
-  ],
-  "monitorSurfaces": [
-    "Task ledger",
-    "Data requests from agents"
-  ],
-  "communicationChannels": [
-    "data deliveries",
-    "report updates",
-    "data quality alerts"
-  ],
-  "tools": [
-    "python/pandas",
-    "xlsx generation",
-    "csv parsing",
-    "json transforms",
-    "charting",
-    "data validation"
-  ],
-  "memoryPaths": [
-    "/Volumes/Storage/OpenClaw/agents/profiles/data/MEMORY.md"
-  ],
-  "taskTags": [
-    "data",
-    "spreadsheets",
-    "csv",
-    "xlsx",
-    "reports",
-    "transforms",
-    "analytics"
-  ],
-  "escalatesTo": "cd",
-  "modelProvider": "anthropic",
-  "defaultModel": "anthropic/claude-sonnet-4-6",
-  "fallbackModel": "openai/gpt-5.4",
-  "reasoningLevel": "medium",
-  "authProfile": "default",
-  "canSpawnSubagents": true,
-  "subagentModel": "anthropic/claude-haiku-4-5",
-  "subagentMaxDepth": 1,
-  "subagentUseCases": [
-    "parallel sheet processing",
-    "data validation workers",
-    "batch transform pipelines"
-  ],
-  "persistent": true,
-  "desiredStatus": "available",
-  "sessionLabel": "lane-data",
-  "startupPolicy": "on_demand",
-  "supervisor": "cd",
-  "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/data/DIRECTIVES.md",
-  "dashboardCardId": "data",
-  "registryVersion": 2,
-  "hiringClass": "permanent-staff",
-  "namedAfter": "Pythia — the Oracle at Delphi, who processed raw input into structured, interpreted output",
-  "runtime": {
-    "observedState": "unknown",
-    "sessionKey": null,
-    "lastSeenAt": null,
-    "currentTaskId": null,
-    "lastError": null
-  }
+    "id": "data",
+    "displayName": "Pythia",
+    "name": "Pythia",
+    "emoji": "\ud83d\udcca",
+    "lane": "data",
+    "status": "active",
+    "runtimeAgentId": "data",
+    "default": false,
+    "description": "Data and spreadsheet specialist \u2014 CSVs, xlsx, transforms, reports, data cleanup. Named for the Oracle at Delphi.",
+    "responsibilities": [
+        "Wrangle spreadsheets, CSVs, and structured data",
+        "Build reports and financial models",
+        "Clean and validate data from any source",
+        "Serve as cross-lane data backbone for all agents"
+    ],
+    "monitorSurfaces": [
+        "Task ledger",
+        "Data requests from agents"
+    ],
+    "communicationChannels": [
+        "data deliveries",
+        "report updates",
+        "data quality alerts"
+    ],
+    "tools": [
+        "python/pandas",
+        "xlsx generation",
+        "csv parsing",
+        "json transforms",
+        "charting",
+        "data validation"
+    ],
+    "memoryPaths": [
+        "/Volumes/Storage/OpenClaw/agents/profiles/data/MEMORY.md"
+    ],
+    "taskTags": [
+        "data",
+        "spreadsheets",
+        "csv",
+        "xlsx",
+        "reports",
+        "transforms",
+        "analytics"
+    ],
+    "escalatesTo": "cd",
+    "modelProvider": "anthropic",
+    "defaultModel": "anthropic/claude-sonnet-4-6",
+    "fallbackModel": "openai/gpt-5.4",
+    "reasoningLevel": "medium",
+    "authProfile": "default",
+    "canSpawnSubagents": true,
+    "subagentModel": "anthropic/claude-haiku-4-5",
+    "subagentMaxDepth": 1,
+    "subagentUseCases": [
+        "parallel sheet processing",
+        "data validation workers",
+        "batch transform pipelines"
+    ],
+    "persistent": true,
+    "desiredStatus": "available",
+    "sessionLabel": "lane-data",
+    "startupPolicy": "on_demand",
+    "supervisor": "cd",
+    "roleFile": "/Volumes/Storage/OpenClaw/agents/profiles/data/DIRECTIVES.md",
+    "dashboardCardId": "data",
+    "registryVersion": 2,
+    "hiringClass": "permanent-staff",
+    "namedAfter": "Pythia \u2014 the Oracle at Delphi, who processed raw input into structured, interpreted output",
+    "runtime": {
+        "observedState": "unknown",
+        "sessionKey": null,
+        "lastSeenAt": null,
+        "currentTaskId": null,
+        "lastError": null
+    },
+    "systemPrompt": "You are Pythia, an Aegilume staff agent. Data and spreadsheet specialist \u2014 CSVs, xlsx, transforms, reports, data cleanup. Named for the Oracle at Delphi.\n\nYour responsibilities:\n- Wrangle spreadsheets, CSVs, and structured data\n- Build reports and financial models\n- Clean and validate data from any source\n- Serve as cross-lane data backbone for all agents"
 }
