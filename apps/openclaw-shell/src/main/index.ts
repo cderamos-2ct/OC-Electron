@@ -76,6 +76,8 @@ import { registerVaultIpcHandlers } from './vault/vault-ipc.js';
 import { assertEnvironment } from './config/env.js';
 import { runCredentialMigration } from './config/credentials-migration.js';
 import { registerDeepLinkProtocol, handleDeepLink, processPendingDeepLink } from './deep-link.js';
+import { existsSync } from 'node:fs';
+import { join as joinPath } from 'node:path';
 import { initUpdater } from './updater.js';
 
 // NOTE: All instances are created inside app.whenReady() or at worst after
@@ -379,8 +381,17 @@ if (!gotLock) {
     applyWindowState(mainWindow);
     trackWindowState(mainWindow);
 
-    // Initialize auto-updater (checks for updates after 10s delay)
-    initUpdater(mainWindow);
+    // Initialize auto-updater only when packaged and update config exists.
+    // Running from /Volumes/ or a dev build has no app-update.yml, so skip
+    // to avoid noisy errors and removable-volume access prompts.
+    if (
+      app.isPackaged &&
+      existsSync(joinPath(process.resourcesPath, 'app-update.yml'))
+    ) {
+      initUpdater(mainWindow);
+    } else {
+      logger.info('Auto-updater disabled (no update config or not packaged)');
+    }
 
     // Phase 5: Wire native notification system
     setNotificationWindow(mainWindow);
