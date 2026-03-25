@@ -2,7 +2,8 @@
 
 import { ChildProcess, spawn } from 'child_process';
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
+import { app } from 'electron';
 import type { Provisioner, ProvisioningProgress } from './types.js';
 import { ProvisioningStatus } from './types.js';
 import { resolveResourcePath } from './platform.js';
@@ -83,14 +84,21 @@ export class DashboardProvisioner implements Provisioner {
       return;
     }
 
-    this.process = spawn('node', [this.serverPath], {
+    // Use Electron's own binary as Node runtime — no external node needed.
+    // ELECTRON_RUN_AS_NODE makes the Electron binary behave as plain Node.js.
+    const nodeBin = process.env.OPENCLAW_DASHBOARD_NODE_BIN || process.execPath;
+
+    this.process = spawn(nodeBin, [this.serverPath], {
+      cwd: dirname(this.serverPath),
       detached: false,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
         PORT: String(DASHBOARD_PORT),
+        HOST: '127.0.0.1',
         HOSTNAME: '127.0.0.1',
         NODE_ENV: 'production',
+        ...(app.isPackaged ? { ELECTRON_RUN_AS_NODE: '1' } : {}),
       },
     });
 
