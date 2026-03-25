@@ -119,27 +119,30 @@ export function HomeView({ userName = 'there', agentBriefs = [] }: HomeViewProps
 
   const agentStats: AgentStat[] = [
     {
-      emoji: '\u{1F6E1}\uFE0F',
+      emoji: '\u2709\uFE0F',
       count: counts.unreadEmails != null ? counts.unreadEmails : '—',
-      label: 'Emails triaged',
+      label: 'Unread emails',
       agent: 'Karoline',
     },
     {
-      emoji: '\u{1F525}',
-      count: counts.githubNotifications != null && counts.githubNotifications > 0
-        ? counts.githubNotifications
-        : '—',
-      label: 'PRs merged',
+      emoji: '\u{1F514}',
+      count: counts.githubNotifications != null ? counts.githubNotifications : '—',
+      label: 'GitHub notifications',
       agent: 'Vulcan',
     },
     {
-      emoji: '\u23F3',
+      emoji: '\u{1F4C5}',
       count: counts.calendarEvents != null ? counts.calendarEvents : '—',
-      label: 'Invites handled',
+      label: 'Meetings today',
       agent: 'Kronos',
     },
-    { emoji: '\u{1F52E}', count: '—', label: 'Recaps processed', agent: 'Ada' },
-    { emoji: '\u{1F4E1}', count: '—', label: 'Risks flagged', agent: 'Hermes' },
+    {
+      emoji: '\u{1F4CB}',
+      count: counts.pendingTasks != null ? counts.pendingTasks : '—',
+      label: 'Pending tasks',
+      agent: 'Ada',
+    },
+    { emoji: '\u{1F4E1}', count: '—', label: 'No data', agent: 'Hermes' },
   ];
 
   return (
@@ -192,7 +195,7 @@ export function HomeView({ userName = 'there', agentBriefs = [] }: HomeViewProps
             margin: '0 0 14px 0',
           }}
         >
-          Overnight Agent Activity
+          Activity Overview
         </p>
 
         {/* Stat cards grid */}
