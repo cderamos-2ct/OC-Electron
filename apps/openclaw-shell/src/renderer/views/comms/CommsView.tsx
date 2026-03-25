@@ -510,10 +510,10 @@ export function CommsView() {
   // The Gmail API worker uses 'karoline' agent by convention
   const GMAIL_AGENT_ID = 'comms';
 
+  // Only show tabs that have real, working backend connections.
+  // iMessage and Voicemail are not available in MVP — hide them entirely.
   const subtabs: Array<{ key: CommsTab; label: string; icon: string }> = [
     { key: 'email', label: 'Email', icon: '✉️' },
-    { key: 'imsg', label: 'iMessage', icon: '💬' },
-    { key: 'voicemail', label: 'Voicemail', icon: '📞' },
   ];
 
   return (

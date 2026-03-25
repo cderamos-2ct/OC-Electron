@@ -4,11 +4,11 @@ export type ChannelFilter = 'all' | 'email' | 'imessage' | 'slack' | 'social' | 
 
 const TABS: { id: ChannelFilter; label: string; icon?: string; count?: number }[] = [
   { id: 'all', label: 'All' },
-  { id: 'email', label: 'Email', icon: '✉️', count: 12 },
-  { id: 'imessage', label: 'iMessage', icon: '💬', count: 3 },
-  { id: 'slack', label: 'Slack', icon: '🔷', count: 8 },
+  { id: 'email', label: 'Email', icon: '✉️' },
+  { id: 'imessage', label: 'iMessage', icon: '💬' },
+  { id: 'slack', label: 'Slack', icon: '🔷' },
   { id: 'social', label: 'Social', icon: '🌐' },
-  { id: 'phone', label: 'Phone', icon: '📞', count: 1 },
+  { id: 'phone', label: 'Phone', icon: '📞' },
 ];
 
 interface SubtabBarProps {
