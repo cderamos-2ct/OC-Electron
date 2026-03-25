@@ -52,6 +52,7 @@ extraResources:
     to: code-server
     filter:
       - "**/*"
+      - "node_modules/**/*"
 
 # ── macOS ────────────────────────────────────────────────────────────────────
 afterSign: scripts/notarize.mjs

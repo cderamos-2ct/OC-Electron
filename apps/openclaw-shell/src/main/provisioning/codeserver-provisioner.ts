@@ -59,6 +59,24 @@ export class CodeServerProvisioner implements Provisioner {
       await this.downloadAndInstall(onProgress);
     }
 
+    // Step 2.5: Ensure node_modules exist (may be missing in packaged builds)
+    const codeServerRoot = resolveResourcePath('code-server');
+    const nodeModulesDir = join(codeServerRoot, 'node_modules');
+    if (existsSync(codeServerRoot) && !existsSync(join(nodeModulesDir, '@coder', 'logger'))) {
+      progress('Installing code-server dependencies...', 60);
+      log.info('code-server node_modules missing @coder/logger — running npm install...');
+      try {
+        await execFileAsync('npm', ['install', '--production', '--no-optional'], {
+          cwd: codeServerRoot,
+          timeout: 120_000,
+          env: { ...process.env, NODE_ENV: 'production' },
+        });
+        log.info('code-server dependencies installed.');
+      } catch (err) {
+        log.warn('code-server npm install failed (non-fatal):', err instanceof Error ? err.message : String(err));
+      }
+    }
+
     // Step 3: Verify binary
     progress('Verifying installation...', 85);
     try {
